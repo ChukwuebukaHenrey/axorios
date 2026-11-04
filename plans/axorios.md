@@ -98,7 +98,8 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 | `webhook_events` unique on `(provider, event_id)` | Applied in 0.1 |
 | Next.js 16 `cacheComponents` and `partialPrefetching` turned off: nearly every route is dynamic and they add Suspense constraints | Applied in 0.1 |
 | Keys used as provided; Twilio and Telegram tokens not rotated | User decision, 4 Nov |
-| Gemini on free tier; image access unproven until 0.4 | Open; see 0.4 |
+| Gemini on free tier: `gemini-3.5-flash` answers text; `gemini-2.5-flash-image`, `gemini-3.1-flash-image` and `gemini-3.1-flash-lite-image` all return 429 quota errors (4 Nov) | Blocks 0.4, 4.1, 4.5 until billing is on |
+| FX provider candidate: open.er-api.com, no key, returned NGN, GHS and KES on 4 Nov (about 1,346 NGN per USD, so 45,000 NGN is about $33.43, not the spec's $29.40) | To confirm in 0.6 |
 
 ## Progress
 | Step | Status | Notes |
@@ -109,5 +110,5 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 | 0.4 | Not started | |
 | 0.5 | Not started | |
 | 0.6 | Not started | |
-| 0.7 | Not started | |
+| 0.7 | In progress | Vercel project `axorios` created and linked to the repo. Env vars, Inngest sync and webhook registration still to do. |
 | Phases 1-5 | Not started | |

@@ -88,7 +88,8 @@ try {
   const started = Date.now();
   type Row = { id: string; status: string; caption: string; media_url: string | null; campaign_id: string | null; publish_results: Record<string, { url?: string; at?: string }>; scheduled_at: string | null };
   let posts: Row[] = [];
-  while (Date.now() - started < 120_000) {
+  // Long enough for a slow model call to hit the 60 s function limit and succeed on Inngest's retry.
+  while (Date.now() - started < 240_000) {
     const { data } = await admin.from("posts").select("id, status, caption, media_url, campaign_id, publish_results, scheduled_at").eq("store_id", store.id);
     posts = ((data ?? []) as Row[]).filter((p) => !existing.has(p.id));
     if (posts.length > 0 && posts.every((p) => p.status !== "generating")) break;

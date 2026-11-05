@@ -40,6 +40,7 @@ export function SiteRenderer(props: Props) {
   return (
     <div
       lang={locale}
+      data-preset={config.preset}
       style={storeCssVars(config.tokens)}
       className="min-h-dvh overflow-x-clip bg-store-paper font-store-body text-store-ink"
     >

@@ -102,6 +102,8 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 | Store fonts load through a Google Fonts `<link>`, not `next/font` as the spec says: the kit holds any font name, and `next/font` needs them at build time | Applied in 1.3 |
 | Hero `carousel` variant replaced by `centered`: no multi-image content yet, and it needs no client JS. Default story, reviews and FAQ are empty and render nothing, so no store shows invented testimonials | Applied in 1.3 |
 | With no logo (4.5 is Cut, no image billing), the link preview shows a monogram tile in the brand's colours; a `logoUrl` replaces it automatically | Applied in 1.3 |
+| Publish uses the SDK's `toolApproval`, with no `experimental_toolApprovalSecret`. The history is client-held, but the only client is the signed-in seller approving their own store, and the model can't forge an approval. Revisit for seller-side payment links | Applied in 1.5 |
+| Publish refuses a store with no products. Until first publish the link follows the current name; once live it never changes | Applied in 1.5 |
 | Undo archives the latest draft, so repeating walks further back. One Undo button stands in for the spec's version history list. Photo swapping isn't in `edit_site` yet: there's no upload path | Applied in 1.4 |
 | Keys used as provided; Twilio and Telegram tokens not rotated | User decision, 4 Nov |
 | A store has one price currency: the first products set `stores.currency`, and a second currency is refused so carts total without converting. `add_products` matches on name, so repeating a product changes it. Stock defaults to 100 when the owner states none, because made-to-order sellers don't count stock | Applied in 1.2 |
@@ -122,11 +124,16 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 | 1.2 | Done | `npm test -- catalog` 13/13. `scripts/e2e-catalog.mts` passes through the real agent: 45,000 NGN saved as 4500000, store currency set to NGN, a repeat changes the price with no duplicate, no price means no product, RLS hides draft products. |
 | 1.3 | In progress | `npm test -- storefront` 15/15. `scripts/e2e-storefront.mts` passes: two stores differ in colours, fonts, currency and products with no leak; a draft store returns 404; link preview tags and a 40 KB PNG. Checked by eye at 390 px and 1280 px. Left: paste the link in WhatsApp (user). |
 | 1.4 | Done | `npm test -- storefront` 27/27. `scripts/e2e-site-edit.mts` passes through the real agent: edit, undo, edit, a clicked section is what "this" means, forged token 404. Click-to-select, the Undo button and the phone toggle driven in headless Edge and checked by eye. Tested on `gemini-3.5-flash-lite` because of the quota. |
-| 1.5 | Next | |
+| 1.5 | Done | Driven in headless Edge: asking shows a card and the store stays draft and 404; "Not yet" keeps it private; Publish makes it live and 200, with the link on the card; a later draft edit leaves the live store unchanged. |
+| 1.5a | Done | Same store renders in all 3 Market presets from the switcher (no model needed) and `choose_template`. Colours, fonts, text and hidden sections are kept. Checked by eye. |
+| 2.1 | Next | Phase 1 is done except the WhatsApp paste in 1.3. |
 | Rest of phases 1-5 | Not started | |
 
 ## Waiting on the user
-- Gemini text quota: `gemini-3.5-flash` hit the free-tier daily per-model cap on 5 Nov (429, `GenerateRequestsPerDayPerProjectPerModel-FreeTier`). Judges would hit the same cap during 1-15 Dec. Needs a decision before 5.3.
+- Gemini text quota: `gemini-3.5-flash` hit the free-tier daily per-model cap on 5 Nov (429, `GenerateRequestsPerDayPerProjectPerModel-FreeTier`). Judges would hit the same cap during 1-15 Dec. Needs a decision before 5.3. `gemini-3.5-flash-lite` passed the 1.4 and 1.5 agent checks and had quota on 5 Nov; production is unchanged.
+- Rotate `INNGEST_EVENT_KEY`: its value was printed into a session transcript on 5 Nov when a leading space in `.env.local` made the shell run it.
+- Product and hero photos: none yet (no image billing, no upload path), so stores show brand-coloured tiles, and Photo-led looks flat. Decide before recording 5.4.
+- Paste `https://axorios.vercel.app/s/demo` in WhatsApp to finish 1.3.
 - Shopify app installed on `ebukahs-dev-store`; currently `app_not_installed`. Blocks 0.5 and 4.4. Auth is the client-credentials grant, not a stored `shpat_` token.
 - Twilio Sandbox "When a message comes in" set to `https://axorios.vercel.app/api/webhooks/twilio` (POST). Console only.
 - `TELEGRAM_CHANNEL_ID` in `.env.local`. Needed by 4.2.
@@ -143,6 +150,8 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 - Read before using, because these differ from older docs: `node_modules/ai/docs` (AI SDK 7: `isStepCount`, `inputSchema`, `toUIMessageStream` with `onEnd`, `toolApproval` for approval cards), `node_modules/next/dist/docs` (Next 16: `proxy.ts`), Inngest 4 (`triggers` inside the options object).
 - Gemini: `gemini-3.5-flash` for text. `gemini-3.8-flash` and `gemini-flash-latest` returned 503 on 4 Nov. `gemini-2.5-flash` is closed to new users.
 - npm is slow on this machine, sometimes 10 minutes: run installs in the background.
+- To test on another model without touching `.env.local`: `GEMINI_TEXT_MODEL=gemini-3.5-flash-lite npx next dev -p 3002`. Process env wins over the file.
+- UI checks need no new dependency: start headless Edge with `--remote-debugging-port`, set the `sb-<ref>-auth-token` cookie over CDP, and drive the page with `Runtime.evaluate`. Node has a global `WebSocket`.
 - Before an e2e run, check what serves the port. A stale `next start` on 3000 silently runs old code, and `next dev` then moves to 3001.
 - The slug is claimed once from the first brand name, so a later rename keeps the old slug. Revisit at 1.5 publish.
 - UI palette from the brand board: #2B0B3F, #F97316, #FBBF24, #1F1F1F, #F8FAFC. Font: DM Sans.

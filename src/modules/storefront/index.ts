@@ -9,4 +9,12 @@ export type { ContactChannels, DesignTokens, Section, SiteConfig } from "./schem
 export { getDraftStorefront, getLiveStorefront } from "./service";
 export type { Storefront } from "./service";
 export { allowedImage, readableOn } from "./theme";
-export { draftPreviewToken, editDraft, getDraftConfig, revertDraft, syncBrandToDraft } from "./versions";
+export {
+  draftPreviewToken,
+  editDraft,
+  getDraftConfig,
+  publishDraft,
+  revertDraft,
+  switchDraftPreset,
+  syncBrandToDraft,
+} from "./versions";

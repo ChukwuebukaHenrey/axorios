@@ -29,7 +29,18 @@
     "tabChat": "Chat",
     "tabPreview": "Preview",
     "editing": "Changing:",
-    "clearSelection": "Clear selection"
+    "clearSelection": "Clear selection",
+    "template": "Template",
+    "publish": "Publish",
+    "publishRequest": "Please publish my store."
+  },
+  "publishCard": {
+    "title": "Put your store online?",
+    "body": "Anyone with the link will be able to see your store and your prices. You can keep editing afterwards.",
+    "approve": "Publish",
+    "deny": "Not yet",
+    "live": "Your store is live",
+    "denied": "Not published. Your store is still private."
   },
   "brandCard": {
     "title": "Brand kit",

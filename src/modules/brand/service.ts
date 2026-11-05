@@ -35,17 +35,36 @@ export async function getBrandKit(storeId: string): Promise<BrandKit | null> {
   return parsed.success ? parsed.data : null;
 }
 
-async function claimSlug(storeId: string, name: string): Promise<void> {
+async function writeSlug(storeId: string, name: string): Promise<void> {
   const db = serviceRoleClient();
-  const { data } = await db.from("stores").select("slug").eq("id", storeId).single();
-  if (!data?.slug.startsWith(PLACEHOLDER_SLUG_PREFIX)) return;
-
   const base = slugify(name);
   for (const candidate of [base, `${base}-${randomBytes(2).toString("hex")}`]) {
     const { error } = await db.from("stores").update({ slug: candidate }).eq("id", storeId);
     if (!error) return;
     if (error.code !== "23505") throw new Error(`Slug update failed: ${error.code}`);
   }
+}
+
+async function claimSlug(storeId: string, name: string): Promise<void> {
+  const { data } = await serviceRoleClient().from("stores").select("slug").eq("id", storeId).single();
+  if (data?.slug.startsWith(PLACEHOLDER_SLUG_PREFIX)) await writeSlug(storeId, name);
+}
+
+/** Before a store's first publish, its link follows the current name. Once live, the link never changes. */
+export async function refreshDraftSlug(storeId: string): Promise<void> {
+  const { data, error } = await serviceRoleClient()
+    .from("stores")
+    .select("slug, status, brand_kit")
+    .eq("id", storeId)
+    .single();
+  if (error) throw new Error(`Store read failed: ${error.code}`);
+  if (data.status !== "draft") return;
+
+  const kit = BrandKitSchema.safeParse(data.brand_kit);
+  if (!kit.success) return;
+  const base = slugify(kit.data.name);
+  const current = data.slug === base || (data.slug.startsWith(`${base}-`) && /-[0-9a-f]{4}$/.test(data.slug));
+  if (!current) await writeSlug(storeId, kit.data.name);
 }
 
 export async function createBrandKit(storeId: string, draft: BrandDraft, storeLanguage: string): Promise<BrandKit> {

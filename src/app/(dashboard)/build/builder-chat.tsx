@@ -1,19 +1,26 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport, type UIMessage } from "ai";
+import { DefaultChatTransport, lastAssistantMessageIsCompleteWithApprovalResponses, type UIMessage } from "ai";
 import { Loader2, SendHorizontal, X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentProps, type FormEvent } from "react";
 import { t } from "@/lib/messages";
 import type { BrandKit } from "@/modules/brand";
 import type { Product } from "@/modules/catalog";
 import { BrandCard } from "./brand-card";
 import { PreviewPane } from "./preview-pane";
 import { ProductsCard } from "./products-card";
+import { PublishCard } from "./publish-card";
 
 const BRAND_TOOL_TYPES = new Set(["tool-create_brand_kit", "tool-update_brand_kit"]);
 /** Any of these changes what the store looks like, so the preview reloads when one finishes. */
-const SITE_TOOL_TYPES = new Set([...BRAND_TOOL_TYPES, "tool-add_products", "tool-edit_site", "tool-revert_site"]);
+const SITE_TOOL_TYPES = new Set([
+  ...BRAND_TOOL_TYPES,
+  "tool-add_products",
+  "tool-edit_site",
+  "tool-revert_site",
+  "tool-choose_template",
+]);
 
 type ToolPart = { type: string; state?: string; output?: unknown };
 
@@ -29,17 +36,23 @@ export function BuilderChat({
   initialMessages,
   previewUrl,
   initialHasKit,
+  presets,
 }: {
   initialMessages: UIMessage[];
   previewUrl: string;
   initialHasKit: boolean;
+  presets: { id: string; label: string }[];
 }) {
   const [input, setInput] = useState("");
   const [view, setView] = useState<"chat" | "preview">("chat");
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const transport = useMemo(() => new DefaultChatTransport({ api: "/api/agent" }), []);
-  const { messages, sendMessage, status, error } = useChat({ messages: initialMessages, transport });
+  const { messages, sendMessage, addToolApprovalResponse, status, error } = useChat({
+    messages: initialMessages,
+    transport,
+    sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
+  });
   const busy = status === "submitted" || status === "streaming";
 
   const previewVersion = useMemo(
@@ -108,6 +121,15 @@ export function BuilderChat({
                       </p>
                     );
                   }
+                  if (part.type === "tool-publish_store") {
+                    return (
+                      <PublishCard
+                        key={i}
+                        part={part as ComponentProps<typeof PublishCard>["part"]}
+                        onRespond={(id, approved) => addToolApprovalResponse({ id, approved })}
+                      />
+                    );
+                  }
                   const kit = brandOutput(part as ToolPart);
                   if (kit) {
                     return (
@@ -171,7 +193,17 @@ export function BuilderChat({
           </form>
         </section>
         <aside className={`${view === "preview" ? "flex" : "hidden"} min-h-0 min-w-0 flex-1 flex-col md:flex`}>
-          <PreviewPane url={hasKit ? previewUrl : null} version={previewVersion} onSelectSection={selectSection} />
+          <PreviewPane
+            url={hasKit ? previewUrl : null}
+            version={previewVersion}
+            presets={presets}
+            publishing={busy}
+            onSelectSection={selectSection}
+            onPublish={() => {
+              setView("chat");
+              sendMessage({ text: t.builder.publishRequest });
+            }}
+          />
         </aside>
       </div>
     </div>

@@ -4,7 +4,7 @@ import { t } from "@/lib/messages";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { loadSellerSession } from "@/modules/agent";
 import { getBrandKit, getOrCreateStore } from "@/modules/brand";
-import { draftPreviewToken } from "@/modules/storefront";
+import { draftPreviewToken, MARKET_PRESETS } from "@/modules/storefront";
 import { BuilderChat } from "./builder-chat";
 
 export const metadata = { title: "Build your store | AxoriOS" };
@@ -26,7 +26,12 @@ export default async function BuildPage() {
         <Logo className="size-6" />
         <h1 className="font-semibold">{t.builder.title}</h1>
       </header>
-      <BuilderChat initialMessages={messages} previewUrl={previewUrl} initialHasKit={kit !== null} />
+      <BuilderChat
+        initialMessages={messages}
+        previewUrl={previewUrl}
+        initialHasKit={kit !== null}
+        presets={Object.entries(MARKET_PRESETS).map(([id, preset]) => ({ id, label: preset.label }))}
+      />
     </div>
   );
 }

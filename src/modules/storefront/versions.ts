@@ -2,10 +2,11 @@ import "server-only";
 import type { Json } from "@/lib/database.types";
 import { env } from "@/lib/env";
 import { serviceRoleClient } from "@/lib/supabase/service-role";
-import { getBrandKit, type BrandKit } from "@/modules/brand";
+import { getBrandKit, refreshDraftSlug, type BrandKit } from "@/modules/brand";
+import { listProducts } from "@/modules/catalog";
 import { signDraftToken, verifyDraftToken } from "./draft-token";
 import { applyBrandToConfig, applySiteEdit, type SiteEdit } from "./edit";
-import { buildSiteConfig } from "./presets";
+import { applyPreset, buildSiteConfig, type MarketPresetId } from "./presets";
 import { SiteConfigSchema, type SiteConfig } from "./schema";
 
 async function latestConfig(storeId: string, status: "draft" | "published"): Promise<SiteConfig | null> {
@@ -49,6 +50,50 @@ export async function editDraft(storeId: string, edit: SiteEdit): Promise<SiteCo
   const next = applySiteEdit(current, edit);
   await saveDraft(storeId, next, "agent");
   return next;
+}
+
+export async function switchDraftPreset(
+  storeId: string,
+  presetId: MarketPresetId,
+  createdBy: "agent" | "seller",
+): Promise<void> {
+  const current = await getDraftConfig(storeId);
+  if (!current) throw new Error("Create the brand kit first");
+  if (current.preset === presetId) return;
+  await saveDraft(storeId, applyPreset(current, presetId), createdBy);
+}
+
+/**
+ * Copies the current draft to live. Only reachable from the publish_store tool, which requires the seller's
+ * approval. Drafts are kept, so the seller can go on editing without touching the live store.
+ */
+export async function publishDraft(storeId: string): Promise<{ url: string }> {
+  const config = await getDraftConfig(storeId);
+  if (!config) throw new Error("Create the brand kit first");
+  if ((await listProducts(storeId)).length === 0) throw new Error("Add at least one product before publishing");
+
+  await refreshDraftSlug(storeId);
+  const db = serviceRoleClient();
+
+  const { error: archiveError } = await db
+    .from("site_versions")
+    .update({ status: "archived" })
+    .eq("store_id", storeId)
+    .eq("status", "published");
+  if (archiveError) throw new Error(`Publish failed: ${archiveError.code}`);
+
+  const { error: insertError } = await db.from("site_versions").insert({
+    store_id: storeId,
+    template_id: config.preset,
+    config: config as unknown as Json,
+    status: "published",
+    created_by: "seller",
+  });
+  if (insertError) throw new Error(`Publish failed: ${insertError.code}`);
+
+  const { data, error } = await db.from("stores").update({ status: "live" }).eq("id", storeId).select("slug").single();
+  if (error) throw new Error(`Publish failed: ${error.code}`);
+  return { url: `${env().NEXT_PUBLIC_APP_URL}/s/${data.slug}` };
 }
 
 /** Called after the brand kit changes, so the draft's colours, fonts and default hero text keep up. */

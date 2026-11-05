@@ -24,7 +24,7 @@ export function ProductArt({
   const src = allowedImage(imageUrl);
   return (
     <div
-      className={`relative aspect-[var(--store-image-aspect)] overflow-hidden rounded-store ${src ? "" : TONES[index % TONES.length]} ${className}`}
+      className={`@container relative aspect-[var(--store-image-aspect)] overflow-hidden rounded-store ${src ? "" : TONES[index % TONES.length]} ${className}`}
     >
       {src ? (
         <Image src={src} alt={name} fill sizes={sizes} className="object-cover" />
@@ -36,7 +36,7 @@ export function ProductArt({
           />
           <span
             aria-hidden="true"
-            className="absolute inset-0 grid place-items-center font-store-heading text-[clamp(3rem,14vw,6rem)] leading-none font-bold"
+            className="absolute inset-0 grid place-items-center font-store-heading text-[40cqw] leading-none font-bold"
           >
             {Array.from(name)[0]?.toUpperCase()}
           </span>
@@ -50,7 +50,7 @@ export function ProductArt({
 export function HeroArt({ name, imageUrl }: { name: string; imageUrl: string | null }) {
   const src = allowedImage(imageUrl);
   return (
-    <div className="relative aspect-square overflow-hidden rounded-store bg-store-primary text-store-on-primary">
+    <div className="@container relative aspect-square overflow-hidden rounded-store bg-store-primary text-store-on-primary">
       {src ? (
         <Image src={src} alt={name} fill priority sizes="(min-width: 768px) 50vw, 100vw" className="object-cover" />
       ) : (
@@ -59,7 +59,7 @@ export function HeroArt({ name, imageUrl }: { name: string; imageUrl: string | n
           <span aria-hidden="true" className="absolute -right-[10%] -bottom-[14%] aspect-square w-[72%] rounded-full bg-store-accent" />
           <span
             aria-hidden="true"
-            className="absolute top-1/2 left-1/2 grid aspect-square w-[52%] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-store-primary font-store-heading text-[clamp(5rem,20vw,10rem)] leading-none font-bold"
+            className="absolute top-1/2 left-1/2 grid aspect-square w-[52%] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-store-primary font-store-heading text-[28cqw] leading-none font-bold"
           >
             {Array.from(name)[0]?.toUpperCase()}
           </span>

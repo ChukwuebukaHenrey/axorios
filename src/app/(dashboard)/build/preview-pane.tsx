@@ -3,24 +3,31 @@
 import { Loader2, Monitor, Smartphone, Undo2 } from "lucide-react";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { t } from "@/lib/messages";
-import { undoDraftEdit } from "./actions";
+import { chooseTemplate, undoDraftEdit } from "./actions";
 
 const SELECT_SECTION_MESSAGE = "axorios:select-section";
 
 export function PreviewPane({
   url,
   version,
+  presets,
+  publishing,
   onSelectSection,
+  onPublish,
 }: {
   url: string | null;
   version: number;
+  presets: { id: string; label: string }[];
+  publishing: boolean;
   onSelectSection: (id: string) => void;
+  onPublish: () => void;
 }) {
   const frame = useRef<HTMLIFrameElement>(null);
   const [device, setDevice] = useState<"desktop" | "phone">("desktop");
-  const [undoCount, setUndoCount] = useState(0);
+  const [localChanges, setLocalChanges] = useState(0);
   const [nothingToUndo, setNothingToUndo] = useState(false);
-  const [undoing, startUndo] = useTransition();
+  const [renderedPreset, setRenderedPreset] = useState("");
+  const [pending, startAction] = useTransition();
 
   useEffect(() => {
     function onMessage(event: MessageEvent) {
@@ -36,11 +43,26 @@ export function PreviewPane({
   if (!url) return <p className="p-6 text-black/60">{t.builder.panelEmpty}</p>;
 
   function undo() {
-    startUndo(async () => {
+    startAction(async () => {
       const reverted = await undoDraftEdit();
       setNothingToUndo(!reverted);
-      if (reverted) setUndoCount((n) => n + 1);
+      if (reverted) setLocalChanges((n) => n + 1);
     });
+  }
+
+  function switchTemplate(presetId: string) {
+    setRenderedPreset(presetId);
+    startAction(async () => {
+      await chooseTemplate(presetId);
+      setNothingToUndo(false);
+      setLocalChanges((n) => n + 1);
+    });
+  }
+
+  /** The switcher shows what the preview actually rendered, so it can't disagree with the page. */
+  function readRenderedPreset() {
+    const root = frame.current?.contentDocument?.querySelector<HTMLElement>("[data-preset]");
+    setRenderedPreset(root?.dataset.preset ?? "");
   }
 
   const toggle = (active: boolean) =>
@@ -69,25 +91,51 @@ export function PreviewPane({
             <Smartphone className="size-5" aria-hidden="true" />
           </button>
         </div>
-        <p className="hidden min-w-0 truncate text-sm text-black/60 lg:block">
+        <select
+          value={renderedPreset}
+          onChange={(e) => switchTemplate(e.target.value)}
+          disabled={pending || !renderedPreset}
+          aria-label={t.builder.template}
+          className="h-10 min-w-0 flex-1 rounded-lg border border-black/15 bg-white px-2 text-sm font-medium disabled:opacity-50 sm:max-w-44"
+        >
+          {!renderedPreset && <option value="">{t.builder.template}</option>}
+          {presets.map((preset) => (
+            <option key={preset.id} value={preset.id}>
+              {preset.label}
+            </option>
+          ))}
+        </select>
+        <p className="hidden min-w-0 flex-1 truncate text-sm text-black/60 xl:block">
           {nothingToUndo ? t.builder.nothingToUndo : t.builder.previewHint}
         </p>
-        <button
-          type="button"
-          onClick={undo}
-          disabled={undoing}
-          className="flex h-10 items-center gap-2 rounded-lg border border-black/15 px-3 text-sm font-medium transition hover:bg-black/5 disabled:opacity-50"
-        >
-          {undoing ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <Undo2 className="size-4" aria-hidden="true" />}
-          {t.builder.undo}
-        </button>
+        <div className="flex shrink-0 gap-2">
+          <button
+            type="button"
+            onClick={undo}
+            disabled={pending}
+            aria-label={t.builder.undo}
+            className="flex h-10 items-center gap-2 rounded-lg border border-black/15 px-3 text-sm font-medium transition hover:bg-black/5 disabled:opacity-50"
+          >
+            {pending ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <Undo2 className="size-4" aria-hidden="true" />}
+            <span className="hidden sm:inline">{t.builder.undo}</span>
+          </button>
+          <button
+            type="button"
+            onClick={onPublish}
+            disabled={publishing}
+            className="h-10 rounded-lg bg-secondary px-3 text-sm font-semibold text-ink transition hover:bg-accent disabled:opacity-50"
+          >
+            {t.builder.publish}
+          </button>
+        </div>
       </div>
       <div className="flex min-h-0 flex-1 justify-center overflow-hidden bg-black/5">
         <iframe
           ref={frame}
-          key={`${version}-${undoCount}`}
+          key={`${version}-${localChanges}`}
           src={url}
           title={t.builder.previewTitle}
+          onLoad={readRenderedPreset}
           className={`h-full bg-white ${device === "phone" ? "w-[390px] max-w-full shadow-lg" : "w-full"}`}
         />
       </div>

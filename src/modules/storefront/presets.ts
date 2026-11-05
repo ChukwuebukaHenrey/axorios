@@ -63,6 +63,18 @@ export const MARKET_PRESETS = {
 export type MarketPresetId = keyof typeof MARKET_PRESETS;
 export const DEFAULT_PRESET: MarketPresetId = "market/warm-bakery";
 
+/** Same store in another preset: new layout and spacing, with the seller's colours, fonts and content kept. */
+export function applyPreset(config: SiteConfig, presetId: MarketPresetId): SiteConfig {
+  const preset = MARKET_PRESETS[presetId];
+  return SiteConfigSchema.parse({
+    ...config,
+    family: "market",
+    preset: presetId,
+    tokens: { ...config.tokens, ...preset.tokens },
+    sections: config.sections.map((section) => ({ ...section, variant: preset.variants[section.type] })),
+  });
+}
+
 /**
  * The starting site for a store. Sections with no real content yet (story, reviews, FAQ) are present but
  * empty, and render nothing until the seller provides them: no made-up testimonials or claims.

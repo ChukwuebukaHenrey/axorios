@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { signDraftToken, verifyDraftToken } from "./draft-token";
 import { applyBrandToConfig, applySiteEdit } from "./edit";
-import { buildSiteConfig, MARKET_PRESETS, type MarketPresetId } from "./presets";
+import { applyPreset, buildSiteConfig, MARKET_PRESETS, type MarketPresetId } from "./presets";
 import { SiteConfigSchema } from "./schema";
 import { allowedImage, contrastRatio, googleFontHrefs, readableOn, safeLocale, storeCssVars } from "./theme";
 
@@ -163,6 +163,30 @@ describe("edit_site", () => {
   it("drops anything that isn't a known field", () => {
     const next = applySiteEdit(config, { sectionId: "hero", text: { headline: "Safe", script: "<script>" } as never });
     expect(JSON.stringify(next)).not.toContain("<script>");
+  });
+});
+
+describe("switching template", () => {
+  const edited = applySiteEdit(
+    applySiteEdit(buildSiteConfig(kit), { sectionId: "hero", text: { headline: "My own words" } }),
+    { sectionId: "faq", hidden: true },
+  );
+
+  it.each(presetIds)("%s keeps colours, fonts, text, hidden sections and order", (id) => {
+    const next = applyPreset(edited, id);
+    expect(next.preset).toBe(id);
+    expect(next.tokens.palette).toEqual(kit.palette);
+    expect(next.tokens.fonts).toEqual(kit.fonts);
+    expect((next.sections[0].content as { headline: string }).headline).toBe("My own words");
+    expect(next.sections.find((s) => s.id === "faq")?.hidden).toBe(true);
+    expect(next.sections.map((s) => s.id)).toEqual(edited.sections.map((s) => s.id));
+  });
+
+  it("changes the layout and spacing", () => {
+    const next = applyPreset(edited, "market/bold-grid");
+    expect(next.sections[0].variant).toBe("centered");
+    expect(next.tokens.radius).toBe("none");
+    expect(applyPreset(next, "market/warm-bakery").sections[0].variant).toBe("split");
   });
 });
 

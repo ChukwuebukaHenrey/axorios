@@ -14,7 +14,17 @@ import { env } from "@/lib/env";
 import { formatMinor } from "@/lib/money";
 import { BrandDraftSchema, BrandPatchSchema, createBrandKit, getBrandKit, updateBrandKit } from "@/modules/brand";
 import { addProducts, AddProductsSchema, listProducts } from "@/modules/catalog";
-import { editDraft, getDraftConfig, revertDraft, SiteEditSchema, syncBrandToDraft } from "@/modules/storefront";
+import {
+  editDraft,
+  getDraftConfig,
+  MARKET_PRESETS,
+  publishDraft,
+  revertDraft,
+  SiteEditSchema,
+  switchDraftPreset,
+  syncBrandToDraft,
+  type MarketPresetId,
+} from "@/modules/storefront";
 import { MAX_TOOL_STEPS } from "./limits";
 import { saveSellerSession } from "./session";
 
@@ -70,6 +80,21 @@ function sellerTools(storeId: string) {
       inputSchema: z.object({}),
       execute: async () => ({ reverted: await revertDraft(storeId) }),
     }),
+    choose_template: tool({
+      description:
+        "Switch the draft store to another template. Keeps the owner's colours, fonts, products and text. warm-bakery is friendly with rounded shapes, bold-grid is strong with sharp edges and a list of products, photo-led is spacious and leads with big images.",
+      inputSchema: z.object({ template: z.enum(Object.keys(MARKET_PRESETS) as [MarketPresetId, ...MarketPresetId[]]) }),
+      execute: async ({ template }) => {
+        await switchDraftPreset(storeId, template, "agent");
+        return { template };
+      },
+    }),
+    publish_store: tool({
+      description:
+        "Put the current draft live so customers can see it. Call this as soon as the owner asks to publish or go live: they get a card to approve, and nothing is public until they do. If they don't approve, don't call it again until they ask. After it succeeds, give them the link.",
+      inputSchema: z.object({}),
+      execute: async () => publishDraft(storeId),
+    }),
   };
 }
 
@@ -100,6 +125,7 @@ export async function runSellerAgent(
     system: [SYSTEM, ...context].join("\n\n"),
     messages: await convertToModelMessages(messages),
     tools: sellerTools(storeId),
+    toolApproval: { publish_store: "user-approval" },
     stopWhen: isStepCount(MAX_TOOL_STEPS),
     maxRetries: 3,
   });

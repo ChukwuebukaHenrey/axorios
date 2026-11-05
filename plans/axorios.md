@@ -109,8 +109,8 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 | 0.1 | Done | Migrations apply via `--db-url` on the eu-central-1 session pooler (aws-1); direct host is IPv6-only and the access token lacks `projects_read`, so `supabase link` isn't used. Types come from the Management API `types/typescript` endpoint. |
 | 0.2 | Done | Order 7KS098545V1134712 created by a Gemini tool call; price injection ignored. Pinned `ai` 7.0.163, `@ai-sdk/google` 4.0.112, `@ai-sdk/react` 4.0.167. Toolkit not used: see decisions. |
 | 0.3 | Not started | |
-| 0.4 | Not started | |
+| 0.4 | Done (revised) | 64 KB on-brand PNG from `next/og` saved to Supabase Storage with no AI model. Gemini images return 429 until billing is on. |
 | 0.5 | Not started | |
-| 0.6 | Not started | |
+| 0.6 | Done | open.er-api.com: NGN, GHS and KES returned; 45,000 NGN = 33.43 USD; 1 h cache verified. |
 | 0.7 | In progress | Vercel project `axorios` created and linked to the repo. Env vars, Inngest sync and webhook registration still to do. |
 | Phases 1-5 | Not started | |

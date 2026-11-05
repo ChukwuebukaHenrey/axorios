@@ -13,6 +13,8 @@ export async function getOrCreateStore(supabase: SupabaseClient<Database>, owner
     .from("stores")
     .select("id, slug, status")
     .eq("owner_id", ownerId)
+    // A seller works on their live store, if they have one: 'live' sorts before 'draft' when descending.
+    .order("status", { ascending: false })
     .order("created_at")
     .limit(1)
     .maybeSingle();

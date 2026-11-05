@@ -6,6 +6,7 @@ import { formatMinor } from "@/lib/money";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { getOrCreateStore } from "@/modules/brand";
 import { listSellerOrders } from "@/modules/orders";
+import { shopConnection } from "@/modules/platforms";
 
 export const metadata = { title: "Orders | AxoriOS" };
 
@@ -36,7 +37,7 @@ export default async function DashboardPage() {
   if (!user) redirect("/");
 
   const store = await getOrCreateStore(supabase, user.id);
-  const orders = await listSellerOrders(supabase, store.id);
+  const [orders, shop] = await Promise.all([listSellerOrders(supabase, store.id), shopConnection(store.id)]);
 
   return (
     <div className="min-h-dvh">
@@ -52,6 +53,19 @@ export default async function DashboardPage() {
       </header>
 
       <main className="mx-auto w-full max-w-3xl px-4 py-6">
+        <section className="mb-4 rounded-2xl border border-black/10 bg-white p-4 text-sm">
+          <h2 className="font-semibold">{t.shopifyCard.statusTitle}</h2>
+          <p className="mt-1 text-black/70">
+            {!shop
+              ? t.shopifyCard.statusNone
+              : shop.lastSyncedAt
+                ? t.shopifyCard.statusSynced
+                    .replace("{domain}", shop.shopDomain)
+                    .replace("{time}", new Date(shop.lastSyncedAt).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }))
+                : t.shopifyCard.statusNever.replace("{domain}", shop.shopDomain)}
+          </p>
+          {shop?.lastResult?.error && <p className="mt-1 text-red-800">{t.shopifyCard.failed}</p>}
+        </section>
         {orders.length === 0 ? (
           <p className="rounded-2xl border border-black/10 bg-white p-5 text-black/70">{t.dashboard.empty}</p>
         ) : (

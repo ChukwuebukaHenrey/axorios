@@ -52,6 +52,28 @@
     "refused": "These posts couldn't be scheduled.",
     "denied": "Not scheduled. Your posts are still drafts."
   },
+  "shopifyCard": {
+    "connectTitle": "Connect this Shopify store?",
+    "connectBody": "AxoriOS will be able to add and change products and pages at {domain}.",
+    "syncTitle": "Copy your store to Shopify?",
+    "syncBody": "Your products, a collection and your store's pages will be added to Shopify, or updated if they're already there.",
+    "approve": "Yes, go ahead",
+    "deny": "Not yet",
+    "denied": "Nothing was sent to Shopify.",
+    "connected": "Connected to {shop}.",
+    "refused": "That didn't work. See the message below.",
+    "syncing": "Copying your store to Shopify",
+    "synced": "Copied to Shopify: {products} products and {pages} pages.",
+    "failed": "The copy to Shopify didn't finish. Please try again.",
+    "themeIntro": "Shopify doesn't let apps change a theme's look. To match your brand, open the theme editor and use these:",
+    "themeLink": "Open the Shopify theme editor",
+    "colours": "Colours",
+    "fonts": "Fonts",
+    "statusTitle": "Shopify",
+    "statusNone": "Not connected. Ask in the chat to connect your Shopify store.",
+    "statusNever": "Connected to {domain}. Not copied yet.",
+    "statusSynced": "Connected to {domain}. Last copied {time}."
+  },
   "campaignCard": {
     "working": "Making your posts",
     "ready": "Your posts are ready",

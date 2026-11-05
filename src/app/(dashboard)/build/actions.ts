@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { getOrCreateStore } from "@/modules/brand";
+import { shopConnection, type SyncResult } from "@/modules/platforms";
 import { MARKET_PRESETS, revertDraft, switchDraftPreset, type MarketPresetId } from "@/modules/storefront";
 
 /** These work without the model, so they still work if the AI provider is down. The store comes from the session. */
@@ -13,6 +14,10 @@ async function sessionStoreId(): Promise<string> {
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Not signed in");
   return (await getOrCreateStore(supabase, user.id)).id;
+}
+
+export async function shopifySyncResult(): Promise<SyncResult | null> {
+  return (await shopConnection(await sessionStoreId()))?.lastResult ?? null;
 }
 
 export async function undoDraftEdit(): Promise<boolean> {

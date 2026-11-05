@@ -22,7 +22,7 @@ export function getPublisher(name: string): Publisher {
 
 /**
  * Where this store's posts can go. There is one Telegram channel, so only the store named by
- * TELEGRAM_CHANNEL_STORE_SLUG may post to it: anyone can sign up, and their posts mustn't reach it.
+ * DEMO_STORE_SLUG may post to it: anyone can sign up, and their posts mustn't reach it.
  * Every other store still gets the download pack.
  */
 export async function publishTargets(storeId: string): Promise<string[]> {
@@ -30,5 +30,5 @@ export async function publishTargets(storeId: string): Promise<string[]> {
   if (!e.TELEGRAM_CHANNEL_ID) return [];
   const { data, error } = await serviceRoleClient().from("stores").select("slug").eq("id", storeId).single();
   if (error) throw new Error(`Store read failed: ${error.code}`);
-  return data.slug === e.TELEGRAM_CHANNEL_STORE_SLUG ? [telegramChannel.name] : [];
+  return data.slug === e.DEMO_STORE_SLUG ? [telegramChannel.name] : [];
 }

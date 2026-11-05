@@ -7,3 +7,4 @@ export const CHAT_MESSAGE_RECEIVED = "chat/message.received";
 export const PAYPAL_EVENT_RECEIVED = "payments/paypal.event.received";
 export const CREATIVE_GENERATE = "creative/campaign.generate";
 export const POST_PUBLISH = "publishers/post.publish";
+export const PLATFORM_SYNC = "platforms/sync.requested";

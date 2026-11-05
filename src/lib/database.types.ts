@@ -229,30 +229,36 @@ export type Database = {
           created_at: string
           external_ids: Json
           id: string
+          last_sync_result: Json | null
           last_synced_at: string | null
           platform: string
           shop_domain: string
           store_id: string
+          token_expires_at: string | null
         }
         Insert: {
           access_token: string
           created_at?: string
           external_ids?: Json
           id?: string
+          last_sync_result?: Json | null
           last_synced_at?: string | null
           platform: string
           shop_domain: string
           store_id: string
+          token_expires_at?: string | null
         }
         Update: {
           access_token?: string
           created_at?: string
           external_ids?: Json
           id?: string
+          last_sync_result?: Json | null
           last_synced_at?: string | null
           platform?: string
           shop_domain?: string
           store_id?: string
+          token_expires_at?: string | null
         }
         Relationships: [
           {

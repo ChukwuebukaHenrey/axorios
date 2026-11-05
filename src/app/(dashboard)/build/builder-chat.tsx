@@ -13,6 +13,7 @@ import { PreviewPane } from "./preview-pane";
 import { ProductsCard } from "./products-card";
 import { PublishCard } from "./publish-card";
 import { ScheduleCard } from "./schedule-card";
+import { ShopifyCard } from "./shopify-card";
 
 const BRAND_TOOL_TYPES = new Set(["tool-create_brand_kit", "tool-update_brand_kit", "tool-suggest_names"]);
 /** Any of these changes what the store looks like, so the preview reloads when one finishes. */
@@ -128,6 +129,16 @@ export function BuilderChat({
                       <PublishCard
                         key={i}
                         part={part as ComponentProps<typeof PublishCard>["part"]}
+                        onRespond={(id, approved) => addToolApprovalResponse({ id, approved })}
+                      />
+                    );
+                  }
+                  if (part.type === "tool-connect_shopify" || part.type === "tool-sync_to_shopify") {
+                    return (
+                      <ShopifyCard
+                        key={i}
+                        kind={part.type === "tool-connect_shopify" ? "connect" : "sync"}
+                        part={part as ComponentProps<typeof ShopifyCard>["part"]}
                         onRespond={(id, approved) => addToolApprovalResponse({ id, approved })}
                       />
                     );

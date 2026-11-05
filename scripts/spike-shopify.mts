@@ -30,6 +30,7 @@ if (!granted.access_token) throw new Error(`Grant failed: HTTP ${grant.status}`)
 console.log(`grant: OK, expires in ${granted.expires_in}s`);
 console.log(`scopes: ${granted.scope}`);
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- a throwaway spike reading several response shapes
 type GraphResult = { data?: any; errors?: { message: string; extensions?: unknown }[] };
 async function graphql(query: string, variables: Record<string, unknown> = {}): Promise<GraphResult> {
   const res = await connectFetch(`https://${domain}/admin/api/${API_VERSION}/graphql.json`, {

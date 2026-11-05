@@ -266,6 +266,7 @@ export type Database = {
       }
       posts: {
         Row: {
+          campaign_id: string | null
           caption: string
           created_at: string
           id: string
@@ -274,9 +275,11 @@ export type Database = {
           scheduled_at: string | null
           status: string
           store_id: string
+          suggested_at: string | null
           targets: string[]
         }
         Insert: {
+          campaign_id?: string | null
           caption?: string
           created_at?: string
           id?: string
@@ -285,9 +288,11 @@ export type Database = {
           scheduled_at?: string | null
           status?: string
           store_id: string
+          suggested_at?: string | null
           targets?: string[]
         }
         Update: {
+          campaign_id?: string | null
           caption?: string
           created_at?: string
           id?: string
@@ -296,6 +301,7 @@ export type Database = {
           scheduled_at?: string | null
           status?: string
           store_id?: string
+          suggested_at?: string | null
           targets?: string[]
         }
         Relationships: [

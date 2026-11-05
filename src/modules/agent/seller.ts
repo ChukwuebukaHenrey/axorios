@@ -12,6 +12,7 @@ import { z } from "zod";
 import { formatMinor, isIsoCurrency } from "@/lib/money";
 import { BrandDraftSchema, BrandPatchSchema, createBrandKit, getBrandKit, updateBrandKit } from "@/modules/brand";
 import { addProducts, AddProductsSchema, listProducts, setStoreCurrency } from "@/modules/catalog";
+import { MAX_POSTS_PER_CAMPAIGN, queueCampaign } from "@/modules/creative";
 import { isChargeable } from "@/modules/payments";
 import {
   editDraft,
@@ -111,6 +112,18 @@ function sellerTools(storeId: string) {
       execute: async ({ template }) => {
         await switchDraftPreset(storeId, template, "agent");
         return { template };
+      },
+    }),
+    generate_campaign: tool({
+      description:
+        "Create social media posts, each an image and a caption in the brand's style, when the owner asks for posts, marketing or a campaign. It runs in the background and the owner sees them fill in on a card. Say so in one sentence, and don't describe posts you haven't seen. Default to 3 posts.",
+      inputSchema: z.object({
+        brief: z.string().trim().min(1).max(500).describe("What the owner wants to promote, in their words"),
+        count: z.number().int().min(1).max(MAX_POSTS_PER_CAMPAIGN).default(3),
+      }),
+      execute: async ({ brief, count }) => {
+        if (!(await getBrandKit(storeId))) return { error: "no_brand_kit" };
+        return queueCampaign(storeId, brief, count);
       },
     }),
     publish_store: tool({

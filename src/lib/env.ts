@@ -17,6 +17,7 @@ const schema = z.object({
   GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(1),
   GEMINI_TEXT_MODEL: z.string().min(1),
   GEMINI_IMAGE_MODEL: z.string().min(1),
+  IMAGE_PROVIDER: z.enum(["template"]).default("template"),
 
   TEXT_MODEL_PROVIDER: z.enum(["google", "groq"]).default("google"),
   GROQ_API_KEY: optional,

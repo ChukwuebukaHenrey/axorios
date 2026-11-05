@@ -6,7 +6,10 @@ import { getOrCreateStore } from "@/modules/brand";
 
 export const maxDuration = 60;
 
-const BodySchema = z.object({ messages: z.array(z.custom<UIMessage>()).min(1).max(200) });
+const BodySchema = z.object({
+  messages: z.array(z.custom<UIMessage>()).min(1).max(200),
+  selectedSectionId: z.string().max(40).optional(),
+});
 
 export async function POST(req: Request) {
   const supabase = await createServerSupabase();
@@ -21,5 +24,5 @@ export async function POST(req: Request) {
   const store = await getOrCreateStore(supabase, user.id);
   if (!(await consumeDailyRequest(store.id))) return Response.json({ error: "daily_limit" }, { status: 429 });
 
-  return runSellerAgent(store.id, body.data.messages);
+  return runSellerAgent(store.id, body.data.messages, body.data.selectedSectionId);
 }

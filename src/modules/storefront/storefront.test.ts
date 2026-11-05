@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { signDraftToken, verifyDraftToken } from "./draft-token";
+import { applyBrandToConfig, applySiteEdit } from "./edit";
 import { buildSiteConfig, MARKET_PRESETS, type MarketPresetId } from "./presets";
 import { SiteConfigSchema } from "./schema";
 import { allowedImage, contrastRatio, googleFontHrefs, readableOn, safeLocale, storeCssVars } from "./theme";
@@ -108,5 +110,105 @@ describe("theme", () => {
   it("falls back to English on an invalid language tag", () => {
     expect(safeLocale("en-NG")).toBe("en-NG");
     expect(safeLocale("not a tag!")).toBe("en");
+  });
+});
+
+describe("edit_site", () => {
+  const config = buildSiteConfig(kit);
+  const hero = (c: typeof config) => c.sections.find((s) => s.id === "hero")!;
+
+  it("changes only what it was told to", () => {
+    const next = applySiteEdit(config, { sectionId: "hero", text: { headline: "Birthdays, sorted" } });
+    const content = hero(next).content as { headline: string; ctaLabel: string };
+    expect(content.headline).toBe("Birthdays, sorted");
+    expect(content.ctaLabel).toBe((hero(config).content as { ctaLabel: string }).ctaLabel);
+    expect(next.tokens).toEqual(config.tokens);
+  });
+
+  it("does not mutate the previous version", () => {
+    const before = JSON.stringify(config);
+    applySiteEdit(config, { sectionId: "hero", text: { headline: "New" }, position: 2 });
+    expect(JSON.stringify(config)).toBe(before);
+  });
+
+  it("switches variant, hides and shows", () => {
+    expect(hero(applySiteEdit(config, { sectionId: "hero", variant: "centered" })).variant).toBe("centered");
+    const hidden = applySiteEdit(config, { sectionId: "hero", hidden: true });
+    expect(hero(hidden).hidden).toBe(true);
+    expect(hero(applySiteEdit(hidden, { sectionId: "hero", hidden: false })).hidden).toBe(false);
+  });
+
+  it("moves a section and keeps the footer last", () => {
+    const next = applySiteEdit(config, { sectionId: "contact", position: 0 });
+    expect(next.sections[0].id).toBe("contact");
+    expect(next.sections.at(-1)?.id).toBe("footer");
+    const end = applySiteEdit(config, { sectionId: "hero", position: 20 });
+    expect(end.sections.at(-1)?.id).toBe("footer");
+    expect(end.sections.at(-2)?.id).toBe("hero");
+  });
+
+  it("replaces FAQ items and validates their shape", () => {
+    const next = applySiteEdit(config, { sectionId: "faq", items: [{ question: "Delivery?", answer: "Lagos only." }] });
+    expect((next.sections.find((s) => s.id === "faq")!.content as { items: unknown[] }).items).toHaveLength(1);
+    expect(() => applySiteEdit(config, { sectionId: "faq", items: [{ quote: "Great", author: "Ada" }] })).toThrow();
+  });
+
+  it("explains what went wrong, so the agent can correct itself", () => {
+    expect(() => applySiteEdit(config, { sectionId: "nope", hidden: true })).toThrow(/hero/);
+    expect(() => applySiteEdit(config, { sectionId: "hero", variant: "accordion" })).toThrow();
+    expect(() => applySiteEdit(config, { sectionId: "hero", text: { body: "wrong field" } })).toThrow(/Nothing changed/);
+    expect(() => applySiteEdit(config, { sectionId: "hero", text: { headline: "x".repeat(500) } })).toThrow();
+  });
+
+  it("drops anything that isn't a known field", () => {
+    const next = applySiteEdit(config, { sectionId: "hero", text: { headline: "Safe", script: "<script>" } as never });
+    expect(JSON.stringify(next)).not.toContain("<script>");
+  });
+});
+
+describe("brand changes reach the draft", () => {
+  const config = buildSiteConfig(kit);
+  const changed = { ...kit, name: "New Name", tagline: "New line", palette: { ...kit.palette, primary: "#000000" }, fonts: { heading: "Anton", body: "Inter" } };
+
+  it("updates tokens and default hero text", () => {
+    const next = applyBrandToConfig(config, changed, kit);
+    expect(next.tokens.palette.primary).toBe("#000000");
+    expect(next.tokens.fonts.heading).toBe("Anton");
+    const content = next.sections[0].content as { eyebrow: string; headline: string };
+    expect(content.eyebrow).toBe("New Name");
+    expect(content.headline).toBe("New line");
+  });
+
+  it("keeps hero text the seller rewrote", () => {
+    const edited = applySiteEdit(config, { sectionId: "hero", text: { headline: "My own words" } });
+    const next = applyBrandToConfig(edited, changed, kit);
+    expect((next.sections[0].content as { headline: string }).headline).toBe("My own words");
+  });
+});
+
+describe("draft preview token", () => {
+  const secret = "s".repeat(44);
+  const storeId = "3f8a2c1e-0000-4000-8000-000000000000";
+  const now = 1_800_000_000_000;
+
+  it("round-trips the store ID", () => {
+    expect(verifyDraftToken(signDraftToken(storeId, secret, now), secret, now)).toBe(storeId);
+  });
+
+  it("lasts 24 hours and no longer", () => {
+    const token = signDraftToken(storeId, secret, now);
+    expect(verifyDraftToken(token, secret, now + 24 * 3_600_000 - 1)).toBe(storeId);
+    expect(verifyDraftToken(token, secret, now + 24 * 3_600_000)).toBeNull();
+  });
+
+  it("rejects a forged, tampered or malformed token", () => {
+    const token = signDraftToken(storeId, secret, now);
+    expect(verifyDraftToken(token, "x".repeat(44), now)).toBeNull();
+    const [, sig] = token.split(".");
+    const otherStore = Buffer.from(`other-store.${now + 1000}`).toString("base64url");
+    expect(verifyDraftToken(`${otherStore}.${sig}`, secret, now)).toBeNull();
+    expect(verifyDraftToken("garbage", secret, now)).toBeNull();
+    expect(verifyDraftToken("", secret, now)).toBeNull();
+    expect(verifyDraftToken(`${token}.extra`, secret, now)).toBeNull();
   });
 });

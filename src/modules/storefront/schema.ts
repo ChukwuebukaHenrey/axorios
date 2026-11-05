@@ -17,7 +17,7 @@ export const DesignTokensSchema = z.object({
 });
 
 const imageUrl = z.url().nullable().default(null);
-const base = { id: z.string().min(1).max(40) };
+const base = { id: z.string().min(1).max(40), hidden: z.boolean().default(false) };
 
 const HeroSection = z.object({
   ...base,

@@ -15,12 +15,21 @@
   "builder": {
     "title": "Build your store",
     "greeting": "Tell me about your business: what you sell, where you are and what you charge. Any language works.",
-    "placeholder": "Describe your business",
+    "placeholder": "Tell me what you need",
     "send": "Send",
     "thinking": "Working on it",
     "error": "Something went wrong. Please try again.",
-    "panelTitle": "Your brand",
-    "panelEmpty": "Your brand kit appears here once you describe your business."
+    "panelEmpty": "Your store appears here once you describe your business.",
+    "previewTitle": "Preview of your store",
+    "previewHint": "Click any part of your store, then tell me what to change.",
+    "desktop": "Show as on a computer",
+    "phone": "Show as on a phone",
+    "undo": "Undo",
+    "nothingToUndo": "There's nothing left to undo.",
+    "tabChat": "Chat",
+    "tabPreview": "Preview",
+    "editing": "Changing:",
+    "clearSelection": "Clear selection"
   },
   "brandCard": {
     "title": "Brand kit",

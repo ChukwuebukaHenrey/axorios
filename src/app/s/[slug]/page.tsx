@@ -1,11 +1,22 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { env } from "@/lib/env";
-import { getLiveStorefront, SiteRenderer } from "@/modules/storefront";
+import { DraftBridge, getDraftStorefront, getLiveStorefront, SiteRenderer } from "@/modules/storefront";
 
-type Props = { params: Promise<{ slug: string }> };
+type Props = {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ draft?: string | string[] }>;
+};
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+async function draftFrom(searchParams: Props["searchParams"]) {
+  const { draft } = await searchParams;
+  return typeof draft === "string" ? getDraftStorefront(draft) : null;
+}
+
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
+  const draft = await draftFrom(searchParams);
+  if (draft) return { title: draft.kit.name, robots: { index: false, follow: false } };
+
   const { slug } = await params;
   const store = await getLiveStorefront(slug);
   if (!store) return { robots: { index: false } };
@@ -27,18 +38,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function StorePage({ params }: Props) {
+export default async function StorePage({ params, searchParams }: Props) {
+  const draft = await draftFrom(searchParams);
   const { slug } = await params;
-  const store = await getLiveStorefront(slug);
+  const store = draft ?? (await getLiveStorefront(slug));
   if (!store) notFound();
 
   return (
-    <SiteRenderer
-      config={store.config}
-      kit={store.kit}
-      products={store.products}
-      contact={store.contact}
-      locale={store.locale}
-    />
+    <>
+      {draft && <DraftBridge />}
+      <SiteRenderer
+        config={store.config}
+        kit={store.kit}
+        products={store.products}
+        contact={store.contact}
+        locale={store.locale}
+      />
+    </>
   );
 }

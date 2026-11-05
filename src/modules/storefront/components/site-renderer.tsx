@@ -53,11 +53,13 @@ export function SiteRenderer(props: Props) {
         </div>
       </header>
       <main>
-        {config.sections.map((section) => (
-          <div key={section.id} data-section-id={section.id} className="contents">
-            {renderSection(section, props)}
-          </div>
-        ))}
+        {config.sections
+          .filter((section) => !section.hidden)
+          .map((section) => (
+            <div key={section.id} data-section-id={section.id} className="contents">
+              {renderSection(section, props)}
+            </div>
+          ))}
       </main>
     </div>
   );

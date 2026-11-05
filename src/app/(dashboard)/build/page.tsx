@@ -4,7 +4,7 @@ import { t } from "@/lib/messages";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { loadSellerSession } from "@/modules/agent";
 import { getBrandKit, getOrCreateStore } from "@/modules/brand";
-import { listProducts } from "@/modules/catalog";
+import { draftPreviewToken } from "@/modules/storefront";
 import { BuilderChat } from "./builder-chat";
 
 export const metadata = { title: "Build your store | AxoriOS" };
@@ -17,11 +17,8 @@ export default async function BuildPage() {
   if (!user) redirect("/");
 
   const store = await getOrCreateStore(supabase, user.id);
-  const [messages, kit, products] = await Promise.all([
-    loadSellerSession(store.id),
-    getBrandKit(store.id),
-    listProducts(store.id),
-  ]);
+  const [messages, kit] = await Promise.all([loadSellerSession(store.id), getBrandKit(store.id)]);
+  const previewUrl = `/s/${store.slug}?draft=${draftPreviewToken(store.id)}`;
 
   return (
     <div className="flex h-dvh flex-col">
@@ -29,7 +26,7 @@ export default async function BuildPage() {
         <Logo className="size-6" />
         <h1 className="font-semibold">{t.builder.title}</h1>
       </header>
-      <BuilderChat initialMessages={messages} initialKit={kit} initialProducts={products} />
+      <BuilderChat initialMessages={messages} previewUrl={previewUrl} initialHasKit={kit !== null} />
     </div>
   );
 }

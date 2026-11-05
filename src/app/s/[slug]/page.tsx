@@ -53,6 +53,7 @@ export default async function StorePage({ params, searchParams }: Props) {
         products={store.products}
         contact={store.contact}
         locale={store.locale}
+        checkout={draft ? undefined : { slug: store.slug, paypalClientId: env().NEXT_PUBLIC_PAYPAL_CLIENT_ID }}
       />
     </>
   );

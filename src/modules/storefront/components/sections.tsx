@@ -6,6 +6,7 @@ import type { Product } from "@/modules/catalog";
 import type { ContactChannels, Section } from "../schema";
 import { allowedImage } from "../theme";
 import { HeroArt, ProductArt } from "./art";
+import { AddToCart } from "./cart";
 
 type Of<T extends Section["type"]> = Extract<Section, { type: T }>;
 
@@ -74,8 +75,9 @@ export function Hero({ section, name }: { section: Of<"hero">; name: string }) {
   );
 }
 
-function SoldOut({ product }: { product: Product }) {
-  return product.stock === 0 ? <span className="text-sm font-semibold">{t.storefront.soldOut}</span> : null;
+function Buy({ product }: { product: Product }) {
+  if (product.stock === 0) return <span className="text-sm font-semibold">{t.storefront.soldOut}</span>;
+  return <AddToCart productId={product.id} className="mt-3" />;
 }
 
 function ProductCard({ product, index, locale }: { product: Product; index: number; locale: string }) {
@@ -90,7 +92,7 @@ function ProductCard({ product, index, locale }: { product: Product; index: numb
       <h3 className="mt-3 font-store-heading text-lg leading-snug font-semibold">{product.name}</h3>
       {product.description && <p className="mt-1 line-clamp-3 text-sm opacity-80">{product.description}</p>}
       <p className="mt-2 font-semibold">{formatMinor(product.priceMinor, product.currency, locale)}</p>
-      <SoldOut product={product} />
+      <Buy product={product} />
     </li>
   );
 }
@@ -117,7 +119,7 @@ export function Products({
             <div className="min-w-0">
               <h3 className="font-store-heading text-lg font-bold md:text-2xl">{product.name}</h3>
               {product.description && <p className="mt-1 line-clamp-2 text-sm opacity-80 md:text-base">{product.description}</p>}
-              <SoldOut product={product} />
+              <Buy product={product} />
             </div>
             <p className="font-store-heading font-bold md:text-xl">
               {formatMinor(product.priceMinor, product.currency, locale)}
@@ -136,7 +138,7 @@ export function Products({
             <h3 className="font-store-heading text-3xl font-bold md:text-4xl">{first.name}</h3>
             {first.description && <p className="mt-3 text-lg opacity-80">{first.description}</p>}
             <p className="mt-4 text-xl font-semibold">{formatMinor(first.priceMinor, first.currency, locale)}</p>
-            <SoldOut product={first} />
+            <Buy product={first} />
           </div>
         </div>
         {rest.length > 0 && (

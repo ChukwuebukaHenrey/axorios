@@ -41,6 +41,15 @@ export function parseToMinor(amount: string, currency: string): number {
   return minor;
 }
 
+/** The exact decimal string a payment API expects, for example 4500 USD to "45.00" and 4500 JPY to "4500". */
+export function minorToDecimal(minor: number, currency: string): string {
+  if (!Number.isSafeInteger(minor) || minor < 0) throw new Error(`${minor} is not an amount in minor units`);
+  const decimals = currencyDecimals(currency);
+  if (decimals === 0) return String(minor);
+  const digits = String(minor).padStart(decimals + 1, "0");
+  return `${digits.slice(0, -decimals)}.${digits.slice(-decimals)}`;
+}
+
 /** For display only. Drops ".00" so ₦45,000 doesn't read as ₦45,000.00. */
 export function formatMinor(minor: number, currency: string, locale = "en"): string {
   const decimals = currencyDecimals(currency);

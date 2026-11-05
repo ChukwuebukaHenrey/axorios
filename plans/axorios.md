@@ -20,7 +20,7 @@ Daily 21:00 check against this timeline. If a phase is behind, apply the cuts th
 - 4.2 needs only the Telegram publisher, not the 3.3 chat adapter.
 - 4.3 is split: the Market preset switcher is Core, in step 1.5a. Studio, Kiosk, gallery and `apply_reference` are Cut.
 - 5.1, 0.5, 4.4 and 2.4 are Core because the demo script in `REQUIREMENTS.md` section 5 shows them.
-- WhatsApp is out, and this overrides every WhatsApp and Twilio mention in the spec. Telegram is the chat channel for 0.3, 3.1 and 3.2, and for the demo.
+- WhatsApp is dormant behind `WHATSAPP_ENABLED`, and this overrides every WhatsApp and Twilio mention in the spec. Telegram is the chat channel for 0.3, 3.1 and 3.2, and for the demo.
 
 ## Phase 0: Setup and risk spikes
 Verified when: the deployed app loads, a sandbox PayPal order is created by the agent, a Telegram message gets an echo reply, and one on-brand image is generated from a reference.
@@ -106,7 +106,9 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 | Publish uses the SDK's `toolApproval`, with no `experimental_toolApprovalSecret`. The history is client-held, but the only client is the signed-in seller approving their own store, and the model can't forge an approval. Revisit for seller-side payment links | Applied in 1.5 |
 | Publish refuses a store with no products. Until first publish the link follows the current name; once live it never changes | Applied in 1.5 |
 | Undo archives the latest draft, so repeating walks further back. One Undo button stands in for the spec's version history list. Photo swapping isn't in `edit_site` yet: there's no upload path | Applied in 1.4 |
+| Checkout: `POST /api/checkout` takes product IDs and quantities only, and creates the order row and PayPal order before the buttons show, so the buyer sees locked totals first. Capture lives on the return page, which buttons and payment links share. Order page access is by unguessable order ID, scoped to the store. A paid order lowers stock once. Delivery details are asked on the store, with PayPal shipping off, because the buyer is often not the recipient. Uses the stable `PayPalButtons` API of `@paypal/react-paypal-js`, loaded only at the payment step | Applied in 2.1 |
 | Keys used as provided; Twilio and Telegram tokens not rotated | User decision, 4 Nov |
+| WhatsApp is dormant, not removed (user decision, 5 Nov; a new dev account may become available): `WHATSAPP_ENABLED` defaults to false, TWILIO_* keys are optional, the webhook returns 404 while off. To switch on: set the flag and keys, register the webhook, test end to end | Applied 5 Nov |
 | WhatsApp dropped from the build: the user's phone numbers are restricted on Meta services and the Twilio account can't be used, so Kapso and any other Meta-linked provider are out. Telegram replaces it. WhatsApp isn't a hackathon requirement. `twilio-whatsapp.ts` and its webhook route stay unused and never tested end to end, so the README and video must not claim WhatsApp works; list it as roadmap | User constraint, 5 Nov |
 | One Telegram bot serves all stores: the store button opens `t.me/<bot>?start=<slug>` and the `/start` payload binds that chat to the store. Store comes from the binding, never from the model | Planned for 3.1 |
 | `INNGEST_EVENT_KEY` rotated after its value reached a session transcript. New key accepted a test event and is on Vercel | Done 5 Nov |
@@ -131,7 +133,7 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 | 1.4 | Done | `npm test -- storefront` 27/27. `scripts/e2e-site-edit.mts` passes through the real agent: edit, undo, edit, a clicked section is what "this" means, forged token 404. Click-to-select, the Undo button and the phone toggle driven in headless Edge and checked by eye. Tested on `gemini-3.5-flash-lite` because of the quota. |
 | 1.5 | Done | Driven in headless Edge: asking shows a card and the store stays draft and 404; "Not yet" keeps it private; Publish makes it live and 200, with the link on the card; a later draft edit leaves the live store unchanged. Re-verified 5 Nov on 02b99c5: tests 48/48, lint, `tsc` and build pass; GitHub shows the Vercel check as success. Bold Grid tile initials checked by eye at 1280 px and 390 px. |
 | 1.5a | Done | Same store renders in all 3 Market presets from the switcher (no model needed) and `choose_template`. Colours, fonts, text and hidden sections are kept. Checked by eye. |
-| 2.1 | Next | Phase 1 is done except the Telegram paste in 1.3. |
+| 2.1 | Built, capture unverified | `npm test` 56/56, lint, `tsc` and build pass. `scripts/e2e-checkout.mts` passes: a client-sent price is ignored, PayPal holds the server amount (51.00 GBP), another store's product, a draft store and over-stock are refused, an unapproved order takes no money. Real capture is not yet run: it needs a sandbox buyer login, and this sandbox account refuses test cards (422). |
 | Rest of phases 1-5 | Not started | |
 
 ## Waiting on the user

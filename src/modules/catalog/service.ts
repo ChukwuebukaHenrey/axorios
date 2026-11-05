@@ -36,6 +36,27 @@ export async function listProducts(storeId: string): Promise<Product[]> {
   return data.map(toProduct);
 }
 
+/** Takes paid quantities out of stock, stopping at zero. */
+export async function decrementStock(storeId: string, lines: { productId: string; quantity: number }[]): Promise<void> {
+  const db = serviceRoleClient();
+  for (const { productId, quantity } of lines) {
+    const { data, error } = await db
+      .from("products")
+      .select("stock")
+      .eq("id", productId)
+      .eq("store_id", storeId)
+      .maybeSingle();
+    if (error) throw new Error(`Stock read failed: ${error.code}`);
+    if (!data) continue; // Removed since the order was placed.
+    const { error: updateError } = await db
+      .from("products")
+      .update({ stock: Math.max(0, data.stock - quantity) })
+      .eq("id", productId)
+      .eq("store_id", storeId);
+    if (updateError) throw new Error(`Stock update failed: ${updateError.code}`);
+  }
+}
+
 /** Returns the store's full active catalog. The first products priced set the store's currency. */
 export async function addProducts(storeId: string, input: AddProductsInput): Promise<Product[]> {
   const writes = toProductWrites(input);

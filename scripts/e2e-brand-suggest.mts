@@ -47,7 +47,8 @@ try {
 
   // The options list is where suggestions belong, so only the other fields must stay put.
   const saved = async () => {
-    const { nameOptions: _options, ...rest } = await kit();
+    const rest = await kit();
+    delete rest.nameOptions;
     return rest;
   };
 

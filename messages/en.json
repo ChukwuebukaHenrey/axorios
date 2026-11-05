@@ -67,5 +67,38 @@
       "contactHeading": "Talk to us",
       "contactBody": "Message us to ask anything or to place an order."
     }
+  },
+  "cart": {
+    "add": "Add to cart",
+    "open": "Cart ({count})",
+    "title": "Your cart",
+    "close": "Close cart",
+    "less": "One less {name}",
+    "more": "One more {name}",
+    "total": "Total",
+    "deliveryLabel": "Who is this for, and where should it go?",
+    "deliveryPlaceholder": "Name, phone number and delivery address",
+    "continue": "Continue to payment",
+    "working": "One moment",
+    "chargedAs": "You will be charged {amount} in {currency}.",
+    "errorDelivery": "Please tell us where to deliver your order.",
+    "errorUnavailable": "Something in your cart is no longer for sale. Please remove it and try again.",
+    "errorStock": "We don't have that many left. Please lower the quantity.",
+    "errorCurrency": "This store can't take payments yet. Please message the shop.",
+    "errorGeneric": "We couldn't start your payment. You haven't been charged. Please try again."
+  },
+  "order": {
+    "pageTitle": "Your order",
+    "paidTitle": "Thank you. Your order is paid.",
+    "paidBody": "The shop has your order and will be in touch about delivery.",
+    "confirmingTitle": "We're confirming your payment.",
+    "confirmingBody": "PayPal is still processing it. Refresh this page in a minute or two.",
+    "failedTitle": "Your payment didn't go through.",
+    "failedBody": "You haven't been charged for this order. Please go back to the store and try again.",
+    "unpaidTitle": "This order isn't paid yet.",
+    "unpaidBody": "If you've just paid, refresh this page. Otherwise, go back to the store to try again.",
+    "charged": "Charged through PayPal",
+    "delivery": "Delivery",
+    "back": "Back to the store"
   }
 }

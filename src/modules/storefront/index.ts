@@ -1,5 +1,5 @@
 export { DraftBridge } from "./components/draft-bridge";
-export { SiteRenderer } from "./components/site-renderer";
+export { SiteRenderer, StoreFrame } from "./components/site-renderer";
 export { SiteEditSchema } from "./edit";
 export type { SiteEdit } from "./edit";
 export { buildSiteConfig, DEFAULT_PRESET, MARKET_PRESETS } from "./presets";

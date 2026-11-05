@@ -1,0 +1,77 @@
+import "server-only";
+import { randomBytes } from "node:crypto";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database, Json } from "@/lib/database.types";
+import { serviceRoleClient } from "@/lib/supabase/service-role";
+import { applyBrandPatch, BrandKitSchema, slugify, type BrandDraft, type BrandKit, type BrandPatch } from "./schema";
+
+const PLACEHOLDER_SLUG_PREFIX = "store-";
+
+/** Uses the caller's session client, so row-level security limits it to the signed-in owner. */
+export async function getOrCreateStore(supabase: SupabaseClient<Database>, ownerId: string) {
+  const { data: existing, error } = await supabase
+    .from("stores")
+    .select("id, slug, status")
+    .eq("owner_id", ownerId)
+    .order("created_at")
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(`Store lookup failed: ${error.code}`);
+  if (existing) return existing;
+
+  const { data: created, error: insertError } = await supabase
+    .from("stores")
+    .insert({ owner_id: ownerId, slug: `${PLACEHOLDER_SLUG_PREFIX}${randomBytes(4).toString("hex")}` })
+    .select("id, slug, status")
+    .single();
+  if (insertError) throw new Error(`Store create failed: ${insertError.code}`);
+  return created;
+}
+
+export async function getBrandKit(storeId: string): Promise<BrandKit | null> {
+  const { data, error } = await serviceRoleClient().from("stores").select("brand_kit").eq("id", storeId).single();
+  if (error) throw new Error(`Brand kit read failed: ${error.code}`);
+  const parsed = BrandKitSchema.safeParse(data.brand_kit);
+  return parsed.success ? parsed.data : null;
+}
+
+async function claimSlug(storeId: string, name: string): Promise<void> {
+  const db = serviceRoleClient();
+  const { data } = await db.from("stores").select("slug").eq("id", storeId).single();
+  if (!data?.slug.startsWith(PLACEHOLDER_SLUG_PREFIX)) return;
+
+  const base = slugify(name);
+  for (const candidate of [base, `${base}-${randomBytes(2).toString("hex")}`]) {
+    const { error } = await db.from("stores").update({ slug: candidate }).eq("id", storeId);
+    if (!error) return;
+    if (error.code !== "23505") throw new Error(`Slug update failed: ${error.code}`);
+  }
+}
+
+export async function createBrandKit(storeId: string, draft: BrandDraft, storeLanguage: string): Promise<BrandKit> {
+  const existing = await getBrandKit(storeId);
+  const kit = BrandKitSchema.parse({
+    ...draft,
+    logoUrl: existing?.logoUrl ?? null,
+    referenceImageUrls: existing?.referenceImageUrls ?? [],
+  });
+  const { error } = await serviceRoleClient()
+    .from("stores")
+    .update({ brand_kit: kit as unknown as Json, store_language: storeLanguage })
+    .eq("id", storeId);
+  if (error) throw new Error(`Brand kit save failed: ${error.code}`);
+  await claimSlug(storeId, kit.name);
+  return kit;
+}
+
+export async function updateBrandKit(storeId: string, patch: BrandPatch): Promise<BrandKit> {
+  const current = await getBrandKit(storeId);
+  if (!current) throw new Error("No brand kit yet");
+  const kit = applyBrandPatch(current, patch);
+  const { error } = await serviceRoleClient()
+    .from("stores")
+    .update({ brand_kit: kit as unknown as Json })
+    .eq("id", storeId);
+  if (error) throw new Error(`Brand kit save failed: ${error.code}`);
+  return kit;
+}

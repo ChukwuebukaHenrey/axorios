@@ -113,4 +113,28 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 | 0.5 | Not started | |
 | 0.6 | Done | open.er-api.com: NGN, GHS and KES returned; 45,000 NGN = 33.43 USD; 1 h cache verified. |
 | 0.7 | In progress | Vercel project `axorios` created and linked to the repo. Env vars, Inngest sync and webhook registration still to do. |
-| Phases 1-5 | Not started | |
+| 1.1 | Done | `npm test -- brand` 4/4; `scripts/e2e-brand.mts` passes: kit saved, single-field edit, Pidgin reply, signed-out 401. Password sign-in tested through the API. Screens not yet checked by eye. Magic link untested: needs the Supabase Auth site URL and redirect set to the production domain. |
+| 1.2 | Next | |
+| Rest of phases 1-5 | Not started | |
+
+## Waiting on the user
+- Inngest keys in `.env.local` (`INNGEST_EVENT_KEY`, `INNGEST_SIGNING_KEY`). Then load them to Vercel, redeploy, sync the app and confirm `/api/inngest` stops returning 500.
+- Shopify app installed on `ebukahs-dev-store`; currently `app_not_installed`. Blocks 0.5 and 4.4. Auth is the client-credentials grant, not a stored `shpat_` token.
+- Twilio Sandbox "When a message comes in" set to `https://axorios.vercel.app/api/webhooks/twilio` (POST). Console only.
+- `TELEGRAM_CHANNEL_ID` in `.env.local`. Needed by 4.2.
+- Submission date: 9 Nov is assumed and not yet confirmed.
+
+## Working notes
+- Windows shell. `gh` is at `/c/Program Files/GitHub CLI/gh.exe`, not on PATH. Use `npx vercel@latest`; the CLI is logged in. The Vercel connector returns 403 for this scope, so don't rely on it.
+- Load env without printing: `set -a; source .env.local; set +a`. Never echo values. `NEXT_PUBLIC_*` values that look like keys need `--type config` on `vercel env add`.
+- Vercel env is production only. New values need a redeploy. CLI-only Supabase keys stay off Vercel.
+- Migrations: `npx supabase db push --yes --db-url "postgresql://postgres.$SUPABASE_PROJECT_REF:<url-encoded password>@aws-1-eu-central-1.pooler.supabase.com:5432/postgres"`. Don't use `supabase link`: the token lacks `projects_read` and the direct host is IPv6-only.
+- Types: GET `https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/types/typescript?included_schemas=public` with the access token, then write the `types` field to `src/lib/database.types.ts`. `gen types --db-url` needs Docker.
+- The Supabase connector can't see this project. Use the CLI and REST.
+- Scripts are `.mts` for top-level await: `npx tsx --env-file=.env.local scripts/<name>.mts`.
+- Read before using, because these differ from older docs: `node_modules/ai/docs` (AI SDK 7: `isStepCount`, `inputSchema`, `toUIMessageStream` with `onEnd`, `toolApproval` for approval cards), `node_modules/next/dist/docs` (Next 16: `proxy.ts`), Inngest 4 (`triggers` inside the options object).
+- Gemini: `gemini-3.5-flash` for text. `gemini-3.8-flash` and `gemini-flash-latest` returned 503 on 4 Nov. `gemini-2.5-flash` is closed to new users.
+- npm is slow on this machine, sometimes 10 minutes: run installs in the background.
+- The slug is claimed once from the first brand name, so a later rename keeps the old slug. Revisit at 1.5 publish.
+- UI palette from the brand board: #2B0B3F, #F97316, #FBBF24, #1F1F1F, #F8FAFC. Font: DM Sans.
+- Demo seller exists, with credentials in `.env.local`. Re-seed with `scripts/seed-demo-user.mts`. Its store holds test data from the e2e run.

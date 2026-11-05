@@ -1,0 +1,33 @@
+{
+  "landing": {
+    "headline": "Your business idea, open for orders today.",
+    "subhead": "Tell AxoriOS about your business. It builds your brand and your store, takes payments through PayPal and answers your customers.",
+    "emailLabel": "Email address",
+    "magicLink": "Email me a sign-in link",
+    "magicLinkSent": "Check your email for your sign-in link.",
+    "passwordToggle": "Use a password instead",
+    "magicToggle": "Use a sign-in link instead",
+    "passwordLabel": "Password",
+    "signIn": "Sign in",
+    "signInFailed": "We couldn't sign you in. Check your details and try again.",
+    "linkFailed": "That sign-in link has expired. Ask for a new one."
+  },
+  "builder": {
+    "title": "Build your store",
+    "greeting": "Tell me about your business: what you sell, where you are and what you charge. Any language works.",
+    "placeholder": "Describe your business",
+    "send": "Send",
+    "thinking": "Working on it",
+    "error": "Something went wrong. Please try again.",
+    "panelTitle": "Your brand",
+    "panelEmpty": "Your brand kit appears here once you describe your business."
+  },
+  "brandCard": {
+    "title": "Brand kit",
+    "nameOptions": "Other names",
+    "palette": "Colours",
+    "fonts": "Fonts",
+    "tone": "Tone",
+    "editHint": "Ask me to change anything."
+  }
+}

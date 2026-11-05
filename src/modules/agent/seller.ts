@@ -30,7 +30,7 @@ import {
 import { MAX_TOOL_STEPS } from "./limits";
 import { textModel } from "./model";
 import { saveSellerSession } from "./session";
-import { collapseVoiceNotes } from "./voice";
+import { collapseVoiceNotes, latestIsVoiceNote } from "./voice";
 
 const SYSTEM = `You are AxoriOS, a warm, capable partner helping a small business owner with no technical experience go from an idea to a first paid order.
 Reply in the language of the owner's latest message: English to English, Nigerian Pidgin to Pidgin, French to French, and so on. Their location doesn't decide it. Keep replies short, in plain text with no markdown, and with no e-commerce jargon. Suggesting something is not changing it: only save a change the owner asked for.
@@ -217,11 +217,16 @@ export async function runSellerAgent(
     selected &&
       `The owner clicked the "${selected.id}" section in the preview, so "this" in their next message means that section.`,
   ].filter(Boolean);
+  const modelMessages = collapseVoiceNotes(messages, { keepLatest: true });
+  const heardVoiceNote = latestIsVoiceNote(modelMessages);
   const result = streamText({
     model: textModel(),
     system: [SYSTEM, ...context].join("\n\n"),
-    messages: await convertToModelMessages(collapseVoiceNotes(messages, { keepLatest: true })),
+    messages: await convertToModelMessages(modelMessages),
     tools: sellerTools(storeId),
+    // The seller must see what was heard, so this isn't left to the model: it skipped the tool in testing.
+    prepareStep: ({ stepNumber }) =>
+      heardVoiceNote && stepNumber === 0 ? { toolChoice: { type: "tool", toolName: "show_transcript" } } : {},
     toolApproval: {
       publish_store: "user-approval",
       schedule_posts: "user-approval",

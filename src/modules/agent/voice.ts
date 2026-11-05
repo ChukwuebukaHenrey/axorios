@@ -43,6 +43,11 @@ export function collapseVoiceNotes(messages: UIMessage[], { keepLatest }: { keep
   });
 }
 
+export function latestIsVoiceNote(messages: UIMessage[]): boolean {
+  const latest = messages.at(-1);
+  return latest?.role === "user" && latest.parts.some(isVoiceNote);
+}
+
 /** False when a request carries more audio than one voice note can be. */
 export function voiceNotesFit(messages: UIMessage[]): boolean {
   return messages.every((m) => m.parts.every((part) => !isFile(part) || part.url.length <= MAX_VOICE_NOTE_CHARS));

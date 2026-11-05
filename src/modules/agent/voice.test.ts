@@ -1,6 +1,6 @@
 import type { UIMessage } from "ai";
 import { describe, expect, it } from "vitest";
-import { collapseVoiceNotes, MAX_VOICE_NOTE_CHARS, VOICE_NOTE_PLACEHOLDER, voiceNotesFit } from "./voice";
+import { collapseVoiceNotes, latestIsVoiceNote, MAX_VOICE_NOTE_CHARS, VOICE_NOTE_PLACEHOLDER, voiceNotesFit } from "./voice";
 
 const audio = { type: "file", mediaType: "audio/webm", url: "data:audio/webm;base64,AAAA" } as const;
 const user = (parts: UIMessage["parts"]): UIMessage => ({ id: crypto.randomUUID(), role: "user", parts });
@@ -39,6 +39,15 @@ describe("collapseVoiceNotes", () => {
     const pdf = { type: "file", mediaType: "application/pdf", url: "data:application/pdf;base64,AAAA" } as const;
     const out = collapseVoiceNotes([user([{ type: "text", text: "See this" }, pdf])], { keepLatest: true });
     expect(out[0].parts).toEqual([{ type: "text", text: "See this" }]);
+  });
+});
+
+describe("latestIsVoiceNote", () => {
+  it("is true only when the message being answered is a voice note", () => {
+    const text = user([{ type: "text", text: "Hi" }]);
+    expect(latestIsVoiceNote([user([audio])])).toBe(true);
+    expect(latestIsVoiceNote([user([audio]), assistant([transcript("x")])])).toBe(false);
+    expect(latestIsVoiceNote(collapseVoiceNotes([user([audio]), assistant([transcript("x")]), text], { keepLatest: true }))).toBe(false);
   });
 });
 

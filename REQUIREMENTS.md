@@ -94,7 +94,7 @@ Real money; live WhatsApp (dormant behind `WHATSAPP_ENABLED` until an account is
 ## 5. Demo script (under 3 minutes)
 1. Seller speaks: "I bake celebration cakes in Lagos, prices from 30,000 naira." → brand kit appears.
 2. Agent drafts the store in the Market preset; seller switches preset, edits the hero by clicking it, then publishes.
-3. UK buyer opens the store, sees ₦45,000 ≈ $29.40, pays with the PayPal sandbox; order shows both amounts.
+3. UK buyer opens the store, sees ₦45,000 ≈ $33.44 (the live rate on recording day), pays with the PayPal sandbox; order shows both amounts.
 4. A customer messages on Telegram in Pidgin; the agent answers and sends a PayPal link; payment lands.
 5. Agent generates 3 on-brand posts; one publishes to Telegram on schedule.
 6. Agent syncs the catalog to Shopify; products appear in the Shopify admin.

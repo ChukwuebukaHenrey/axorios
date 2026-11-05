@@ -50,14 +50,21 @@ function sellerTools(storeId: string) {
       },
     }),
     update_brand_kit: tool({
-      description: "Change only the brand kit fields the owner asked to change. Leave everything else out.",
-      inputSchema: BrandPatchSchema,
+      description:
+        "Change brand kit fields only when the owner has told you the value to use, or has picked one of your ideas. Leave every other field out. If they ask for ideas, options or suggestions, or ask what you would suggest, even with words like 'make it better', don't call this: offer ideas and let them choose.",
+      inputSchema: BrandPatchSchema.omit({ nameOptions: true }),
       execute: async (patch) => {
         const previous = await getBrandKit(storeId);
         const kit = await updateBrandKit(storeId, patch);
         await syncBrandToDraft(storeId, kit, previous);
         return kit;
       },
+    }),
+    suggest_names: tool({
+      description:
+        "When the owner asks for name ideas, list them here so they appear as options on the brand card. This never changes the current name. Then ask which one they like, and remind them to check that it is free to use.",
+      inputSchema: z.object({ nameOptions: BrandDraftSchema.shape.nameOptions.min(1) }),
+      execute: async ({ nameOptions }) => updateBrandKit(storeId, { nameOptions }),
     }),
     add_products: tool({
       description:

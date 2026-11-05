@@ -12,7 +12,7 @@ import { PreviewPane } from "./preview-pane";
 import { ProductsCard } from "./products-card";
 import { PublishCard } from "./publish-card";
 
-const BRAND_TOOL_TYPES = new Set(["tool-create_brand_kit", "tool-update_brand_kit"]);
+const BRAND_TOOL_TYPES = new Set(["tool-create_brand_kit", "tool-update_brand_kit", "tool-suggest_names"]);
 /** Any of these changes what the store looks like, so the preview reloads when one finishes. */
 const SITE_TOOL_TYPES = new Set([
   ...BRAND_TOOL_TYPES,

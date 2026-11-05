@@ -1,5 +1,4 @@
 import "server-only";
-import { google } from "@ai-sdk/google";
 import {
   convertToModelMessages,
   createUIMessageStreamResponse,
@@ -10,7 +9,6 @@ import {
   type UIMessage,
 } from "ai";
 import { z } from "zod";
-import { env } from "@/lib/env";
 import { formatMinor } from "@/lib/money";
 import { BrandDraftSchema, BrandPatchSchema, createBrandKit, getBrandKit, updateBrandKit } from "@/modules/brand";
 import { addProducts, AddProductsSchema, listProducts } from "@/modules/catalog";
@@ -26,6 +24,7 @@ import {
   type MarketPresetId,
 } from "@/modules/storefront";
 import { MAX_TOOL_STEPS } from "./limits";
+import { textModel } from "./model";
 import { saveSellerSession } from "./session";
 
 const SYSTEM = `You are AxoriOS, a warm, capable partner helping a small business owner with no technical experience go from an idea to a first paid order.
@@ -121,7 +120,7 @@ export async function runSellerAgent(
       `The owner clicked the "${selected.id}" section in the preview, so "this" in their next message means that section.`,
   ].filter(Boolean);
   const result = streamText({
-    model: google(env().GEMINI_TEXT_MODEL),
+    model: textModel(),
     system: [SYSTEM, ...context].join("\n\n"),
     messages: await convertToModelMessages(messages),
     tools: sellerTools(storeId),

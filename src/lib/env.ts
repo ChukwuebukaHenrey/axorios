@@ -18,6 +18,10 @@ const schema = z.object({
   GEMINI_TEXT_MODEL: z.string().min(1),
   GEMINI_IMAGE_MODEL: z.string().min(1),
 
+  TEXT_MODEL_PROVIDER: z.enum(["google", "groq"]).default("google"),
+  GROQ_API_KEY: optional,
+  GROQ_TEXT_MODEL: optional,
+
   PAYPAL_ENV: z.literal("sandbox"),
   PAYPAL_CLIENT_ID: z.string().min(1),
   PAYPAL_CLIENT_SECRET: z.string().min(1),

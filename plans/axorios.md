@@ -108,6 +108,7 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 | Keys used as provided; Twilio and Telegram tokens not rotated | User decision, 4 Nov |
 | A store has one price currency: the first products set `stores.currency`, and a second currency is refused so carts total without converting. `add_products` matches on name, so repeating a product changes it. Stock defaults to 100 when the owner states none, because made-to-order sellers don't count stock | Applied in 1.2 |
 | Gemini on free tier: `gemini-3.5-flash` answers text; `gemini-2.5-flash-image`, `gemini-3.1-flash-image` and `gemini-3.1-flash-lite-image` all return 429 quota errors (4 Nov) | Blocks 0.4, 4.1, 4.5 until billing is on |
+| Agent text model: `gemini-3.5-flash-lite` is primary. Groq stays a backup through `TEXT_MODEL_PROVIDER`, with no automatic fallback. Fresh-seller test on 5 Nov: Flash-lite took 4-5 s a turn and replied in Pidgin; Groq `openai/gpt-oss-120b` took 17-38 s after the first turn (8,000 tokens a minute), answered Pidgin in English and once changed the tagline unasked. Pinned `@ai-sdk/groq` 4.0.77, same provider packages as `@ai-sdk/google`. Groq chat models also take no audio, which 5.1 needs | Code applied; production waits on the env change below |
 | FX provider candidate: open.er-api.com, no key, returned NGN, GHS and KES on 4 Nov (about 1,346 NGN per USD, so 45,000 NGN is about $33.43, not the spec's $29.40) | To confirm in 0.6 |
 
 ## Progress
@@ -124,19 +125,19 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 | 1.2 | Done | `npm test -- catalog` 13/13. `scripts/e2e-catalog.mts` passes through the real agent: 45,000 NGN saved as 4500000, store currency set to NGN, a repeat changes the price with no duplicate, no price means no product, RLS hides draft products. |
 | 1.3 | In progress | `npm test -- storefront` 15/15. `scripts/e2e-storefront.mts` passes: two stores differ in colours, fonts, currency and products with no leak; a draft store returns 404; link preview tags and a 40 KB PNG. Checked by eye at 390 px and 1280 px. Left: paste the link in WhatsApp (user). |
 | 1.4 | Done | `npm test -- storefront` 27/27. `scripts/e2e-site-edit.mts` passes through the real agent: edit, undo, edit, a clicked section is what "this" means, forged token 404. Click-to-select, the Undo button and the phone toggle driven in headless Edge and checked by eye. Tested on `gemini-3.5-flash-lite` because of the quota. |
-| 1.5 | Done | Driven in headless Edge: asking shows a card and the store stays draft and 404; "Not yet" keeps it private; Publish makes it live and 200, with the link on the card; a later draft edit leaves the live store unchanged. |
+| 1.5 | Done | Driven in headless Edge: asking shows a card and the store stays draft and 404; "Not yet" keeps it private; Publish makes it live and 200, with the link on the card; a later draft edit leaves the live store unchanged. Re-verified 5 Nov on 02b99c5: tests 48/48, lint, `tsc` and build pass; GitHub shows the Vercel check as success. Bold Grid tile initials checked by eye at 1280 px and 390 px. |
 | 1.5a | Done | Same store renders in all 3 Market presets from the switcher (no model needed) and `choose_template`. Colours, fonts, text and hidden sections are kept. Checked by eye. |
 | 2.1 | Next | Phase 1 is done except the WhatsApp paste in 1.3. |
 | Rest of phases 1-5 | Not started | |
 
 ## Waiting on the user
-- Gemini text quota: `gemini-3.5-flash` hit the free-tier daily per-model cap on 5 Nov (429, `GenerateRequestsPerDayPerProjectPerModel-FreeTier`). Judges would hit the same cap during 1-15 Dec. Needs a decision before 5.3. `gemini-3.5-flash-lite` passed the 1.4 and 1.5 agent checks and had quota on 5 Nov; production is unchanged.
-- Rotate `INNGEST_EVENT_KEY`: its value was printed into a session transcript on 5 Nov when a leading space in `.env.local` made the shell run it.
+- Vercel production env, blocked from this machine: `api.vercel.com` times out and the connector needs team authorization. Set `GEMINI_TEXT_MODEL=gemini-3.5-flash-lite`, `TELEGRAM_CHANNEL_ID`, and the rotated `INNGEST_EVENT_KEY`, then redeploy. Add `GROQ_API_KEY` and `GROQ_TEXT_MODEL` so the backup can be switched on.
+- Judge traffic during 1-15 Dec: Flash-lite's free-tier daily cap is not measured yet. Check it before 5.3.
+- Rotate `INNGEST_EVENT_KEY` in the Inngest dashboard: its value was printed into a session transcript on 5 Nov when a leading space in `.env.local` made the shell run it. Update `.env.local` and Vercel.
 - Product and hero photos: none yet (no image billing, no upload path), so stores show brand-coloured tiles, and Photo-led looks flat. Decide before recording 5.4.
 - Paste `https://axorios.vercel.app/s/demo` in WhatsApp to finish 1.3.
 - Shopify app installed on `ebukahs-dev-store`; currently `app_not_installed`. Blocks 0.5 and 4.4. Auth is the client-credentials grant, not a stored `shpat_` token.
 - Twilio Sandbox "When a message comes in" set to `https://axorios.vercel.app/api/webhooks/twilio` (POST). Console only.
-- `TELEGRAM_CHANNEL_ID` in `.env.local`. Needed by 4.2.
 - Submission date: 9 Nov is assumed and not yet confirmed.
 
 ## Working notes
@@ -157,4 +158,7 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 - UI palette from the brand board: #2B0B3F, #F97316, #FBBF24, #1F1F1F, #F8FAFC. Font: DM Sans.
 - Demo seller exists, with credentials in `.env.local`. Re-seed with `scripts/seed-demo-user.mts`. Its store holds test data from the e2e run.
 - `/s/demo` comes from `scripts/seed-demo-store.mts`. The demo seller now owns two stores and `/build` opens the older test one; 5.2 must make `/build` open the demo store.
+- `scripts/e2e-brand.mts` step 1 needs a seller with no brand kit. Against the demo seller's used test store it fails on any model. Run it with `DEMO_SELLER_EMAIL` and `DEMO_SELLER_PASSWORD` set to a throwaway user; process env wins over `--env-file`.
+- Groq limits refill continuously, so there is no fixed reset time: 1,000 requests a day is one back every 86.4 s, and 8,000 tokens a minute is about 133 back per second. The `x-ratelimit-reset-*` headers give the wait.
+- A Windows portproxy rule (`iphlpsvc`) listens on 127.0.0.1:3000 and forwards to itself, so port 3000 always looks busy. Test servers here used 3100 and 3101.
 - Headless Edge screenshots: `--window-size` below 500 px clips rather than narrows. For phone width, load the page in a 390 px iframe.

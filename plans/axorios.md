@@ -136,6 +136,7 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 | 2.1 | Built, capture unverified | `npm test` 56/56, lint, `tsc` and build pass. `scripts/e2e-checkout.mts` passes: a client-sent price is ignored, PayPal holds the server amount (51.00 GBP), another store's product, a draft store and over-stock are refused, an unapproved order takes no money. Real capture is not yet run: it needs a sandbox buyer login, and this sandbox account refuses test cards (422). |
 | 2.2 | Built, replay unverified | `npm test` 61/61. Unsigned, forged and malformed webhooks all return 403 through PayPal's own check. Replaying a real event needs a paid order, so it waits on the sandbox buyer. |
 | 2.3 | Built, checkouts unpaid | `npm test -- payments` 9/9. `scripts/e2e-checkout.mts`: a 45,000 NGN order charges 33.44 USD at the stored rate 0.000743, PayPal holds 33.44 USD, a GBP store charges 51.00 GBP with no rate. `scripts/e2e-currency.mts` passes through the real agent. Paying these orders waits on the sandbox buyer. |
+| 2.4 | Done | `scripts/e2e-dashboard.mts` passes: a paid order shows both amounts, channel and delivery details; an unpaid cart stays out; another seller sees nothing; signed out goes to sign-in. Seeded rows, so a real paid order still has to appear here once the sandbox buyer runs. |
 | Rest of phases 1-5 | Not started | |
 
 ## Waiting on the user
@@ -165,6 +166,7 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 - The slug is claimed once from the first brand name, so a later rename keeps the old slug. Revisit at 1.5 publish.
 - UI palette from the brand board: #2B0B3F, #F97316, #FBBF24, #1F1F1F, #F8FAFC. Font: DM Sans.
 - Demo seller exists, with credentials in `.env.local`. Re-seed with `scripts/seed-demo-user.mts`. Its store holds test data from the e2e run.
+- The cart was driven in headless Edge at 390 px on 5 Nov and checked by eye: add, quantity, required delivery details, the USD charge before paying, PayPal's button, and a reload keeps the cart. No console errors.
 - `/s/demo` comes from `scripts/seed-demo-store.mts`. The demo seller now owns two stores and `/build` opens the older test one; 5.2 must make `/build` open the demo store.
 - `scripts/e2e-brand.mts` step 1 needs a seller with no brand kit. Against the demo seller's used test store it fails on any model. Run it with `DEMO_SELLER_EMAIL` and `DEMO_SELLER_PASSWORD` set to a throwaway user; process env wins over `--env-file`.
 - Groq limits refill continuously, so there is no fixed reset time: 1,000 requests a day is one back every 86.4 s, and 8,000 tokens a minute is about 133 back per second. The `x-ratelimit-reset-*` headers give the wait.

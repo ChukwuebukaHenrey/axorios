@@ -87,6 +87,20 @@
     "errorCurrency": "This store can't take payments yet. Please message the shop.",
     "errorGeneric": "We couldn't start your payment. You haven't been charged. Please try again."
   },
+  "dashboard": {
+    "title": "Orders",
+    "toBuilder": "Your store",
+    "empty": "No orders yet. They show here as soon as a customer pays.",
+    "charged": "Customer paid {amount} through PayPal",
+    "delivery": "Deliver to:",
+    "statusPaid": "Paid",
+    "statusConfirming": "Confirming payment",
+    "statusFailed": "Payment failed",
+    "channelWeb": "Store",
+    "channelTelegram": "Telegram",
+    "channelWhatsApp": "WhatsApp",
+    "channelInstagram": "Instagram"
+  },
   "order": {
     "pageTitle": "Your order",
     "paidTitle": "Thank you. Your order is paid.",

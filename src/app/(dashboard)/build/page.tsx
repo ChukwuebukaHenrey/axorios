@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Logo } from "@/components/logo";
 import { t } from "@/lib/messages";
@@ -25,6 +26,9 @@ export default async function BuildPage() {
       <header className="flex items-center gap-2 bg-primary px-4 py-3 text-white">
         <Logo className="size-6" />
         <h1 className="font-semibold">{t.builder.title}</h1>
+        <Link href="/dashboard" className="ml-auto inline-flex min-h-11 items-center px-2 text-sm font-semibold underline">
+          {t.dashboard.title}
+        </Link>
       </header>
       <BuilderChat
         initialMessages={messages}

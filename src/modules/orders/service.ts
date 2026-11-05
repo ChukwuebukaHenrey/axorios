@@ -1,4 +1,5 @@
 import "server-only";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/lib/database.types";
 import { env } from "@/lib/env";
 import { serviceRoleClient } from "@/lib/supabase/service-role";
@@ -111,6 +112,22 @@ export async function getOrder(storeId: string, orderId: string): Promise<Order 
     .maybeSingle();
   if (error) throw new Error(`Order read failed: ${error.code}`);
   return data && toOrder(data);
+}
+
+/**
+ * Orders the seller should act on, newest first. Takes the signed-in seller's client, so row-level security applies.
+ * Pending orders are left out: most are carts the buyer never paid for.
+ */
+export async function listSellerOrders(supabase: SupabaseClient<Database>, storeId: string): Promise<Order[]> {
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*")
+    .eq("store_id", storeId)
+    .in("status", ["paid", "approved", "failed"])
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (error) throw new Error(`Order list failed: ${error.code}`);
+  return data.map(toOrder);
 }
 
 /** For a provider's webhook, where the store comes from our own order row. An order we don't know is ignored. */

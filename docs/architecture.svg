@@ -35,7 +35,7 @@
 
   <path class="line" d="M175 214V258"/><path class="line" d="M500 214V258"/><path class="dash" d="M825 214V258"/>
 
-  <text class="band" x="30" y="250">MODULES: PUBLIC API ONLY, SCOPED TO store_id</text>
+  <text class="band" x="190" y="250">MODULES, SCOPED TO store_id</text>
   <rect class="box" x="30" y="260" width="620" height="118"/>
   <text class="title" x="46" y="288">agent</text><text class="small" x="96" y="288">one runtime, two roles. Max 8 tool steps. The sales role can't change the store</text>
   <text class="small" x="46" y="316">brand · catalog · storefront · orders · payments · creative · publishers · platforms · channels</text>
@@ -50,7 +50,7 @@
 
   <path class="line" d="M130 378V428"/><path class="line" d="M340 378V428"/><path class="line" d="M550 378V428"/><path class="line" d="M825 378V428"/>
 
-  <text class="band" x="30" y="420">VENDORS, EACH BEHIND AN ADAPTER</text>
+  <text class="band" x="145" y="420">VENDORS BEHIND ADAPTERS</text>
   <rect class="box" x="30" y="430" width="200" height="76"/>
   <text class="title" x="46" y="456">Gemini</text><text class="small" x="46" y="476">Text and audio in one call</text>
   <rect class="box" x="240" y="430" width="200" height="76"/>

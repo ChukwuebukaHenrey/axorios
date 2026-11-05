@@ -30,6 +30,7 @@ import {
 import { MAX_TOOL_STEPS } from "./limits";
 import { textModel } from "./model";
 import { saveSellerSession } from "./session";
+import { collapseVoiceNotes } from "./voice";
 
 const SYSTEM = `You are AxoriOS, a warm, capable partner helping a small business owner with no technical experience go from an idea to a first paid order.
 Reply in the language of the owner's latest message: English to English, Nigerian Pidgin to Pidgin, French to French, and so on. Their location doesn't decide it. Keep replies short, in plain text with no markdown, and with no e-commerce jargon. Suggesting something is not changing it: only save a change the owner asked for.
@@ -40,6 +41,12 @@ The owner sees a live preview of their store beside this chat, so don't describe
 /** storeId is closed over from the session. The model can never supply it. */
 function sellerTools(storeId: string) {
   return {
+    show_transcript: tool({
+      description:
+        "When the owner's latest message is a voice note, call this first with exactly what they said, in the language they spoke, so they can see you heard them right. Then act on it as if they had typed it. If you couldn't make out a price or a name, ask instead of guessing. Never call this for typed messages.",
+      inputSchema: z.object({ transcript: z.string().trim().min(1).max(2000) }),
+      execute: async () => ({ shown: true }),
+    }),
     create_brand_kit: tool({
       description:
         "Create the brand kit from what the owner said: a name, up to 3 other name options, tagline, tone, 5 hex colours with readable contrast between neutralDark and neutralLight, and a heading and body Google Font. If the owner gave a business name, use it. After calling, tell the owner in one or two sentences and remind them to check that the name is free to use.",
@@ -213,7 +220,7 @@ export async function runSellerAgent(
   const result = streamText({
     model: textModel(),
     system: [SYSTEM, ...context].join("\n\n"),
-    messages: await convertToModelMessages(messages),
+    messages: await convertToModelMessages(collapseVoiceNotes(messages, { keepLatest: true })),
     tools: sellerTools(storeId),
     toolApproval: {
       publish_store: "user-approval",
@@ -229,7 +236,7 @@ export async function runSellerAgent(
     stream: toUIMessageStream({
       stream: result.stream,
       originalMessages: messages,
-      onEnd: ({ messages: finished }) => saveSellerSession(storeId, finished),
+      onEnd: ({ messages: finished }) => saveSellerSession(storeId, collapseVoiceNotes(finished, { keepLatest: false })),
     }),
   });
 }

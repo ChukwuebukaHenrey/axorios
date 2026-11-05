@@ -32,7 +32,14 @@
     "clearSelection": "Clear selection",
     "template": "Template",
     "publish": "Publish",
-    "publishRequest": "Please publish my store."
+    "publishRequest": "Please publish my store.",
+    "micStart": "Record a voice note",
+    "micStop": "Stop and send",
+    "micListening": "Listening: {seconds} s. Press stop to send. Up to 60 s.",
+    "micDenied": "Your browser blocked the microphone. Allow it in your browser's settings, or type instead.",
+    "micUnsupported": "This browser can't record audio. Please type instead.",
+    "voiceNote": "Voice note",
+    "youSaid": "You said:"
   },
   "publishCard": {
     "title": "Put your store online?",

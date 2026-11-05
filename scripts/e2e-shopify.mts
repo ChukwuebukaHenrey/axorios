@@ -35,11 +35,15 @@ async function shopify<T>(query: string, variables: Record<string, unknown> = {}
   return body.data;
 }
 type ShopProduct = { id: string; handle: string; title: string; variants: { nodes: { id: string; price: string; inventoryQuantity: number }[] } };
-const demoProducts = async () =>
+// By exact ID, because Shopify's search index lags behind writes.
+const productsById = async (ids: string[]) =>
   (
-    await shopify<{ products: { nodes: ShopProduct[] } }>(`{ products(first: 100, query: "handle:demo-*") {
-      nodes { id handle title variants(first: 1) { nodes { id price inventoryQuantity } } } } }`)
-  ).products.nodes.filter((p) => p.handle.startsWith("demo-"));
+    await shopify<{ nodes: (ShopProduct | null)[] }>(
+      `query P($ids: [ID!]!) { nodes(ids: $ids) { ... on Product { id handle title variants(first: 1) { nodes { id price inventoryQuantity } } } } }`,
+      { ids },
+    )
+  ).nodes.filter((p): p is ShopProduct => Boolean(p?.id));
+const totalProducts = async () => (await shopify<{ productsCount: { count: number } }>(`{ productsCount { count } }`)).productsCount.count;
 
 type Msg = { id: string; role: string; parts: Record<string, unknown>[] };
 const sessionCookie = async (email: string, password: string) => {
@@ -119,6 +123,8 @@ try {
   check(refused?.error === "shop_not_available", "a stranger's connect is refused", JSON.stringify(refused));
 
   const cookie = await sessionCookie(process.env.DEMO_SELLER_EMAIL!, process.env.DEMO_SELLER_PASSWORD!);
+  // Start unconnected, but keep the IDs: otherwise a rerun would leave the old collection and pages behind in Shopify.
+  const keptIds = (await connection())?.external_ids;
   await admin.from("platform_connections").delete().eq("store_id", store.id);
 
   console.log("2. Denying connects nothing");
@@ -133,17 +139,23 @@ try {
   const row = await connection();
   check(row?.access_token.split(".").length === 3 && !row.access_token.startsWith("shpat"), "the stored token is encrypted");
   check(Boolean(row?.token_expires_at), "its expiry is stored");
+  if (keptIds) await admin.from("platform_connections").update({ external_ids: keptIds }).eq("store_id", store.id);
 
   console.log("4. First sync");
   const catalog = (await admin.from("products").select("id, name, price_minor, currency, stock").eq("store_id", store.id).eq("active", true)).data ?? [];
+  const totalBefore = await totalProducts();
+  console.log(`  Shopify holds ${totalBefore} products before this sync`);
   await withApproval(cookie, "sync_to_shopify", "Sync my store to Shopify", async () => {
     check((await connection())?.last_synced_at === null, "nothing runs while the card waits");
   });
   const first = await waitForSync(null);
   if (first.last_sync_result?.error) throw new Error(`FAIL sync error: ${first.last_sync_result.error}`);
   console.log(`  result: ${JSON.stringify({ ...first.last_sync_result, theme: undefined })}`);
-  const afterFirst = await demoProducts();
+  const afterFirst = await productsById(Object.values(first.external_ids.products ?? {}));
   check(afterFirst.length === catalog.length, "every product is in Shopify", `${afterFirst.length} of ${catalog.length}`);
+  check(afterFirst.every((p) => p.handle.startsWith("demo-")), "with its stable handle", afterFirst.map((p) => p.handle).join());
+  const totalAfterFirst = await totalProducts();
+  console.log(`  Shopify holds ${totalAfterFirst} products after the first sync`);
 
   const sample = catalog.find((p) => p.currency === "NGN");
   if (sample) {
@@ -169,9 +181,10 @@ try {
   await withApproval(cookie, "sync_to_shopify", "Sync to Shopify again", async () => {});
   const second = await waitForSync(String(first.last_sync_result?.at));
   if (second.last_sync_result?.error) throw new Error(`FAIL sync error: ${second.last_sync_result.error}`);
-  const afterSecond = await demoProducts();
-  check(afterSecond.length === afterFirst.length, "still the same number of products", String(afterSecond.length));
+  const afterSecond = await productsById(Object.values(second.external_ids.products ?? {}));
   check(afterSecond.map((p) => p.id).sort().join() === afterFirst.map((p) => p.id).sort().join(), "the very same products");
+  const totalAfterSecond = await totalProducts();
+  check(totalAfterSecond === totalAfterFirst, "the shop's total didn't grow on the second sync", `${totalAfterFirst} then ${totalAfterSecond}`);
   const repaired = Number(afterSecond.find((p) => p.id === victim.id)?.variants.nodes[0].price);
   check(Math.abs(repaired - Number(correctPrice)) < 0.05, "a price changed in Shopify was put back by the sync", `$1.00 back to $${repaired}`);
   check(second.external_ids.collection === first.external_ids.collection, "the same collection");

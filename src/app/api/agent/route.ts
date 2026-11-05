@@ -1,7 +1,7 @@
 import type { UIMessage } from "ai";
 import { z } from "zod";
 import { createServerSupabase } from "@/lib/supabase/server";
-import { consumeDailyRequest, runSellerAgent } from "@/modules/agent";
+import { consumeDailyRequest, runSellerAgent, voiceNotesFit } from "@/modules/agent";
 import { getOrCreateStore } from "@/modules/brand";
 
 export const maxDuration = 60;
@@ -20,6 +20,7 @@ export async function POST(req: Request) {
 
   const body = BodySchema.safeParse(await req.json());
   if (!body.success) return Response.json({ error: "bad_request" }, { status: 400 });
+  if (!voiceNotesFit(body.data.messages)) return Response.json({ error: "voice_note_too_long" }, { status: 413 });
 
   const store = await getOrCreateStore(supabase, user.id);
   if (!(await consumeDailyRequest(store.id))) return Response.json({ error: "daily_limit" }, { status: 429 });

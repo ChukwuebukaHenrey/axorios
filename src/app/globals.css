@@ -7,6 +7,19 @@
   --color-ink: #1f1f1f;
   --color-paper: #f8fafc;
   --font-sans: var(--font-dm-sans), system-ui, sans-serif;
+
+  /* Storefront tokens. Each store sets the values on its root, from its SiteConfig. */
+  --color-store-primary: var(--store-primary);
+  --color-store-on-primary: var(--store-on-primary);
+  --color-store-secondary: var(--store-secondary);
+  --color-store-on-secondary: var(--store-on-secondary);
+  --color-store-accent: var(--store-accent);
+  --color-store-on-accent: var(--store-on-accent);
+  --color-store-paper: var(--store-paper);
+  --color-store-ink: var(--store-ink);
+  --font-store-heading: var(--store-font-heading);
+  --font-store-body: var(--store-font-body);
+  --radius-store: var(--store-radius);
 }
 
 body {

@@ -33,5 +33,19 @@
   "productsCard": {
     "title": "Your products",
     "editHint": "Tell me a new price or another product to add."
+  },
+  "storefront": {
+    "soldOut": "Sold out",
+    "whatsapp": "WhatsApp",
+    "telegram": "Telegram",
+    "defaults": {
+      "heroCta": "See what we sell",
+      "productsHeading": "Our products",
+      "storyHeading": "Our story",
+      "reviewsHeading": "What customers say",
+      "faqHeading": "Questions",
+      "contactHeading": "Talk to us",
+      "contactBody": "Message us to ask anything or to place an order."
+    }
   }
 }

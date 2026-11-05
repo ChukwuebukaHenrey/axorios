@@ -99,6 +99,9 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 | Next.js 16 `cacheComponents` and `partialPrefetching` turned off: nearly every route is dynamic and they add Suspense constraints | Applied in 0.1 |
 | `@paypal/agent-toolkit` dropped, using the spec's fallback: 1.11.0 bundles `ai` 4.3.19 against our v7 and its order schema takes item prices from the model, which breaks the money rule. Own tools call Orders v2 REST | Applied in 0.2 |
 | No Gemini billing for now (user decision, 5 Nov). `ImageProvider` stays an adapter: a `next/og` template adapter renders on-brand graphics; a Gemini adapter is switched on by env flag when billing or another provider is available | Applied in 0.4 |
+| Store fonts load through a Google Fonts `<link>`, not `next/font` as the spec says: the kit holds any font name, and `next/font` needs them at build time | Applied in 1.3 |
+| Hero `carousel` variant replaced by `centered`: no multi-image content yet, and it needs no client JS. Default story, reviews and FAQ are empty and render nothing, so no store shows invented testimonials | Applied in 1.3 |
+| With no logo (4.5 is Cut, no image billing), the link preview shows a monogram tile in the brand's colours; a `logoUrl` replaces it automatically | Applied in 1.3 |
 | Keys used as provided; Twilio and Telegram tokens not rotated | User decision, 4 Nov |
 | A store has one price currency: the first products set `stores.currency`, and a second currency is refused so carts total without converting. `add_products` matches on name, so repeating a product changes it. Stock defaults to 100 when the owner states none, because made-to-order sellers don't count stock | Applied in 1.2 |
 | Gemini on free tier: `gemini-3.5-flash` answers text; `gemini-2.5-flash-image`, `gemini-3.1-flash-image` and `gemini-3.1-flash-lite-image` all return 429 quota errors (4 Nov) | Blocks 0.4, 4.1, 4.5 until billing is on |
@@ -116,7 +119,8 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 | 0.7 | In progress | Deployed; `/api/health` 200. Inngest keys on Vercel; app `axorios` synced with status success. Left: Twilio URL (console only). The Telegram webhook waits for its route in 3.3. |
 | 1.1 | Done | `npm test -- brand` 4/4; `scripts/e2e-brand.mts` passes: kit saved, single-field edit, Pidgin reply, signed-out 401. Password sign-in tested through the API. Screens not yet checked by eye. Magic link untested: needs the Supabase Auth site URL and redirect set to the production domain. |
 | 1.2 | Done | `npm test -- catalog` 13/13. `scripts/e2e-catalog.mts` passes through the real agent: 45,000 NGN saved as 4500000, store currency set to NGN, a repeat changes the price with no duplicate, no price means no product, RLS hides draft products. |
-| 1.3 | Next | |
+| 1.3 | In progress | `npm test -- storefront` 15/15. `scripts/e2e-storefront.mts` passes: two stores differ in colours, fonts, currency and products with no leak; a draft store returns 404; link preview tags and a 40 KB PNG. Checked by eye at 390 px and 1280 px. Left: paste the link in WhatsApp (user). |
+| 1.4 | Next | |
 | Rest of phases 1-5 | Not started | |
 
 ## Waiting on the user
@@ -141,3 +145,5 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 - The slug is claimed once from the first brand name, so a later rename keeps the old slug. Revisit at 1.5 publish.
 - UI palette from the brand board: #2B0B3F, #F97316, #FBBF24, #1F1F1F, #F8FAFC. Font: DM Sans.
 - Demo seller exists, with credentials in `.env.local`. Re-seed with `scripts/seed-demo-user.mts`. Its store holds test data from the e2e run.
+- `/s/demo` comes from `scripts/seed-demo-store.mts`. The demo seller now owns two stores and `/build` opens the older test one; 5.2 must make `/build` open the demo store.
+- Headless Edge screenshots: `--window-size` below 500 px clips rather than narrows. For phone width, load the page in a 390 px iframe.

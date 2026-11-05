@@ -43,6 +43,8 @@ async function currentStore() {
     .from("stores")
     .select("id, slug, status, brand_kit, store_language")
     .eq("owner_id", signIn.user!.id)
+    .order("created_at")
+    .limit(1)
     .single();
   if (e) throw new Error(`Store read failed: ${e.code}`);
   return data;

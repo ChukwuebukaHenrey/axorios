@@ -1,0 +1,44 @@
+import "server-only";
+import { createHash, timingSafeEqual } from "node:crypto";
+import { env } from "@/lib/env";
+import { parseTelegramUpdate } from "../telegram-update";
+import type { Channel } from "../types";
+
+const MAX_TEXT = 4096;
+const MAX_CAPTION = 1024;
+
+const digest = (value: string) => createHash("sha256").update(value).digest();
+
+/** Errors carry the method and status only: the request URL holds the bot token. */
+async function callApi(method: string, body: Record<string, unknown>): Promise<void> {
+  const res = await fetch(`https://api.telegram.org/bot${env().TELEGRAM_BOT_TOKEN}/${method}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const failure = (await res.json().catch(() => null)) as { description?: string } | null;
+    throw new Error(`Telegram ${method} failed: HTTP ${res.status} ${failure?.description ?? ""}`.trim());
+  }
+}
+
+export const telegram: Channel = {
+  name: "telegram",
+
+  async verify(req) {
+    const header = req.headers.get("x-telegram-bot-api-secret-token");
+    return Boolean(header) && timingSafeEqual(digest(header!), digest(env().TELEGRAM_WEBHOOK_SECRET));
+  },
+
+  async parseWebhook(req) {
+    return parseTelegramUpdate(await req.json().catch(() => null), new Date().toISOString());
+  },
+
+  async send(to, msg) {
+    if (msg.mediaUrl) {
+      await callApi("sendPhoto", { chat_id: to, photo: msg.mediaUrl, caption: msg.text.slice(0, MAX_CAPTION) });
+      return;
+    }
+    await callApi("sendMessage", { chat_id: to, text: msg.text.slice(0, MAX_TEXT) });
+  },
+};

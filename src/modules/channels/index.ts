@@ -1,5 +1,6 @@
 import "server-only";
 import { env } from "@/lib/env";
+import { telegram } from "./adapters/telegram";
 import { twilioWhatsApp } from "./adapters/twilio-whatsapp";
 import type { Channel, ChannelName } from "./types";
 
@@ -7,6 +8,7 @@ export type { Channel, ChannelName, OutboundMessage, ParsedInbound } from "./typ
 
 /** Adding a vendor means one adapter file and one entry here. */
 const registry: Partial<Record<ChannelName, Channel>> = {
+  telegram,
   whatsapp: twilioWhatsApp,
 };
 

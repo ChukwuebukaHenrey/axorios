@@ -43,6 +43,35 @@ export type Database = {
           },
         ]
       }
+      channel_bindings: {
+        Row: {
+          bound_at: string
+          channel: string
+          customer_ref: string
+          store_id: string
+        }
+        Insert: {
+          bound_at?: string
+          channel: string
+          customer_ref: string
+          store_id: string
+        }
+        Update: {
+          bound_at?: string
+          channel?: string
+          customer_ref?: string
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_bindings_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           agent_paused: boolean

@@ -15,6 +15,17 @@ describe("parseTelegramUpdate", () => {
     expect(m.text).toBe("this one");
   });
 
+  it("reads the store slug from a deep link, and nothing else as a slug", () => {
+    const start = (text: string) => parseTelegramUpdate(update({ chat: { id: 42, type: "private" }, text }), at)[0];
+    expect(start("/start eko-sweet-bakes").start).toEqual({ slug: "eko-sweet-bakes" });
+    expect(start("/start eko-sweet-bakes").text).toBeUndefined();
+    expect(start("/start").start).toEqual({ slug: null });
+    expect(start("/start@SomeBot demo").start).toEqual({ slug: "demo" });
+    expect(start("/start ../../etc").start).toEqual({ slug: null });
+    expect(start("/start one two").start).toBeUndefined();
+    expect(start("please /start demo").start).toBeUndefined();
+  });
+
   it("ignores groups, updates with no message, and malformed bodies", () => {
     expect(parseTelegramUpdate(update({ chat: { id: 42, type: "group" }, text: "hi" }), at)).toEqual([]);
     expect(parseTelegramUpdate({ update_id: 7 }, at)).toEqual([]);

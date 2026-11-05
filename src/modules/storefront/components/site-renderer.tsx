@@ -12,12 +12,13 @@ type Props = {
   kit: BrandKit;
   products: Product[];
   contact: ContactChannels;
+  chatUrl: string | null;
   locale: string;
   /** Left out for a draft preview, which can't sell. */
   checkout?: { slug: string; paypalClientId: string };
 };
 
-function renderSection(section: Section, { kit, products, contact, locale }: Props) {
+function renderSection(section: Section, { kit, products, contact, chatUrl, locale }: Props) {
   switch (section.type) {
     case "hero":
       return <Hero section={section} name={kit.name} />;
@@ -30,7 +31,7 @@ function renderSection(section: Section, { kit, products, contact, locale }: Pro
     case "faq":
       return <Faq section={section} />;
     case "contact":
-      return <Contact section={section} contact={contact} />;
+      return <Contact section={section} contact={contact} chatUrl={chatUrl} />;
     case "footer":
       return <Footer section={section} name={kit.name} tagline={kit.tagline} />;
   }

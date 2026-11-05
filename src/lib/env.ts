@@ -36,6 +36,7 @@ const schema = z.object({
   TELEGRAM_BOT_TOKEN: z.string().min(1),
   TELEGRAM_WEBHOOK_SECRET: z.string().min(1),
   TELEGRAM_CHANNEL_ID: optional,
+  TELEGRAM_BOT_USERNAME: optional,
 
   SHOPIFY_STORE_DOMAIN: optional,
   SHOPIFY_CLIENT_ID: optional,

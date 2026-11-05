@@ -7,6 +7,8 @@ export type ParsedInbound = {
   customerRef: string; // phone, chat id, or session id
   text?: string;
   mediaUrls?: string[];
+  /** The customer opened the chat. `slug` is the store whose link they used, when there is one. */
+  start?: { slug: string | null };
   receivedAt: string;
 };
 

@@ -114,5 +114,13 @@
     "charged": "Charged through PayPal",
     "delivery": "Delivery",
     "back": "Back to the store"
+  },
+  "chat": {
+    "welcome": "Welcome to {store}! Tell me what you're looking for, in any language, and I'll help you order.",
+    "noStore": "Hello! I answer for the shops on AxoriOS. Please open this chat from a shop's page, using its Telegram button.",
+    "storeClosed": "Sorry, that shop isn't open right now. Please check the link with the shop.",
+    "textOnly": "Sorry, I can only read text messages for now. Please type what you need.",
+    "busy": "We're getting a lot of messages today. Please try again tomorrow, or order on the shop's page.",
+    "failed": "Sorry, something went wrong on our side. Please try again in a minute."
   }
 }

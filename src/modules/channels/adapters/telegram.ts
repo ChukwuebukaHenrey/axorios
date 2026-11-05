@@ -1,5 +1,6 @@
 import "server-only";
 import { createHash, timingSafeEqual } from "node:crypto";
+import { NonRetriableError } from "inngest";
 import { env } from "@/lib/env";
 import { parseTelegramUpdate } from "../telegram-update";
 import type { Channel } from "../types";
@@ -18,7 +19,10 @@ async function callApi(method: string, body: Record<string, unknown>): Promise<v
   });
   if (!res.ok) {
     const failure = (await res.json().catch(() => null)) as { description?: string } | null;
-    throw new Error(`Telegram ${method} failed: HTTP ${res.status} ${failure?.description ?? ""}`.trim());
+    const message = `Telegram ${method} failed: HTTP ${res.status} ${failure?.description ?? ""}`.trim();
+    // A blocked bot or an unknown chat won't heal, and retrying would hold up this chat's next message.
+    if (res.status === 400 || res.status === 403) throw new NonRetriableError(message);
+    throw new Error(message);
   }
 }
 

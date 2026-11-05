@@ -4,6 +4,8 @@ import { telegram } from "./adapters/telegram";
 import { twilioWhatsApp } from "./adapters/twilio-whatsapp";
 import type { Channel, ChannelName } from "./types";
 
+export { bindCustomer, boundStore, customerChatUrl, openConversation, recentMessages, recordMessage } from "./conversations";
+export type { BoundStore } from "./conversations";
 export type { Channel, ChannelName, OutboundMessage, ParsedInbound } from "./types";
 
 /** Adding a vendor means one adapter file and one entry here. */

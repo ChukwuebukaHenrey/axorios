@@ -278,17 +278,25 @@ export function Faq({ section }: { section: Of<"faq"> }) {
   );
 }
 
-function contactLinks(contact: ContactChannels) {
+function contactLinks(contact: ContactChannels, chatUrl: string | null) {
   const links = [];
   const digits = contact.whatsapp?.replace(/\D/g, "");
   if (digits) links.push({ label: t.storefront.whatsapp, href: `https://wa.me/${digits}`, Icon: MessageCircle });
-  const handle = contact.telegram?.replace(/[^A-Za-z0-9_]/g, "");
-  if (handle) links.push({ label: t.storefront.telegram, href: `https://t.me/${handle}`, Icon: Send });
+  // One bot serves every store: this link is what tells it which store the customer came from.
+  if (chatUrl) links.push({ label: t.storefront.telegram, href: chatUrl, Icon: Send });
   return links;
 }
 
-export function Contact({ section, contact }: { section: Of<"contact">; contact: ContactChannels }) {
-  const links = contactLinks(contact);
+export function Contact({
+  section,
+  contact,
+  chatUrl,
+}: {
+  section: Of<"contact">;
+  contact: ContactChannels;
+  chatUrl: string | null;
+}) {
+  const links = contactLinks(contact, chatUrl);
   if (links.length === 0) return null;
   const { heading, body } = section.content;
   const banner = section.variant === "banner";

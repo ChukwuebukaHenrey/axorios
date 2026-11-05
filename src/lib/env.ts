@@ -33,7 +33,8 @@ const schema = z.object({
   TELEGRAM_CHANNEL_ID: optional,
 
   SHOPIFY_STORE_DOMAIN: optional,
-  SHOPIFY_ADMIN_TOKEN: optional,
+  SHOPIFY_CLIENT_ID: optional,
+  SHOPIFY_CLIENT_SECRET: optional,
 
   INNGEST_EVENT_KEY: optional,
   INNGEST_SIGNING_KEY: optional,

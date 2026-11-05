@@ -97,6 +97,8 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 | Schema additions beyond the spec: `stores.store_language`, `stores.agent_requests_today/date`, `conversations.agent_paused`, `orders.delivery_note`, `orders.paypal_capture_id`, `orders.paid_at`, `messages.store_id` | Applied in 0.1 |
 | `webhook_events` unique on `(provider, event_id)` | Applied in 0.1 |
 | Next.js 16 `cacheComponents` and `partialPrefetching` turned off: nearly every route is dynamic and they add Suspense constraints | Applied in 0.1 |
+| `@paypal/agent-toolkit` dropped, using the spec's fallback: 1.11.0 bundles `ai` 4.3.19 against our v7 and its order schema takes item prices from the model, which breaks the money rule. Own tools call Orders v2 REST | Applied in 0.2 |
+| No Gemini billing for now (user decision, 5 Nov). `ImageProvider` stays an adapter: a `next/og` template adapter renders on-brand graphics; a Gemini adapter is switched on by env flag when billing or another provider is available | Applied in 0.4 |
 | Keys used as provided; Twilio and Telegram tokens not rotated | User decision, 4 Nov |
 | Gemini on free tier: `gemini-3.5-flash` answers text; `gemini-2.5-flash-image`, `gemini-3.1-flash-image` and `gemini-3.1-flash-lite-image` all return 429 quota errors (4 Nov) | Blocks 0.4, 4.1, 4.5 until billing is on |
 | FX provider candidate: open.er-api.com, no key, returned NGN, GHS and KES on 4 Nov (about 1,346 NGN per USD, so 45,000 NGN is about $33.43, not the spec's $29.40) | To confirm in 0.6 |
@@ -105,7 +107,7 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 | Step | Status | Notes |
 |---|---|---|
 | 0.1 | Done | Migrations apply via `--db-url` on the eu-central-1 session pooler (aws-1); direct host is IPv6-only and the access token lacks `projects_read`, so `supabase link` isn't used. Types come from the Management API `types/typescript` endpoint. |
-| 0.2 | Not started | |
+| 0.2 | Done | Order 7KS098545V1134712 created by a Gemini tool call; price injection ignored. Pinned `ai` 7.0.163, `@ai-sdk/google` 4.0.112, `@ai-sdk/react` 4.0.167. Toolkit not used: see decisions. |
 | 0.3 | Not started | |
 | 0.4 | Not started | |
 | 0.5 | Not started | |

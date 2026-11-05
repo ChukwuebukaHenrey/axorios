@@ -43,7 +43,10 @@ next-env.d.ts
 # never commit: raw key files
 env.download
 env.local.template
-!.env.example
 
 # supabase cli cache
 supabase/.temp
+
+.vercel
+.env*
+!.env.example

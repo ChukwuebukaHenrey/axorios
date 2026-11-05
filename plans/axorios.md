@@ -1,4 +1,4 @@
-# AxoriOS build plan
+| 2.4 | Done | The real paid order is on `/dashboard` for the demo seller with both amounts and delivery details. Fixed on the way: the lookup opened the seller's oldest store, a draft, so it now prefers the live one. || 2.3 | Done | `npm test -- payments` 9/9. Both paid in sandbox on production: 45,000 NGN charged 33.44 USD at the stored rate with both totals kept; a throwaway GBP store charged 51.00 GBP with no rate. || 2.2 | Done | PayPal delivered CHECKOUT.ORDER.APPROVED to production and PayPal's resend API accepted a replay (HTTP 202): one event row, one order, paid time unchanged, stock moved once (100 to 99). Limit: Vercel logs don't expose the request, so arrival of the resend itself wasn't observed. Unsigned and forged webhooks return 403. || 2.1 | Done | Real sandbox purchase on production `/s/demo` on 5 Nov (`scripts/e2e-paid-order.mts`): order 3920970b charged 33.44 USD, capture id stored, buyer returned to the order page. Earlier checks: a client-sent price is ignored, another store's product, a draft store and over-stock are refused. |# AxoriOS build plan
 
 Source: `docs/spec.md` (Build plan; Decisions, open questions and scope). Working target: **submit 9 Nov 2026**. Official dates: submit by 11 Nov, hard stop 12 Nov. Days 10-12 Nov are buffer.
 
@@ -116,6 +116,7 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 | Gemini on free tier: `gemini-3.5-flash` answers text; `gemini-2.5-flash-image`, `gemini-3.1-flash-image` and `gemini-3.1-flash-lite-image` all return 429 quota errors (4 Nov) | Blocks 0.4, 4.1, 4.5 until billing is on |
 | Agent text model: `gemini-3.5-flash-lite` is primary. Groq stays a backup through `TEXT_MODEL_PROVIDER`, with no automatic fallback. Fresh-seller test on 5 Nov: Flash-lite took 4-5 s a turn and replied in Pidgin; Groq `openai/gpt-oss-120b` took 17-38 s after the first turn (8,000 tokens a minute), answered Pidgin in English and once changed the tagline unasked. Pinned `@ai-sdk/groq` 4.0.77, same provider packages as `@ai-sdk/google`. Groq chat models also take no audio, which 5.1 needs | Applied in production 5 Nov |
 | FX provider: open.er-api.com, no key, cached 1 h, and a stale rate is used if it fails. 45,000 NGN is about $33.44, not the $29.40 in the spec and demo script, so the video script must use the live figure. The charge is computed from the rate rounded to the column's 10 decimals, so the stored rate reproduces it. A store with products can't change price currency without new prices | Applied in 2.3 |
+| A seller's lookup prefers their live store, then their oldest. There is no store switcher | Applied 5 Nov |
 
 ## Progress
 | Step | Status | Notes |
@@ -140,7 +141,6 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 | Rest of phases 1-5 | Not started | |
 
 ## Waiting on the user
-- Sandbox buyer login, from developer.paypal.com > Testing Tools > Sandbox Accounts (the Personal account), added to `.env.local` as `PAYPAL_SANDBOX_BUYER_EMAIL` and `PAYPAL_SANDBOX_BUYER_PASSWORD`, or one purchase made by hand. Blocks the capture check in 2.1 and the verification of 2.2, 2.3 and 3.2.
 - Judge traffic during 1-15 Dec: Flash-lite's free-tier daily cap is not measured yet. Check it before 5.3.
 - Product and hero photos: none yet (no image billing, no upload path), so stores show brand-coloured tiles, and Photo-led looks flat. Decide before recording 5.4.
 - Paste `https://axorios.vercel.app/s/demo` in Telegram to finish 1.3.
@@ -167,7 +167,8 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 - UI palette from the brand board: #2B0B3F, #F97316, #FBBF24, #1F1F1F, #F8FAFC. Font: DM Sans.
 - Demo seller exists, with credentials in `.env.local`. Re-seed with `scripts/seed-demo-user.mts`. Its store holds test data from the e2e run.
 - The cart was driven in headless Edge at 390 px on 5 Nov and checked by eye: add, quantity, required delivery details, the USD charge before paying, PayPal's button, and a reload keeps the cart. No console errors.
-- `/s/demo` comes from `scripts/seed-demo-store.mts`. The demo seller now owns two stores and `/build` opens the older test one; 5.2 must make `/build` open the demo store.
+- `/s/demo` comes from `scripts/seed-demo-store.mts`. The demo seller also owns an older draft test store; `/build` and `/dashboard` open the live store first.
+- `scripts/sandbox-pay.ts` pays a PayPal approval link as the sandbox buyer in headless Edge; import it from e2e scripts. Vercel runtime logs (connector and CLI) returned nothing for webhook paths on 5 Nov, so use database rows and Inngest events as evidence.
 - `scripts/e2e-brand.mts` step 1 needs a seller with no brand kit. Against the demo seller's used test store it fails on any model. Run it with `DEMO_SELLER_EMAIL` and `DEMO_SELLER_PASSWORD` set to a throwaway user; process env wins over `--env-file`.
 - Groq limits refill continuously, so there is no fixed reset time: 1,000 requests a day is one back every 86.4 s, and 8,000 tokens a minute is about 133 back per second. The `x-ratelimit-reset-*` headers give the wait.
 - A Windows portproxy rule (`iphlpsvc`) listens on 127.0.0.1:3000 and forwards to itself, so port 3000 always looks busy. Test servers here used 3100 and 3101.

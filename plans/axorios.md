@@ -108,7 +108,7 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 | Keys used as provided; Twilio and Telegram tokens not rotated | User decision, 4 Nov |
 | A store has one price currency: the first products set `stores.currency`, and a second currency is refused so carts total without converting. `add_products` matches on name, so repeating a product changes it. Stock defaults to 100 when the owner states none, because made-to-order sellers don't count stock | Applied in 1.2 |
 | Gemini on free tier: `gemini-3.5-flash` answers text; `gemini-2.5-flash-image`, `gemini-3.1-flash-image` and `gemini-3.1-flash-lite-image` all return 429 quota errors (4 Nov) | Blocks 0.4, 4.1, 4.5 until billing is on |
-| Agent text model: `gemini-3.5-flash-lite` is primary. Groq stays a backup through `TEXT_MODEL_PROVIDER`, with no automatic fallback. Fresh-seller test on 5 Nov: Flash-lite took 4-5 s a turn and replied in Pidgin; Groq `openai/gpt-oss-120b` took 17-38 s after the first turn (8,000 tokens a minute), answered Pidgin in English and once changed the tagline unasked. Pinned `@ai-sdk/groq` 4.0.77, same provider packages as `@ai-sdk/google`. Groq chat models also take no audio, which 5.1 needs | Code applied; production waits on the env change below |
+| Agent text model: `gemini-3.5-flash-lite` is primary. Groq stays a backup through `TEXT_MODEL_PROVIDER`, with no automatic fallback. Fresh-seller test on 5 Nov: Flash-lite took 4-5 s a turn and replied in Pidgin; Groq `openai/gpt-oss-120b` took 17-38 s after the first turn (8,000 tokens a minute), answered Pidgin in English and once changed the tagline unasked. Pinned `@ai-sdk/groq` 4.0.77, same provider packages as `@ai-sdk/google`. Groq chat models also take no audio, which 5.1 needs | Applied in production 5 Nov |
 | FX provider candidate: open.er-api.com, no key, returned NGN, GHS and KES on 4 Nov (about 1,346 NGN per USD, so 45,000 NGN is about $33.43, not the spec's $29.40) | To confirm in 0.6 |
 
 ## Progress
@@ -131,7 +131,6 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 | Rest of phases 1-5 | Not started | |
 
 ## Waiting on the user
-- Vercel production env, blocked from this machine: `api.vercel.com` times out and the connector needs team authorization. Set `GEMINI_TEXT_MODEL=gemini-3.5-flash-lite`, `TELEGRAM_CHANNEL_ID`, and the rotated `INNGEST_EVENT_KEY`, then redeploy. Add `GROQ_API_KEY` and `GROQ_TEXT_MODEL` so the backup can be switched on.
 - Judge traffic during 1-15 Dec: Flash-lite's free-tier daily cap is not measured yet. Check it before 5.3.
 - Rotate `INNGEST_EVENT_KEY` in the Inngest dashboard: its value was printed into a session transcript on 5 Nov when a leading space in `.env.local` made the shell run it. Update `.env.local` and Vercel.
 - Product and hero photos: none yet (no image billing, no upload path), so stores show brand-coloured tiles, and Photo-led looks flat. Decide before recording 5.4.
@@ -141,7 +140,7 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 - Submission date: 9 Nov is assumed and not yet confirmed.
 
 ## Working notes
-- Windows shell. `gh` is at `/c/Program Files/GitHub CLI/gh.exe`, not on PATH. Use `npx vercel@latest`; the CLI is logged in. The Vercel connector returns 403 for this scope, so don't rely on it.
+- Windows shell. `gh` is at `/c/Program Files/GitHub CLI/gh.exe`, not on PATH. Use `npx vercel@latest`; the CLI is logged in. The Vercel connector works since team access was approved on 5 Nov. `api.vercel.com` timed out from this machine for a while that day, so the CLI can fail with `fetch failed`. Send secrets through the CLI, piped from `.env.local`, never as connector arguments.
 - Load env without printing: `set -a; source .env.local; set +a`. Never echo values. `NEXT_PUBLIC_*` values that look like keys need `--type config` on `vercel env add`.
 - Vercel env is production only. New values need a redeploy. CLI-only Supabase keys stay off Vercel.
 - Migrations: `npx supabase db push --yes --db-url "postgresql://postgres.$SUPABASE_PROJECT_REF:<url-encoded password>@aws-1-eu-central-1.pooler.supabase.com:5432/postgres"`. Don't use `supabase link`: the token lacks `projects_read` and the direct host is IPv6-only.
@@ -149,7 +148,7 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 - The Supabase connector can't see this project. Use the CLI and REST.
 - Scripts are `.mts` for top-level await: `npx tsx --env-file=.env.local scripts/<name>.mts`.
 - Read before using, because these differ from older docs: `node_modules/ai/docs` (AI SDK 7: `isStepCount`, `inputSchema`, `toUIMessageStream` with `onEnd`, `toolApproval` for approval cards), `node_modules/next/dist/docs` (Next 16: `proxy.ts`), Inngest 4 (`triggers` inside the options object).
-- Gemini: `gemini-3.5-flash` for text. `gemini-3.8-flash` and `gemini-flash-latest` returned 503 on 4 Nov. `gemini-2.5-flash` is closed to new users.
+- Gemini: `gemini-3.5-flash-lite` for text. `gemini-3.8-flash` and `gemini-flash-latest` returned 503 on 4 Nov. `gemini-2.5-flash` is closed to new users.
 - npm is slow on this machine, sometimes 10 minutes: run installs in the background.
 - To test on another model without touching `.env.local`: `GEMINI_TEXT_MODEL=gemini-3.5-flash-lite npx next dev -p 3002`. Process env wins over the file.
 - UI checks need no new dependency: start headless Edge with `--remote-debugging-port`, set the `sb-<ref>-auth-token` cookie over CDP, and drive the page with `Runtime.evaluate`. Node has a global `WebSocket`.

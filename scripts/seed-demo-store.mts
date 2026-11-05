@@ -61,18 +61,21 @@ const products = [
   ["Chin Chin Gift Jar", "Crunchy, lightly spiced chin chin in a 500 g gift jar.", 350_000],
 ] as const;
 
-await admin.from("products").delete().eq("store_id", store.id);
-const { error: productsError } = await admin.from("products").insert(
-  products.map(([name, description, price_minor]) => ({
-    store_id: store.id,
-    name,
-    description,
-    price_minor,
-    currency: "NGN",
-    stock: 100,
-  })),
-);
-if (productsError) throw productsError;
+// Keeps existing product rows, because their IDs are what the Shopify sync and past orders point at.
+const { data: existing, error: existingError } = await admin.from("products").select("id, name").eq("store_id", store.id);
+if (existingError) throw existingError;
+for (const [name, description, price_minor] of products) {
+  const row = { store_id: store.id, name, description, price_minor, currency: "NGN", stock: 100, active: true };
+  const found = existing.find((p) => p.name === name);
+  const { error } = found ? await admin.from("products").update(row).eq("id", found.id) : await admin.from("products").insert(row);
+  if (error) throw error;
+}
+const seeded = new Set<string>(products.map(([name]) => name));
+const extras = existing.filter((p) => !seeded.has(p.name)).map((p) => p.id);
+if (extras.length > 0) {
+  const { error } = await admin.from("products").update({ active: false }).in("id", extras);
+  if (error) throw error;
+}
 
 const config = buildSiteConfig(kit);
 for (const section of config.sections) {

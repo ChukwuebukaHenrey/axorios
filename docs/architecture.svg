@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 640" role="img" aria-label="AxoriOS architecture: sellers and buyers reach one Next.js app, whose modules call vendors only through adapters, with webhooks handed to Inngest jobs.">
+  <style>
+    text { font-family: "DM Sans", system-ui, sans-serif; fill: #1F1F1F; }
+    .title { font-size: 15px; font-weight: 700; }
+    .small { font-size: 12px; fill: #4a4a4a; }
+    .band { font-size: 12px; font-weight: 700; fill: #2B0B3F; letter-spacing: .06em; }
+    .box { fill: #fff; stroke: #2B0B3F; stroke-width: 1.5; rx: 10; }
+    .accent { fill: #FFF3E6; stroke: #F97316; stroke-width: 1.5; rx: 10; }
+    .line { stroke: #2B0B3F; stroke-width: 1.5; fill: none; marker-end: url(#arrow); }
+    .dash { stroke: #F97316; stroke-width: 1.5; fill: none; stroke-dasharray: 5 4; marker-end: url(#arrowO); }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#2B0B3F"/></marker>
+    <marker id="arrowO" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#F97316"/></marker>
+  </defs>
+  <rect width="1000" height="640" fill="#F8FAFC"/>
+
+  <text class="band" x="30" y="32">PEOPLE</text>
+  <rect class="box" x="30" y="44" width="290" height="62"/>
+  <text class="title" x="46" y="70">Seller</text><text class="small" x="46" y="90">Voice or text, in any language</text>
+  <rect class="box" x="355" y="44" width="290" height="62"/>
+  <text class="title" x="371" y="70">Buyer on the store</text><text class="small" x="371" y="90">Cart and PayPal buttons</text>
+  <rect class="box" x="680" y="44" width="290" height="62"/>
+  <text class="title" x="696" y="70">Customer on Telegram</text><text class="small" x="696" y="90">Asks, orders, gets a payment link</text>
+
+  <path class="line" d="M175 106V150"/><path class="line" d="M500 106V150"/><path class="line" d="M825 106V150"/>
+
+  <text class="band" x="30" y="142">NEXT.JS ON VERCEL</text>
+  <rect class="box" x="30" y="152" width="290" height="62"/>
+  <text class="title" x="46" y="178">/build and /api/agent</text><text class="small" x="46" y="198">Streams the seller agent; approval cards</text>
+  <rect class="box" x="355" y="152" width="290" height="62"/>
+  <text class="title" x="371" y="178">/s/[slug] and /api/checkout</text><text class="small" x="371" y="198">Server-rendered store from SiteConfig JSON</text>
+  <rect class="accent" x="680" y="152" width="290" height="62"/>
+  <text class="title" x="696" y="178">/api/webhooks</text><text class="small" x="696" y="198">Verify, store once, 200, hand to a job. No LLM</text>
+
+  <path class="line" d="M175 214V258"/><path class="line" d="M500 214V258"/><path class="dash" d="M825 214V258"/>
+
+  <text class="band" x="30" y="250">MODULES: PUBLIC API ONLY, SCOPED TO store_id</text>
+  <rect class="box" x="30" y="260" width="620" height="118"/>
+  <text class="title" x="46" y="288">agent</text><text class="small" x="96" y="288">one runtime, two roles. Max 8 tool steps. The sales role can't change the store</text>
+  <text class="small" x="46" y="316">brand · catalog · storefront · orders · payments · creative · publishers · platforms · channels</text>
+  <text class="small" x="46" y="344">Totals are computed in code from integer minor units. The model never supplies prices or a store ID.</text>
+  <text class="small" x="46" y="364">Publishing, scheduling and Shopify all wait for the seller's approval.</text>
+  <rect class="accent" x="680" y="260" width="290" height="118"/>
+  <text class="title" x="696" y="288">Inngest jobs</text>
+  <text class="small" x="696" y="312">chat.reply · paypal event</text>
+  <text class="small" x="696" y="332">creative.generate · post.publish</text>
+  <text class="small" x="696" y="352">platform.sync · keep-alive</text>
+  <path class="line" d="M680 319H652" />
+
+  <path class="line" d="M130 378V428"/><path class="line" d="M340 378V428"/><path class="line" d="M550 378V428"/><path class="line" d="M825 378V428"/>
+
+  <text class="band" x="30" y="420">VENDORS, EACH BEHIND AN ADAPTER</text>
+  <rect class="box" x="30" y="430" width="200" height="76"/>
+  <text class="title" x="46" y="456">Gemini</text><text class="small" x="46" y="476">Text and audio in one call</text>
+  <rect class="box" x="240" y="430" width="200" height="76"/>
+  <text class="title" x="256" y="456">PayPal Orders v2</text><text class="small" x="256" y="476">Sandbox. Capture on return</text><text class="small" x="256" y="492">and on the webhook</text>
+  <rect class="box" x="450" y="430" width="200" height="76"/>
+  <text class="title" x="466" y="456">Shopify Admin GraphQL</text><text class="small" x="466" y="476">Products, collection, pages</text>
+  <rect class="box" x="680" y="430" width="290" height="76"/>
+  <text class="title" x="696" y="456">Telegram Bot API</text><text class="small" x="696" y="476">Customer chat and channel posts</text>
+
+  <text class="band" x="30" y="540">DATA</text>
+  <rect class="box" x="30" y="550" width="940" height="62"/>
+  <text class="title" x="46" y="576">Supabase</text><text class="small" x="46" y="596">Postgres with row-level security on every table · Auth · Storage for post images · Shopify tokens encrypted at rest</text>
+</svg>

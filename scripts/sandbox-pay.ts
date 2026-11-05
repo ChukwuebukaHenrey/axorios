@@ -78,7 +78,8 @@ export async function payAsSandboxBuyer(approveUrl: string, doneOrigin: string):
     let last = "";
     const deadline = Date.now() + 150_000;
     let emailDone = false;
-    let passwordDone = false;
+    let passwordTries = 0;
+    let lastPasswordTry = 0;
     while (Date.now() < deadline) {
       await new Promise((r) => setTimeout(r, 1500));
       const here = await evaluate<string>("location.href");
@@ -90,9 +91,13 @@ export async function payAsSandboxBuyer(approveUrl: string, doneOrigin: string):
         last = where.pathname;
       }
 
-      if (!passwordDone && (await fill("input#password, input[name=login_password]", password))) {
+      // The first submit can land while the page is still animating in, so try again if the field stays up.
+      const passwordDue = passwordTries < 4 && Date.now() - lastPasswordTry > 12_000;
+      if (passwordDue && (await fill("input#password, input[name=login_password]", password))) {
+        await new Promise((r) => setTimeout(r, 800));
         await click("button#btnLogin, button[name=btnLogin]");
-        passwordDone = true;
+        passwordTries++;
+        lastPasswordTry = Date.now();
         continue;
       }
       if (!emailDone && (await fill("input#email, input[name=login_email]", email))) {
@@ -104,8 +109,8 @@ export async function payAsSandboxBuyer(approveUrl: string, doneOrigin: string):
       await click("button#acceptAllButton");
       await click("button#payment-submit-btn, [data-id=payment-submit-btn], [data-testid=submit-button-initial], button#consentButton");
     }
-    const text = await evaluate<string>("document.body.innerText.slice(0, 400)");
-    throw new Error(`Buyer flow timed out at ${last}. Page says: ${text}`);
+    // The page text isn't printed: it can show the buyer's login.
+    throw new Error(`Buyer flow timed out at ${last} after ${passwordTries} password tries`);
   } finally {
     close();
     edge.kill();

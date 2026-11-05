@@ -106,6 +106,7 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 | Publish refuses a store with no products. Until first publish the link follows the current name; once live it never changes | Applied in 1.5 |
 | Undo archives the latest draft, so repeating walks further back. One Undo button stands in for the spec's version history list. Photo swapping isn't in `edit_site` yet: there's no upload path | Applied in 1.4 |
 | Keys used as provided; Twilio and Telegram tokens not rotated | User decision, 4 Nov |
+| `INNGEST_EVENT_KEY` not rotated, although its value reached a session transcript on 5 Nov | User decision, 5 Nov |
 | A store has one price currency: the first products set `stores.currency`, and a second currency is refused so carts total without converting. `add_products` matches on name, so repeating a product changes it. Stock defaults to 100 when the owner states none, because made-to-order sellers don't count stock | Applied in 1.2 |
 | Gemini on free tier: `gemini-3.5-flash` answers text; `gemini-2.5-flash-image`, `gemini-3.1-flash-image` and `gemini-3.1-flash-lite-image` all return 429 quota errors (4 Nov) | Blocks 0.4, 4.1, 4.5 until billing is on |
 | Agent text model: `gemini-3.5-flash-lite` is primary. Groq stays a backup through `TEXT_MODEL_PROVIDER`, with no automatic fallback. Fresh-seller test on 5 Nov: Flash-lite took 4-5 s a turn and replied in Pidgin; Groq `openai/gpt-oss-120b` took 17-38 s after the first turn (8,000 tokens a minute), answered Pidgin in English and once changed the tagline unasked. Pinned `@ai-sdk/groq` 4.0.77, same provider packages as `@ai-sdk/google`. Groq chat models also take no audio, which 5.1 needs | Applied in production 5 Nov |
@@ -132,7 +133,6 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 
 ## Waiting on the user
 - Judge traffic during 1-15 Dec: Flash-lite's free-tier daily cap is not measured yet. Check it before 5.3.
-- Rotate `INNGEST_EVENT_KEY` in the Inngest dashboard: its value was printed into a session transcript on 5 Nov when a leading space in `.env.local` made the shell run it. Update `.env.local` and Vercel.
 - Product and hero photos: none yet (no image billing, no upload path), so stores show brand-coloured tiles, and Photo-led looks flat. Decide before recording 5.4.
 - Paste `https://axorios.vercel.app/s/demo` in WhatsApp to finish 1.3.
 - Shopify app installed on `ebukahs-dev-store`; currently `app_not_installed`. Blocks 0.5 and 4.4. Auth is the client-credentials grant, not a stored `shpat_` token.

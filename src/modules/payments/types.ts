@@ -1,3 +1,5 @@
+import type { PaymentEvent } from "./webhook-event";
+
 export type CheckoutRequest = {
   orderId: string;
   amountMinor: number;
@@ -21,4 +23,6 @@ export interface PaymentProvider {
   createCheckout(request: CheckoutRequest): Promise<CheckoutSession>;
   /** Safe to call any number of times for one order. */
   capture(providerOrderId: string): Promise<CaptureResult>;
+  /** Returns null unless the provider confirms it really sent this request. */
+  verifyWebhook(req: Request): Promise<PaymentEvent | null>;
 }

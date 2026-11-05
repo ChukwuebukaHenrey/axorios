@@ -2,6 +2,7 @@ import "server-only";
 import { env } from "@/lib/env";
 import { minorToDecimal, parseToMinor } from "@/lib/money";
 import type { CaptureResult, PaymentProvider } from "../types";
+import { parsePayPalEvent } from "../webhook-event";
 
 const BASE = "https://api-m.sandbox.paypal.com";
 
@@ -123,5 +124,36 @@ export const paypal: PaymentProvider = {
     if (issue === "ORDER_ALREADY_CAPTURED") return fromOrder(await getOrder(providerOrderId));
     if (issue === "INSTRUMENT_DECLINED" || issue === "PAYER_ACTION_REQUIRED") return { status: "declined" };
     throw new Error(`PayPal capture failed: HTTP ${res.status} ${issue ?? ""}`.trim());
+  },
+
+  async verifyWebhook(req) {
+    const webhookId = env().PAYPAL_WEBHOOK_ID;
+    if (!webhookId) {
+      console.error("PAYPAL_WEBHOOK_ID is not set, so PayPal webhooks are refused");
+      return null;
+    }
+    const raw = await req.text();
+    const fields = {
+      auth_algo: req.headers.get("paypal-auth-algo"),
+      cert_url: req.headers.get("paypal-cert-url"),
+      transmission_id: req.headers.get("paypal-transmission-id"),
+      transmission_sig: req.headers.get("paypal-transmission-sig"),
+      transmission_time: req.headers.get("paypal-transmission-time"),
+      webhook_id: webhookId,
+    };
+    if (Object.values(fields).some((value) => !value)) return null;
+
+    const event = parsePayPalEvent(raw);
+    if (!event) return null;
+
+    // The event goes back byte for byte: parsing and re-serialising it can break the signature.
+    const res = await fetch(`${BASE}/v1/notifications/verify-webhook-signature`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${await accessToken()}`, "Content-Type": "application/json" },
+      body: `${JSON.stringify(fields).slice(0, -1)},"webhook_event":${raw}}`,
+    });
+    if (!res.ok) throw new Error(`PayPal webhook check failed: HTTP ${res.status}`);
+    const { verification_status: status } = (await res.json()) as { verification_status?: string };
+    return status === "SUCCESS" ? event : null;
   },
 };

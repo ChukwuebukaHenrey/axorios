@@ -134,9 +134,11 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 | 1.5 | Done | Driven in headless Edge: asking shows a card and the store stays draft and 404; "Not yet" keeps it private; Publish makes it live and 200, with the link on the card; a later draft edit leaves the live store unchanged. Re-verified 5 Nov on 02b99c5: tests 48/48, lint, `tsc` and build pass; GitHub shows the Vercel check as success. Bold Grid tile initials checked by eye at 1280 px and 390 px. |
 | 1.5a | Done | Same store renders in all 3 Market presets from the switcher (no model needed) and `choose_template`. Colours, fonts, text and hidden sections are kept. Checked by eye. |
 | 2.1 | Built, capture unverified | `npm test` 56/56, lint, `tsc` and build pass. `scripts/e2e-checkout.mts` passes: a client-sent price is ignored, PayPal holds the server amount (51.00 GBP), another store's product, a draft store and over-stock are refused, an unapproved order takes no money. Real capture is not yet run: it needs a sandbox buyer login, and this sandbox account refuses test cards (422). |
+| 2.2 | Built, replay unverified | `npm test` 61/61. Unsigned, forged and malformed webhooks all return 403 through PayPal's own check. Replaying a real event needs a paid order, so it waits on the sandbox buyer. |
 | Rest of phases 1-5 | Not started | |
 
 ## Waiting on the user
+- Sandbox buyer login, from developer.paypal.com > Testing Tools > Sandbox Accounts (the Personal account), added to `.env.local` as `PAYPAL_SANDBOX_BUYER_EMAIL` and `PAYPAL_SANDBOX_BUYER_PASSWORD`, or one purchase made by hand. Blocks the capture check in 2.1 and the verification of 2.2, 2.3 and 3.2.
 - Judge traffic during 1-15 Dec: Flash-lite's free-tier daily cap is not measured yet. Check it before 5.3.
 - Product and hero photos: none yet (no image billing, no upload path), so stores show brand-coloured tiles, and Photo-led looks flat. Decide before recording 5.4.
 - Paste `https://axorios.vercel.app/s/demo` in Telegram to finish 1.3.
@@ -157,6 +159,7 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 - npm is slow on this machine, sometimes 10 minutes: run installs in the background.
 - To test on another model without touching `.env.local`: `GEMINI_TEXT_MODEL=gemini-3.5-flash-lite npx next dev -p 3002`. Process env wins over the file.
 - UI checks need no new dependency: start headless Edge with `--remote-debugging-port`, set the `sb-<ref>-auth-token` cookie over CDP, and drive the page with `Runtime.evaluate`. Node has a global `WebSocket`.
+- `next dev` here can miss file edits and serve a stale compile, showing "X is not a function" for code that `tsc` accepts. Restart it. Stopping the background task can leave `next` running, so stop whatever listens on the port too.
 - Before an e2e run, check what serves the port. A stale `next start` on 3000 silently runs old code, and `next dev` then moves to 3001.
 - The slug is claimed once from the first brand name, so a later rename keeps the old slug. Revisit at 1.5 publish.
 - UI palette from the brand board: #2B0B3F, #F97316, #FBBF24, #1F1F1F, #F8FAFC. Font: DM Sans.

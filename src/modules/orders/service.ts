@@ -98,6 +98,17 @@ export async function getOrder(storeId: string, orderId: string): Promise<Order 
   return data && toOrder(data);
 }
 
+/** For a provider's webhook, where the store comes from our own order row. An order we don't know is ignored. */
+export async function settleByProviderOrder(providerOrderId: string): Promise<Order | null> {
+  const { data, error } = await serviceRoleClient()
+    .from("orders")
+    .select("*")
+    .eq("paypal_order_id", providerOrderId)
+    .maybeSingle();
+  if (error) throw new Error(`Order read failed: ${error.code}`);
+  return data && settleOrder(toOrder(data));
+}
+
 /** Only the first call for an order changes anything, so stock moves once however often this runs. */
 async function markPaid(order: Order, captureId: string, payerEmail?: string): Promise<Order> {
   const { data, error } = await serviceRoleClient()

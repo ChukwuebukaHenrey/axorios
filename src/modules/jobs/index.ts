@@ -1,6 +1,7 @@
 import "server-only";
 import { chatReply } from "./chat-reply";
+import { paypalEvent } from "./paypal-event";
 
-export { CHAT_MESSAGE_RECEIVED, inngest } from "./client";
+export { CHAT_MESSAGE_RECEIVED, inngest, PAYPAL_EVENT_RECEIVED } from "./client";
 
-export const functions = [chatReply];
+export const functions = [chatReply, paypalEvent];

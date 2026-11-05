@@ -36,6 +36,33 @@ export async function listProducts(storeId: string): Promise<Product[]> {
   return data.map(toProduct);
 }
 
+/**
+ * Sets how a store prices and how buyers are charged. A store with products can't change its price currency,
+ * because that would need new prices only the owner can give.
+ */
+export async function setStoreCurrency(
+  storeId: string,
+  { currency, settlementCurrency }: { currency?: string; settlementCurrency?: string },
+) {
+  const db = serviceRoleClient();
+  if (currency) {
+    const { data, error } = await db.from("products").select("currency").eq("store_id", storeId).eq("active", true);
+    if (error) throw new Error(`Product read failed: ${error.code}`);
+    assertSameCurrency(
+      data.map((p) => p.currency),
+      currency,
+    );
+  }
+  const { data, error } = await db
+    .from("stores")
+    .update({ ...(currency && { currency }), ...(settlementCurrency && { settlement_currency: settlementCurrency }) })
+    .eq("id", storeId)
+    .select("currency, settlement_currency")
+    .single();
+  if (error) throw new Error(`Currency update failed: ${error.code}`);
+  return { currency: data.currency, settlementCurrency: data.settlement_currency };
+}
+
 /** Takes paid quantities out of stock, stopping at zero. */
 export async function decrementStock(storeId: string, lines: { productId: string; quantity: number }[]): Promise<void> {
   const db = serviceRoleClient();

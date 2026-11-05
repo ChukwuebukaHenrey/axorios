@@ -4,7 +4,7 @@ import { env } from "@/lib/env";
 import { serviceRoleClient } from "@/lib/supabase/service-role";
 import { BrandKitSchema } from "@/modules/brand";
 import { decrementStock, listProducts } from "@/modules/catalog";
-import { isChargeable, paymentProvider } from "@/modules/payments";
+import { isChargeable, paymentProvider, quote } from "@/modules/payments";
 import { CheckoutError, OrderLineSchema, priceCart, type CartItem, type OrderLine } from "./schema";
 
 type OrderRow = Database["public"]["Tables"]["orders"]["Row"];
@@ -24,14 +24,27 @@ type NewOrder = {
   deliveryNote?: string;
 };
 
+/** PayPal charges the owner's currency when it can. Otherwise the settlement currency, at a rate locked on the order. */
+async function chargeFor(totalMinor: number, currency: string, settlementCurrency: string) {
+  if (isChargeable(currency)) return { minor: totalMinor, currency, rate: null, source: null };
+  if (!isChargeable(settlementCurrency)) throw new CheckoutError("currency_not_supported");
+  const { chargeMinor, rate, source } = await quote(totalMinor, currency, settlementCurrency);
+  if (chargeMinor <= 0) throw new CheckoutError("empty_total");
+  return { minor: chargeMinor, currency: settlementCurrency, rate, source };
+}
+
 /** Prices the cart from the database, saves the order, then opens its PayPal checkout. */
 export async function createOrder({ storeId, slug, items, channel, customerRef, deliveryNote }: NewOrder) {
   const db = serviceRoleClient();
-  const { data: store, error: storeError } = await db.from("stores").select("brand_kit").eq("id", storeId).single();
+  const { data: store, error: storeError } = await db
+    .from("stores")
+    .select("brand_kit, settlement_currency")
+    .eq("id", storeId)
+    .single();
   if (storeError) throw new Error(`Store read failed: ${storeError.code}`);
 
   const { lines, totalMinor, currency } = priceCart(await listProducts(storeId), items);
-  if (!isChargeable(currency)) throw new CheckoutError("currency_not_supported");
+  const charge = await chargeFor(totalMinor, currency, store.settlement_currency);
 
   const { data: row, error } = await db
     .from("orders")
@@ -40,8 +53,10 @@ export async function createOrder({ storeId, slug, items, channel, customerRef, 
       items: lines as unknown as Json,
       total_minor: totalMinor,
       currency,
-      charge_total_minor: totalMinor,
-      charge_currency: currency,
+      charge_total_minor: charge.minor,
+      charge_currency: charge.currency,
+      fx_rate: charge.rate,
+      fx_source: charge.source,
       channel,
       customer_ref: customerRef ?? null,
       delivery_note: deliveryNote || null,

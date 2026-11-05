@@ -120,6 +120,24 @@ try {
   const foreign = await fetch(`${base}/s/${other.slug}/order/${tampered.body.orderId}`);
   check(foreign.status === 404, "an order can't be opened through another store");
 
+  // Step 2.3: PayPal can't charge naira, so the order converts at a rate it keeps.
+  const ngn = await makeStore(`checkout-ngn-${suffix}`, "live", "NGN", 4_500_000);
+  const naira = await checkout({ slug: ngn.slug, items: [{ productId: ngn.productId, quantity: 1 }] });
+  check(naira.status === 200 && naira.body.currency === "NGN" && naira.body.chargeCurrency === "USD", "an NGN store charges USD", `${naira.body.totalMinor} NGN minor -> ${naira.body.chargeMinor} USD minor`);
+  const { data: locked, error: lockedError } = await admin
+    .from("orders")
+    .select("total_minor, currency, charge_total_minor, charge_currency, fx_rate, fx_source")
+    .eq("id", naira.body.orderId)
+    .single();
+  if (lockedError) throw new Error(`Order read failed: ${lockedError.code}`);
+  check(Math.round(locked.total_minor * Number(locked.fx_rate)) === locked.charge_total_minor, "the stored rate explains the charge", `rate ${locked.fx_rate} from ${locked.fx_source}`);
+  const nairaAtPayPal = (await (await fetch(`${PAYPAL}/v2/checkout/orders/${naira.body.paypalOrderId}`, { headers })).json()) as typeof atPayPal;
+  const amount = nairaAtPayPal.purchase_units[0].amount;
+  check(amount.currency_code === "USD" && amount.value === (locked.charge_total_minor / 100).toFixed(2), "PayPal holds the converted amount", `${amount.value} ${amount.currency_code}`);
+  check(tampered.body.chargeCurrency === "GBP", "a GBP store charges GBP, with no conversion");
+  const { data: direct } = await admin.from("orders").select("fx_rate").eq("id", tampered.body.orderId).single();
+  check(direct?.fx_rate === null, "no rate is stored when nothing is converted");
+
 } finally {
   await admin.from("stores").delete().eq("owner_id", userId);
   await admin.auth.admin.deleteUser(userId);

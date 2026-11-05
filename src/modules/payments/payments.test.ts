@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { convertMinor, lockRate } from "./convert";
 import { isChargeable } from "./currency";
 import { parsePayPalEvent } from "./webhook-event";
 
@@ -29,6 +30,31 @@ describe("parsePayPalEvent", () => {
   it("refuses a body that isn't an event", () => {
     expect(parsePayPalEvent("not json")).toBeNull();
     expect(parsePayPalEvent(JSON.stringify({ hello: "world" }))).toBeNull();
+  });
+});
+
+describe("convertMinor", () => {
+  it("converts naira to dollars at a locked rate", () => {
+    const rate = lockRate(1 / 1346);
+    expect(convertMinor(4_500_000, "NGN", "USD", rate)).toBe(3343);
+  });
+
+  it("respects currencies with no decimals or three", () => {
+    expect(convertMinor(1000, "JPY", "USD", 0.0065)).toBe(650); // ¥1,000 = $6.50
+    expect(convertMinor(650, "USD", "JPY", 153.8)).toBe(1000); // $6.50 = ¥999.7, rounded to whole yen
+    expect(convertMinor(1000, "KWD", "USD", 3.25)).toBe(325); // 1.000 KWD = $3.25
+  });
+
+  it("gets the same charge back from the stored rate", () => {
+    const stored = Number(lockRate(0.000742942050520059).toString());
+    expect(convertMinor(4_500_000, "NGN", "USD", stored)).toBe(convertMinor(4_500_000, "NGN", "USD", lockRate(0.000742942050520059)));
+    expect(String(stored).split(".")[1].length).toBeLessThanOrEqual(10);
+  });
+
+  it("refuses an unusable rate", () => {
+    expect(() => lockRate(0)).toThrow();
+    expect(() => lockRate(Number.NaN)).toThrow();
+    expect(() => lockRate(0.00000000001)).toThrow();
   });
 });
 

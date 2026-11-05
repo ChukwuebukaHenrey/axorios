@@ -9,9 +9,10 @@ import {
   type UIMessage,
 } from "ai";
 import { z } from "zod";
-import { formatMinor } from "@/lib/money";
+import { formatMinor, isIsoCurrency } from "@/lib/money";
 import { BrandDraftSchema, BrandPatchSchema, createBrandKit, getBrandKit, updateBrandKit } from "@/modules/brand";
-import { addProducts, AddProductsSchema, listProducts } from "@/modules/catalog";
+import { addProducts, AddProductsSchema, listProducts, setStoreCurrency } from "@/modules/catalog";
+import { isChargeable } from "@/modules/payments";
 import {
   editDraft,
   getDraftConfig,
@@ -71,6 +72,23 @@ function sellerTools(storeId: string) {
         "Save products the owner sells, or change one by saying its name again. Use only prices the owner stated: never invent, estimate or round a price, and if a price is missing, ask for it. You may write a short description in the store's language. After calling, confirm in one sentence.",
       inputSchema: AddProductsSchema,
       execute: async (input) => addProducts(storeId, input),
+    }),
+    set_currency: tool({
+      description:
+        "Set the currency the store prices in, or the currency buyers are charged in when PayPal can't charge the price currency. Only when the owner asks. If the store has products in another currency this fails: tell the owner, and ask for new prices. After calling, confirm in one sentence.",
+      inputSchema: z.object({
+        currency: z
+          .string()
+          .refine(isIsoCurrency, "Use a 3-letter ISO currency code")
+          .optional()
+          .describe("ISO code the store prices in, if the owner wants to change it"),
+        settlementCurrency: z
+          .string()
+          .refine(isChargeable, "PayPal can't charge this currency")
+          .optional()
+          .describe("ISO code buyers are charged in, if the owner wants to change it"),
+      }),
+      execute: async (input) => setStoreCurrency(storeId, input),
     }),
     edit_site: tool({
       description:

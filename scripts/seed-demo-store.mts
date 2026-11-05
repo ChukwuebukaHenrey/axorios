@@ -33,7 +33,8 @@ const kit = {
 const bot = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/getMe`);
 const botBody = (await bot.json()) as { ok: boolean; result?: { username?: string } };
 if (!botBody.ok || !botBody.result?.username) throw new Error(`Telegram getMe failed: HTTP ${bot.status}`);
-const whatsapp = process.env.TWILIO_WHATSAPP_FROM!.replace("whatsapp:", "");
+// WhatsApp is dormant, so the demo store shows no button that nothing answers.
+const whatsapp = process.env.WHATSAPP_ENABLED === "true" ? process.env.TWILIO_WHATSAPP_FROM?.replace("whatsapp:", "") : undefined;
 
 const { data: store, error: storeError } = await admin
   .from("stores")
@@ -46,7 +47,7 @@ const { data: store, error: storeError } = await admin
       currency: "NGN",
       settlement_currency: "USD",
       store_language: "en-NG",
-      contact_channels: { whatsapp, telegram: botBody.result.username },
+      contact_channels: { ...(whatsapp && { whatsapp }), telegram: botBody.result.username },
     },
     { onConflict: "slug" },
   )

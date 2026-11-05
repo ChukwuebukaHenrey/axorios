@@ -28,9 +28,10 @@ const schema = z.object({
   NEXT_PUBLIC_PAYPAL_CLIENT_ID: z.string().min(1),
   PAYPAL_WEBHOOK_ID: optional,
 
-  TWILIO_ACCOUNT_SID: z.string().min(1),
-  TWILIO_AUTH_TOKEN: z.string().min(1),
-  TWILIO_WHATSAPP_FROM: z.string().startsWith("whatsapp:"),
+  WHATSAPP_ENABLED: z.enum(["true", "false"]).default("false"),
+  TWILIO_ACCOUNT_SID: optional,
+  TWILIO_AUTH_TOKEN: optional,
+  TWILIO_WHATSAPP_FROM: optional,
 
   TELEGRAM_BOT_TOKEN: z.string().min(1),
   TELEGRAM_WEBHOOK_SECRET: z.string().min(1),

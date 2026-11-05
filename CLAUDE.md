@@ -26,7 +26,7 @@ Demo story: a Lagos cake shop priced in naira. A buyer in the UK orders a birthd
 - Vercel AI SDK (`ai`, `@ai-sdk/google`, `@ai-sdk/react`); model IDs from env only
 - Gemini: Flash-tier for the agent (text + audio in), image model for creatives and logos
 - PayPal: `@paypal/react-paypal-js`, Orders v2 REST, `@paypal/agent-toolkit`; sandbox only
-- Telegram Bot API via `fetch`. WhatsApp is out of this build; the Twilio adapter stays unused
+- Telegram Bot API via `fetch`. WhatsApp is dormant: the Twilio adapter stays in `channels`, switched off by `WHATSAPP_ENABLED`, and never claimed as working until it is tested
 - Shopify: `@shopify/admin-api-client` (Admin GraphQL)
 - Inngest for every background, slow or scheduled task
 - Zod for every schema: env, tool inputs, API bodies, `SiteConfig`, `DesignTokens`
@@ -100,4 +100,4 @@ CLI tools don't read `.env.local`. Load it first: `set -a; source .env.local; se
 
 ## Never (this build)
 
-Real money; WhatsApp on any provider; Jumia/Konga integrations; creating Shopify stores by API; paid ad buying; video generation; Midjourney; n8n/Make; multi-agent orchestration; external template platforms; storing card or bank details; LLM calls inside webhook requests.
+Real money; WhatsApp switched on without a usable account and an end-to-end test; Jumia/Konga integrations; creating Shopify stores by API; paid ad buying; video generation; Midjourney; n8n/Make; multi-agent orchestration; external template platforms; storing card or bank details; LLM calls inside webhook requests.

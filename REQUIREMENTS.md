@@ -89,7 +89,7 @@ What the product must do for the hackathon build. Each requirement has an ID; pl
 | N9 | Extensibility | Meta, Paystack or a new template preset = new adapter or config, no agent rewrite |
 
 ## 4. Out of scope (this build)
-Real money; WhatsApp on any provider; Meta (Instagram, Facebook posting, ads); Jumia and Konga; creating Shopify stores; video generation; external template platforms; delivery logistics; multi-agent orchestration.
+Real money; live WhatsApp (dormant behind `WHATSAPP_ENABLED` until an account is available); Meta (Instagram, Facebook posting, ads); Jumia and Konga; creating Shopify stores; video generation; external template platforms; delivery logistics; multi-agent orchestration.
 
 ## 5. Demo script (under 3 minutes)
 1. Seller speaks: "I bake celebration cakes in Lagos, prices from 30,000 naira." → brand kit appears.

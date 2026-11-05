@@ -94,6 +94,9 @@ export const paypal: PaymentProvider = {
               user_action: "PAY_NOW",
               return_url: request.returnUrl,
               cancel_url: request.cancelUrl,
+              // Fixed, not storeLanguage: this is the buyer's checkout page, and the buyer's own account
+              // locale (observed as Arabic for the sandbox buyer) otherwise overrides PayPal's default.
+              locale: "en-US",
             },
           },
         },

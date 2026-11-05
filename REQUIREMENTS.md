@@ -33,8 +33,8 @@ What the product must do for the hackathon build. Each requirement has an ID; pl
 | F3.3 | Seller clicks a section in the preview and changes it by chat | Only that section changes |
 | F3.4 | Every change is versioned and can be reverted | Revert restores the exact previous version |
 | F3.5 | Nothing goes public until the seller approves Publish | Public URL returns 404 for draft-only stores |
-| F3.6 | Store links shared in WhatsApp show the store name, image and description | Link preview renders in WhatsApp |
-| F3.7 | Store has WhatsApp and Telegram contact buttons and a web chat bubble | Each opens a conversation with the store's sales agent |
+| F3.6 | Store links shared in chat apps show the store name, image and description | Link preview renders in Telegram |
+| F3.7 | Store has a Telegram contact button and a web chat bubble | Each opens a conversation with the store's sales agent |
 
 ### Checkout and payments (F4)
 | ID | Requirement | Acceptance |
@@ -48,11 +48,11 @@ What the product must do for the hackathon build. Each requirement has an ID; pl
 ### Chat selling (F5)
 | ID | Requirement | Acceptance |
 |---|---|---|
-| F5.1 | Customers chat with the store on WhatsApp (Twilio Sandbox), Telegram and web chat | Same agent answers on all three |
+| F5.1 | Customers chat with the store on Telegram and web chat | Same agent answers on both |
 | F5.2 | Sales agent answers only from this store's catalog, in the customer's language | Questions about other stores or prices get a correct refusal |
 | F5.3 | Sales agent creates an order and sends a PayPal payment link | Paying via the link marks the order paid |
 | F5.4 | Seller sees every conversation in one inbox and can take over | Takeover stops agent replies on that conversation |
-| F5.5 | Replies arrive within 10 s on WhatsApp | Measured on the production deployment |
+| F5.5 | Replies arrive within 10 s on Telegram | Measured on the production deployment |
 
 ### Marketing (F6)
 | ID | Requirement | Acceptance |
@@ -89,12 +89,12 @@ What the product must do for the hackathon build. Each requirement has an ID; pl
 | N9 | Extensibility | Meta, Paystack or a new template preset = new adapter or config, no agent rewrite |
 
 ## 4. Out of scope (this build)
-Real money; Meta (WhatsApp Cloud API, Instagram, Facebook posting, ads); Jumia and Konga; creating Shopify stores; video generation; external template platforms; delivery logistics; multi-agent orchestration.
+Real money; WhatsApp on any provider; Meta (Instagram, Facebook posting, ads); Jumia and Konga; creating Shopify stores; video generation; external template platforms; delivery logistics; multi-agent orchestration.
 
 ## 5. Demo script (under 3 minutes)
 1. Seller speaks: "I bake celebration cakes in Lagos, prices from 30,000 naira." → brand kit appears.
 2. Agent drafts the store in the Market preset; seller switches preset, edits the hero by clicking it, then publishes.
 3. UK buyer opens the store, sees ₦45,000 ≈ $29.40, pays with the PayPal sandbox; order shows both amounts.
-4. A customer messages on WhatsApp in Pidgin; the agent answers and sends a PayPal link; payment lands.
+4. A customer messages on Telegram in Pidgin; the agent answers and sends a PayPal link; payment lands.
 5. Agent generates 3 on-brand posts; one publishes to Telegram on schedule.
 6. Agent syncs the catalog to Shopify; products appear in the Shopify admin.

@@ -15,7 +15,7 @@ Read these before any work:
 
 ## Product in one paragraph
 
-A voice-first AI agent that takes a non-technical seller anywhere in the world from a business idea to a first paid order. It covers a brand kit, a designed storefront with PayPal checkout, chat selling on WhatsApp and Telegram, scheduled on-brand marketing, and Shopify sync. Built solo for the PayPal AI Hackathon (Devpost). Submit by 11 Nov 2026; hard deadline 12 Nov; judging 1–15 Dec. Hard requirements: working prototype, public MIT repo, YouTube demo under 3 min, PayPal sandbox integration.
+A voice-first AI agent that takes a non-technical seller anywhere in the world from a business idea to a first paid order. It covers a brand kit, a designed storefront with PayPal checkout, chat selling on Telegram, scheduled on-brand marketing, and Shopify sync. Built solo for the PayPal AI Hackathon (Devpost). Submit by 11 Nov 2026; hard deadline 12 Nov; judging 1–15 Dec. Hard requirements: working prototype, public MIT repo, YouTube demo under 3 min, PayPal sandbox integration.
 
 Demo story: a Lagos cake shop priced in naira. A buyer in the UK orders a birthday cake for family in Lagos and pays in USD through PayPal, with local delivery.
 
@@ -26,7 +26,7 @@ Demo story: a Lagos cake shop priced in naira. A buyer in the UK orders a birthd
 - Vercel AI SDK (`ai`, `@ai-sdk/google`, `@ai-sdk/react`); model IDs from env only
 - Gemini: Flash-tier for the agent (text + audio in), image model for creatives and logos
 - PayPal: `@paypal/react-paypal-js`, Orders v2 REST, `@paypal/agent-toolkit`; sandbox only
-- Twilio Node SDK (WhatsApp Sandbox), Telegram Bot API via `fetch`
+- Telegram Bot API via `fetch`. WhatsApp is out of this build; the Twilio adapter stays unused
 - Shopify: `@shopify/admin-api-client` (Admin GraphQL)
 - Inngest for every background, slow or scheduled task
 - Zod for every schema: env, tool inputs, API bodies, `SiteConfig`, `DesignTokens`
@@ -59,7 +59,7 @@ docs/spec.md
 
 - Public API only from `src/modules/<name>/index.ts`. Never import another module's internals.
 - Vendors sit behind interfaces in `src/modules/<name>/adapters/`, chosen by a registry from env flags:
-  `PaymentProvider` (PayPal), `Channel` (Twilio WhatsApp, Telegram, web chat), `Publisher` (Telegram channel, download pack), `ImageProvider` (Gemini), `CommercePlatform` (Shopify).
+  `PaymentProvider` (PayPal), `Channel` (Telegram, web chat), `Publisher` (Telegram channel, download pack), `ImageProvider` (Gemini), `CommercePlatform` (Shopify).
 - Adding Meta later = one adapter file + one flag; no agent changes.
 
 ## Non-negotiables
@@ -100,4 +100,4 @@ CLI tools don't read `.env.local`. Load it first: `set -a; source .env.local; se
 
 ## Never (this build)
 
-Real money; Jumia/Konga integrations; creating Shopify stores by API; paid ad buying; video generation; Midjourney; n8n/Make; multi-agent orchestration; external template platforms; storing card or bank details; LLM calls inside webhook requests.
+Real money; WhatsApp on any provider; Jumia/Konga integrations; creating Shopify stores by API; paid ad buying; video generation; Midjourney; n8n/Make; multi-agent orchestration; external template platforms; storing card or bank details; LLM calls inside webhook requests.

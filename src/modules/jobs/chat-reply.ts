@@ -63,7 +63,7 @@ export const chatReply = inngest.createFunction(
     if ("reply" in turn) reply = turn.reply;
     if ("agent" in turn) {
       const { store, conversationId } = turn.agent;
-      const text = await step.run("agent", () => runSalesAgent(store, conversationId));
+      const text = await step.run("agent", () => runSalesAgent(store, conversationId, message));
       reply = text || t.chat.failed;
       await step.run("save-reply", () => recordMessage(store.storeId, conversationId, "agent", reply!));
     }

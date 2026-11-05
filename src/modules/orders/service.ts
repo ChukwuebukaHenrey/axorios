@@ -20,7 +20,7 @@ type NewOrder = {
   storeId: string;
   slug: string;
   items: CartItem[];
-  channel: "web" | "telegram" | "whatsapp";
+  channel: "web" | "telegram" | "whatsapp" | "instagram";
   customerRef?: string;
   deliveryNote?: string;
 };

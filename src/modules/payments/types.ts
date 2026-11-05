@@ -21,6 +21,8 @@ export type CaptureResult =
 export interface PaymentProvider {
   name: string;
   createCheckout(request: CheckoutRequest): Promise<CheckoutSession>;
+  /** Where a buyer pays for a checkout already created, for sending as a link. */
+  checkoutUrl(providerOrderId: string): string;
   /** Safe to call any number of times for one order. */
   capture(providerOrderId: string): Promise<CaptureResult>;
   /** Returns null unless the provider confirms it really sent this request. */

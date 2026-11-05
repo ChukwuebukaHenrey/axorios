@@ -121,6 +121,9 @@
     "storeClosed": "Sorry, that shop isn't open right now. Please check the link with the shop.",
     "textOnly": "Sorry, I can only read text messages for now. Please type what you need.",
     "busy": "We're getting a lot of messages today. Please try again tomorrow, or order on the shop's page.",
-    "failed": "Sorry, something went wrong on our side. Please try again in a minute."
+    "failed": "Sorry, something went wrong on our side. Please try again in a minute.",
+    "paymentTotal": "Total: {total}",
+    "paymentCharge": "You pay {charge} through PayPal (1 {from} = {rate} {to}).",
+    "paymentLink": "Pay here: {url}"
   }
 }

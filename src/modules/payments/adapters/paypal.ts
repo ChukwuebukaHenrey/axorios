@@ -106,6 +106,10 @@ export const paypal: PaymentProvider = {
     return { providerOrderId: order.id, approveUrl };
   },
 
+  checkoutUrl(providerOrderId) {
+    return `https://www.sandbox.paypal.com/checkoutnow?token=${encodeURIComponent(providerOrderId)}`;
+  },
+
   async capture(providerOrderId) {
     // Read first: a capture attempted before approval must not be replayed under the same request ID afterwards.
     const current = await getOrder(providerOrderId);

@@ -8,9 +8,11 @@ import { t } from "@/lib/messages";
 import type { BrandKit } from "@/modules/brand";
 import type { Product } from "@/modules/catalog";
 import { BrandCard } from "./brand-card";
+import { CampaignCard } from "./campaign-card";
 import { PreviewPane } from "./preview-pane";
 import { ProductsCard } from "./products-card";
 import { PublishCard } from "./publish-card";
+import { ScheduleCard } from "./schedule-card";
 
 const BRAND_TOOL_TYPES = new Set(["tool-create_brand_kit", "tool-update_brand_kit", "tool-suggest_names"]);
 /** Any of these changes what the store looks like, so the preview reloads when one finishes. */
@@ -129,6 +131,19 @@ export function BuilderChat({
                         onRespond={(id, approved) => addToolApprovalResponse({ id, approved })}
                       />
                     );
+                  }
+                  if (part.type === "tool-schedule_posts") {
+                    return (
+                      <ScheduleCard
+                        key={i}
+                        part={part as ComponentProps<typeof ScheduleCard>["part"]}
+                        onRespond={(id, approved) => addToolApprovalResponse({ id, approved })}
+                      />
+                    );
+                  }
+                  if (part.type === "tool-generate_campaign" && (part as ToolPart).state === "output-available") {
+                    const queued = (part as ToolPart).output as { campaignId?: string; count?: number };
+                    return queued.campaignId ? <CampaignCard key={i} campaignId={queued.campaignId} count={queued.count ?? 3} /> : null;
                   }
                   const kit = brandOutput(part as ToolPart);
                   if (kit) {

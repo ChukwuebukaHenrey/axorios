@@ -11,9 +11,10 @@ type FontEntry = { name: string; data: ArrayBuffer; weight: 400 | 700; style: "n
  * Fetches a TTF from Google Fonts. The v1 CSS API returns the nearest weight, where css2 fails on a missing one.
  * Returns null on any failure, so a bad font name still gives an image.
  */
-async function googleFont(family: string, weight: 400 | 700): Promise<FontEntry | null> {
+async function googleFont(family: string, weight: 400 | 700, subset?: string): Promise<FontEntry | null> {
   try {
-    const css = await fetch(`https://fonts.googleapis.com/css?family=${encodeURIComponent(family)}:${weight}`, {
+    const text = subset ? `&text=${encodeURIComponent(subset)}` : "";
+    const css = await fetch(`https://fonts.googleapis.com/css?family=${encodeURIComponent(family)}:${weight}${text}`, {
       signal: AbortSignal.timeout(5000),
     }).then((r) => (r.ok ? r.text() : ""));
     const url = /src:\s*url\((https:[^)]+)\)\s*format\('(?:truetype|opentype)'\)/.exec(css)?.[1];
@@ -104,7 +105,12 @@ export const templateImages: ImageProvider = {
 
   async generate(request) {
     const { fonts } = request.brand;
-    const loaded = await Promise.all([googleFont(fonts.heading, 700), googleFont(fonts.body, 400)]);
+    // Many brand fonts have no ₦ or ₵, which would draw as an empty box. The renderer falls back to this for missing glyphs.
+    const loaded = await Promise.all([
+      googleFont(fonts.heading, 700),
+      googleFont(fonts.body, 400),
+      request.priceLabel ? googleFont("Noto Sans", 700, request.priceLabel) : null,
+    ]);
     const image = new ImageResponse(layout(request), {
       ...request.size,
       fonts: loaded.filter((font): font is FontEntry => font !== null),

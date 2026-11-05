@@ -42,6 +42,43 @@
     "live": "Your store is live",
     "denied": "Not published. Your store is still private."
   },
+  "scheduleCard": {
+    "title": "Schedule these posts?",
+    "bodyOne": "1 post will go out on your Telegram channel at:",
+    "bodyMany": "{count} posts will go out on your Telegram channel at:",
+    "approve": "Schedule",
+    "deny": "Not yet",
+    "done": "Scheduled. You can change this on the Marketing page.",
+    "refused": "These posts couldn't be scheduled.",
+    "denied": "Not scheduled. Your posts are still drafts."
+  },
+  "campaignCard": {
+    "working": "Making your posts",
+    "ready": "Your posts are ready",
+    "failed": "Some posts couldn't be made. Please try again.",
+    "open": "Review and schedule"
+  },
+  "campaigns": {
+    "title": "Marketing",
+    "empty": "No posts yet. Ask for some in the chat: \"Make me 3 posts for birthday season.\"",
+    "generating": "Making this post",
+    "caption": "Caption",
+    "postAt": "Post at",
+    "save": "Save caption",
+    "saved": "Saved",
+    "approve": "Approve and schedule",
+    "cancel": "Cancel schedule",
+    "download": "Download pack",
+    "downloadCampaign": "Download all posts",
+    "noChannel": "This store can't post automatically yet. Download the pack and post it yourself.",
+    "scheduledFor": "Goes out {time}",
+    "published": "Posted {time}",
+    "view": "View post",
+    "failed": "This post didn't go out. Check the time and try again.",
+    "errorTime": "Pick a time in the next 7 days.",
+    "errorGeneric": "That didn't work. Please try again.",
+    "imageAlt": "Post image"
+  },
   "brandCard": {
     "title": "Brand kit",
     "nameOptions": "Other names",

@@ -43,7 +43,10 @@ export default async function DashboardPage() {
       <header className="flex items-center gap-2 bg-primary px-4 py-3 text-white">
         <Logo className="size-6" />
         <h1 className="font-semibold">{t.dashboard.title}</h1>
-        <Link href="/build" className="ml-auto inline-flex min-h-11 items-center px-2 text-sm font-semibold underline">
+        <Link href="/dashboard/campaigns" className="ml-auto inline-flex min-h-11 items-center px-2 text-sm font-semibold underline">
+          {t.campaigns.title}
+        </Link>
+        <Link href="/build" className="inline-flex min-h-11 items-center px-2 text-sm font-semibold underline">
           {t.dashboard.toBuilder}
         </Link>
       </header>

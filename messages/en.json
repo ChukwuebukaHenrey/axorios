@@ -29,5 +29,9 @@
     "fonts": "Fonts",
     "tone": "Tone",
     "editHint": "Ask me to change anything."
+  },
+  "productsCard": {
+    "title": "Your products",
+    "editHint": "Tell me a new price or another product to add."
   }
 }

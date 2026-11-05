@@ -6,7 +6,9 @@ import { Loader2, SendHorizontal } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { t } from "@/lib/messages";
 import type { BrandKit } from "@/modules/brand";
+import type { Product } from "@/modules/catalog";
 import { BrandCard } from "./brand-card";
+import { ProductsCard } from "./products-card";
 
 const BRAND_TOOL_TYPES = new Set(["tool-create_brand_kit", "tool-update_brand_kit"]);
 
@@ -16,12 +18,18 @@ function brandOutput(part: ToolPart): BrandKit | null {
   return BRAND_TOOL_TYPES.has(part.type) && part.state === "output-available" ? (part.output as BrandKit) : null;
 }
 
+function productsOutput(part: ToolPart): Product[] | null {
+  return part.type === "tool-add_products" && part.state === "output-available" ? (part.output as Product[]) : null;
+}
+
 export function BuilderChat({
   initialMessages,
   initialKit,
+  initialProducts,
 }: {
   initialMessages: UIMessage[];
   initialKit: BrandKit | null;
+  initialProducts: Product[];
 }) {
   const [input, setInput] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
@@ -38,6 +46,16 @@ export function BuilderChat({
     }
     return initialKit;
   }, [messages, initialKit]);
+
+  const latestProducts = useMemo(() => {
+    for (const message of [...messages].reverse()) {
+      for (const part of [...message.parts].reverse()) {
+        const products = productsOutput(part as ToolPart);
+        if (products) return products;
+      }
+    }
+    return initialProducts;
+  }, [messages, initialProducts]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -74,9 +92,17 @@ export function BuilderChat({
                   );
                 }
                 const kit = brandOutput(part as ToolPart);
-                return kit ? (
+                if (kit) {
+                  return (
+                    <div key={i} className="my-2 w-full max-w-sm md:hidden">
+                      <BrandCard kit={kit} />
+                    </div>
+                  );
+                }
+                const products = productsOutput(part as ToolPart);
+                return products ? (
                   <div key={i} className="my-2 w-full max-w-sm md:hidden">
-                    <BrandCard kit={kit} />
+                    <ProductsCard products={products} />
                   </div>
                 ) : null;
               })}
@@ -115,8 +141,9 @@ export function BuilderChat({
       <aside className="hidden flex-1 overflow-y-auto bg-black/[0.03] p-6 md:block">
         <h2 className="mb-4 font-semibold">{t.builder.panelTitle}</h2>
         {latestKit ? (
-          <div className="max-w-md">
+          <div className="flex max-w-md flex-col gap-4">
             <BrandCard kit={latestKit} />
+            {latestProducts.length > 0 && <ProductsCard products={latestProducts} />}
           </div>
         ) : (
           <p className="text-black/60">{t.builder.panelEmpty}</p>

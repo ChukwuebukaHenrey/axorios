@@ -100,6 +100,7 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 | `@paypal/agent-toolkit` dropped, using the spec's fallback: 1.11.0 bundles `ai` 4.3.19 against our v7 and its order schema takes item prices from the model, which breaks the money rule. Own tools call Orders v2 REST | Applied in 0.2 |
 | No Gemini billing for now (user decision, 5 Nov). `ImageProvider` stays an adapter: a `next/og` template adapter renders on-brand graphics; a Gemini adapter is switched on by env flag when billing or another provider is available | Applied in 0.4 |
 | Keys used as provided; Twilio and Telegram tokens not rotated | User decision, 4 Nov |
+| A store has one price currency: the first products set `stores.currency`, and a second currency is refused so carts total without converting. `add_products` matches on name, so repeating a product changes it. Stock defaults to 100 when the owner states none, because made-to-order sellers don't count stock | Applied in 1.2 |
 | Gemini on free tier: `gemini-3.5-flash` answers text; `gemini-2.5-flash-image`, `gemini-3.1-flash-image` and `gemini-3.1-flash-lite-image` all return 429 quota errors (4 Nov) | Blocks 0.4, 4.1, 4.5 until billing is on |
 | FX provider candidate: open.er-api.com, no key, returned NGN, GHS and KES on 4 Nov (about 1,346 NGN per USD, so 45,000 NGN is about $33.43, not the spec's $29.40) | To confirm in 0.6 |
 
@@ -108,17 +109,18 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 |---|---|---|
 | 0.1 | Done | Migrations apply via `--db-url` on the eu-central-1 session pooler (aws-1); direct host is IPv6-only and the access token lacks `projects_read`, so `supabase link` isn't used. Types come from the Management API `types/typescript` endpoint. |
 | 0.2 | Done | Order 7KS098545V1134712 created by a Gemini tool call; price injection ignored. Pinned `ai` 7.0.163, `@ai-sdk/google` 4.0.112, `@ai-sdk/react` 4.0.167. Toolkit not used: see decisions. |
-| 0.3 | In progress | Channel adapter, webhook route and echo job built. Needs Inngest keys, and the Sandbox "when a message comes in" URL set in the Twilio console. |
+| 0.3 | In progress | Channel adapter, webhook route and echo job built and synced to Inngest. Needs the Sandbox "when a message comes in" URL set in the Twilio console, then send "hi". |
 | 0.4 | Done (revised) | 64 KB on-brand PNG from `next/og` saved to Supabase Storage with no AI model. Gemini images return 429 until billing is on. |
-| 0.5 | Not started | |
+| 0.5 | Blocked | Client-credentials retry on 5 Nov still returns `app_not_installed`. Needs the app installed on the dev store. |
 | 0.6 | Done | open.er-api.com: NGN, GHS and KES returned; 45,000 NGN = 33.43 USD; 1 h cache verified. |
-| 0.7 | In progress | Vercel project `axorios` created and linked to the repo. Env vars, Inngest sync and webhook registration still to do. |
+| 0.7 | In progress | Deployed; `/api/health` 200. Inngest keys on Vercel; app `axorios` synced with status success. Left: Twilio URL (console only). The Telegram webhook waits for its route in 3.3. |
 | 1.1 | Done | `npm test -- brand` 4/4; `scripts/e2e-brand.mts` passes: kit saved, single-field edit, Pidgin reply, signed-out 401. Password sign-in tested through the API. Screens not yet checked by eye. Magic link untested: needs the Supabase Auth site URL and redirect set to the production domain. |
-| 1.2 | Next | |
+| 1.2 | Done | `npm test -- catalog` 13/13. `scripts/e2e-catalog.mts` passes through the real agent: 45,000 NGN saved as 4500000, store currency set to NGN, a repeat changes the price with no duplicate, no price means no product, RLS hides draft products. |
+| 1.3 | Next | |
 | Rest of phases 1-5 | Not started | |
 
 ## Waiting on the user
-- Inngest keys in `.env.local` (`INNGEST_EVENT_KEY`, `INNGEST_SIGNING_KEY`). Then load them to Vercel, redeploy, sync the app and confirm `/api/inngest` stops returning 500.
+- Gemini text quota: `gemini-3.5-flash` hit the free-tier daily per-model cap on 5 Nov (429, `GenerateRequestsPerDayPerProjectPerModel-FreeTier`). Judges would hit the same cap during 1-15 Dec. Needs a decision before 5.3.
 - Shopify app installed on `ebukahs-dev-store`; currently `app_not_installed`. Blocks 0.5 and 4.4. Auth is the client-credentials grant, not a stored `shpat_` token.
 - Twilio Sandbox "When a message comes in" set to `https://axorios.vercel.app/api/webhooks/twilio` (POST). Console only.
 - `TELEGRAM_CHANNEL_ID` in `.env.local`. Needed by 4.2.
@@ -135,6 +137,7 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 - Read before using, because these differ from older docs: `node_modules/ai/docs` (AI SDK 7: `isStepCount`, `inputSchema`, `toUIMessageStream` with `onEnd`, `toolApproval` for approval cards), `node_modules/next/dist/docs` (Next 16: `proxy.ts`), Inngest 4 (`triggers` inside the options object).
 - Gemini: `gemini-3.5-flash` for text. `gemini-3.8-flash` and `gemini-flash-latest` returned 503 on 4 Nov. `gemini-2.5-flash` is closed to new users.
 - npm is slow on this machine, sometimes 10 minutes: run installs in the background.
+- Before an e2e run, check what serves the port. A stale `next start` on 3000 silently runs old code, and `next dev` then moves to 3001.
 - The slug is claimed once from the first brand name, so a later rename keeps the old slug. Revisit at 1.5 publish.
 - UI palette from the brand board: #2B0B3F, #F97316, #FBBF24, #1F1F1F, #F8FAFC. Font: DM Sans.
 - Demo seller exists, with credentials in `.env.local`. Re-seed with `scripts/seed-demo-user.mts`. Its store holds test data from the e2e run.

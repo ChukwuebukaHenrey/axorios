@@ -21,8 +21,8 @@ const kit = {
 const presetIds = Object.keys(MARKET_PRESETS) as MarketPresetId[];
 
 describe("presets", () => {
-  it("offers 3 Market presets", () => {
-    expect(presetIds).toEqual(["market/warm-bakery", "market/bold-grid", "market/photo-led"]);
+  it("offers the bakery template and 3 Market presets", () => {
+    expect(presetIds).toEqual(["bakery", "market/warm-bakery", "market/bold-grid", "market/photo-led"]);
   });
 
   it.each(presetIds)("%s builds a valid config from the brand kit", (id) => {

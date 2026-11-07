@@ -116,7 +116,7 @@ function sellerTools(storeId: string) {
     }),
     choose_template: tool({
       description:
-        "Switch the draft store to another template. Keeps the owner's colours, fonts, products and text. warm-bakery is friendly with rounded shapes, bold-grid is strong with sharp edges and a list of products, photo-led is spacious and leads with big images.",
+        "Switch the draft store to another template. Keeps the owner's colours, fonts, products and text. bakery is playful, with wavy colour bands and cake stickers, for cake and pastry shops only. warm-bakery is friendly with rounded shapes, bold-grid is strong with sharp edges and a list of products, photo-led is spacious and leads with big images.",
       inputSchema: z.object({ template: z.enum(Object.keys(MARKET_PRESETS) as [MarketPresetId, ...MarketPresetId[]]) }),
       execute: async ({ template }) => {
         await switchDraftPreset(storeId, template, "agent");

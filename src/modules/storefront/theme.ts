@@ -24,6 +24,9 @@ function ensureReadable(text: string, background: string): string {
   return contrastRatio(text, background) >= 4.5 ? text : readableOn(background);
 }
 
+/** Accent font for the playful templates' section titles. Fixed per template, not part of the brand kit. */
+export const SCRIPT_FONT = "Pacifico";
+
 const RADIUS = { none: "0", soft: "0.5rem", round: "1.25rem" } as const;
 const SECTION_SPACE = { compact: "3rem", comfortable: "4.5rem", airy: "7rem" } as const;
 const IMAGE_ASPECT = { square: "1 / 1", portrait: "4 / 5", wide: "4 / 3" } as const;
@@ -45,6 +48,9 @@ export function storeCssVars(tokens: DesignTokens): CSSProperties {
     "--store-on-accent": readableOn(palette.accent),
     "--store-paper": palette.neutralLight,
     "--store-ink": ensureReadable(palette.neutralDark, palette.neutralLight),
+    // A pale tint of the secondary colour, for soft bands and picture tiles.
+    "--store-soft": `color-mix(in oklab, ${palette.secondary} 30%, ${palette.neutralLight})`,
+    "--store-font-script": `"${SCRIPT_FONT}", cursive`,
     "--store-font-heading": fontStack(fonts.heading),
     "--store-font-body": fontStack(fonts.body),
     "--store-radius": RADIUS[tokens.radius],
@@ -61,7 +67,7 @@ export function storeCssVars(tokens: DesignTokens): CSSProperties {
 export function googleFontHrefs(fonts: DesignTokens["fonts"]): string[] {
   const families = [...new Set([fonts.heading, fonts.body])];
   return families.map(
-    (family) => `https://fonts.googleapis.com/css?family=${encodeURIComponent(family)}:400,600,700&display=swap`,
+    (family) => `https://fonts.googleapis.com/css?family=${encodeURIComponent(family)}:400,600,700,800,900&display=swap`,
   );
 }
 

@@ -1,5 +1,8 @@
 export { DraftBridge } from "./components/draft-bridge";
-export { SiteRenderer, StoreFrame } from "./components/site-renderer";
+export { Band, Squiggle, StickerImage } from "./components/playful";
+export { SiteRenderer, StoreFrame, storeNavLinks } from "./components/site-renderer";
+export { templateArt } from "./components/template-art";
+export type { TemplateArt } from "./components/template-art";
 export { WaveDivider } from "./components/wave-divider";
 export { SiteEditSchema } from "./edit";
 export type { SiteEdit } from "./edit";

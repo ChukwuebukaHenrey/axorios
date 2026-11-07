@@ -3,7 +3,7 @@
 import { Minus, Plus, ShoppingBag, X } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { createContext, useContext, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { createContext, useContext, useMemo, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from "react";
 import { t } from "@/lib/messages";
 import { formatMinor } from "@/lib/money";
 
@@ -61,6 +61,8 @@ type CartState = {
   add: (productId: string) => void;
   setQuantity: (productId: string, quantity: number) => void;
   clear: () => void;
+  /** The cart dialog, opened from the floating button or the store header's bag. */
+  dialog: RefObject<HTMLDialogElement | null>;
 };
 
 const CartContext = createContext<CartState | null>(null);
@@ -75,6 +77,7 @@ export function CartProvider({
   children: ReactNode;
 }) {
   const key = `axorios-cart-${slug}`;
+  const dialog = useRef<HTMLDialogElement>(null);
   const raw = useSyncExternalStore(
     subscribe,
     () => readCart(key),
@@ -99,10 +102,16 @@ export function CartProvider({
       setQuantity,
       add: (productId) => setQuantity(productId, (Number(parseCart(readCart(key))[productId]) || 0) + 1),
       clear: () => writeCart(key, {}),
+      dialog,
     };
   }, [raw, products, key]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+}
+
+/** Null outside a store page with checkout, such as the builder preview or the order page. */
+export function useCart() {
+  return useContext(CartContext);
 }
 
 /** With no cart around it, as in the builder's preview, the button shows but does nothing. */
@@ -138,14 +147,13 @@ const ERRORS: Record<string, string> = {
 export function CartBar({ slug, paypalClientId, locale }: { slug: string; paypalClientId: string; locale: string }) {
   const cart = useContext(CartContext);
   const router = useRouter();
-  const dialog = useRef<HTMLDialogElement>(null);
   const [deliveryNote, setDeliveryNote] = useState("");
   const [checkout, setCheckout] = useState<Checkout | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!cart || cart.lines.length === 0) return null;
-  const { lines, setQuantity, clear } = cart;
+  const { lines, setQuantity, clear, dialog } = cart;
 
   const count = lines.reduce((sum, line) => sum + line.quantity, 0);
   const currency = lines[0].product.currency;

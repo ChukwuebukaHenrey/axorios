@@ -36,6 +36,7 @@
   --color-store-on-accent: var(--store-on-accent);
   --color-store-paper: var(--store-paper);
   --color-store-ink: var(--store-ink);
+  --color-store-soft: var(--store-soft);
   --font-store-heading: var(--store-font-heading);
   --font-store-body: var(--store-font-body);
   --radius-store: var(--store-radius);
@@ -45,6 +46,17 @@ body {
   background: var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-sans);
+}
+
+/* Template stickers on the storefront bob gently. Only applied under motion-safe. */
+@keyframes sticker-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(-3deg);
+  }
 }
 
 @keyframes marquee {

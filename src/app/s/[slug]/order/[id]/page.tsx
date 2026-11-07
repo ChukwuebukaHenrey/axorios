@@ -1,10 +1,24 @@
-import { CheckCircle2, Clock, TriangleAlert } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock, MapPin, TriangleAlert } from "lucide-react";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { t } from "@/lib/messages";
 import { formatMinor } from "@/lib/money";
 import { getOrder, settleOrder, type Order } from "@/modules/orders";
-import { getLiveStorefront, StoreFrame, WaveDivider } from "@/modules/storefront";
+import { customerChatUrl } from "@/modules/channels";
+import {
+  allowedImage,
+  Band,
+  getLiveStorefront,
+  Squiggle,
+  StickerImage,
+  StoreFrame,
+  storeNavLinks,
+  templateArt,
+  WaveDivider,
+  type Storefront,
+  type TemplateArt,
+} from "@/modules/storefront";
 
 export const metadata: Metadata = { title: t.order.pageTitle, robots: { index: false, follow: false } };
 
@@ -27,9 +41,31 @@ export default async function OrderPage({ params }: Props) {
   const order = await settleOrder(found);
   const copy = statusCopy(order.status);
   const converted = order.charge_currency !== order.currency;
+  const art = templateArt(store.config.preset);
+  const frame = {
+    tokens: store.config.tokens,
+    kit: store.kit,
+    locale: store.locale,
+    preset: store.config.preset,
+    homeHref: `/s/${store.slug}`,
+  };
+
+  if (art) {
+    const links = storeNavLinks(store.config, {
+      products: store.products,
+      contact: store.contact,
+      chatUrl: customerChatUrl(store.slug),
+      base: `/s/${store.slug}`,
+    });
+    return (
+      <StoreFrame {...frame} links={links}>
+        <PlayfulOrder store={store} order={order} copy={copy} converted={converted} art={art} />
+      </StoreFrame>
+    );
+  }
 
   return (
-    <StoreFrame tokens={store.config.tokens} kit={store.kit} locale={store.locale} preset={store.config.preset}>
+    <StoreFrame {...frame}>
       <main className="pb-16">
         {copy.tone === "success" ? (
           <>
@@ -105,5 +141,121 @@ export default async function OrderPage({ params }: Props) {
         </div>
       </main>
     </StoreFrame>
+  );
+}
+
+const TILES = ["bg-store-soft", "bg-store-accent", "bg-store-primary"];
+
+/** The order page for the playful templates: a wavy thank-you band, a rounded receipt card and a sticker band. */
+function PlayfulOrder({
+  store,
+  order,
+  copy,
+  converted,
+  art,
+}: {
+  store: Storefront;
+  order: Order;
+  copy: ReturnType<typeof statusCopy>;
+  converted: boolean;
+  art: TemplateArt;
+}) {
+  const paid = copy.tone === "success";
+  const images = new Map(store.products.map((product) => [product.id, allowedImage(product.imageUrl)]));
+
+  return (
+    <main>
+      <Band tone="primary" className="overflow-x-clip pb-24 md:pb-32">
+        <div className="mx-auto grid w-full max-w-5xl items-center gap-6 px-4 pt-10 md:grid-cols-[1.5fr_1fr] md:px-8 md:pt-16">
+          <div className="relative">
+            <StickerImage sticker={art.bursts[0]} className="-top-12 -left-3 w-12 md:-top-14 md:-left-20 md:w-20" />
+            {paid ? (
+              <>
+                <h1 className="font-store-heading text-6xl leading-none font-black tracking-tight whitespace-nowrap md:text-7xl lg:text-8xl">
+                  {t.order.paidThanks}
+                </h1>
+                <Squiggle className="mt-2 text-store-secondary" />
+                <p className="mt-4 font-store-heading text-3xl leading-tight font-black md:text-5xl">{t.order.paidHeadline}</p>
+              </>
+            ) : (
+              <h1 className="flex items-start gap-3 font-store-heading text-4xl leading-tight font-black tracking-tight text-balance md:text-6xl">
+                {copy.tone === "failed" ? (
+                  <TriangleAlert className="mt-2 size-9 shrink-0" aria-hidden="true" />
+                ) : (
+                  <Clock className="mt-2 size-9 shrink-0" aria-hidden="true" />
+                )}
+                {copy.title}
+              </h1>
+            )}
+            <p className="mt-5 max-w-md text-lg md:text-xl">{copy.body}</p>
+          </div>
+          <div className="relative mx-auto aspect-[8/7] w-56 md:w-full md:max-w-sm">
+            <StickerImage
+              sticker={paid ? art.feature[0] : art.small[3]}
+              priority
+              className={paid ? "inset-0 w-full rotate-[-6deg]" : "inset-[15%] w-[70%]"}
+            />
+            <StickerImage sticker={art.bursts[1]} delay={1} className="-top-6 -right-2 w-16 md:w-24" />
+          </div>
+        </div>
+      </Band>
+
+      <Band tone="paper" wave={1} className="pb-20 md:pb-28">
+        <div className="relative mx-auto w-full max-w-xl px-4 pt-6">
+          <div className="rounded-[2rem] border-2 border-store-ink bg-store-paper p-5 sm:p-8">
+            <ul className="space-y-4 border-b-2 border-store-ink/15 pb-5">
+              {order.items.map((line, index) => {
+                const src = images.get(line.productId);
+                return (
+                  <li key={line.productId} className="flex items-center gap-4">
+                    <span className={`relative size-20 shrink-0 overflow-hidden rounded-2xl sm:size-24 ${TILES[index % TILES.length]}`}>
+                      {src && <Image src={src} alt="" fill sizes="96px" className="object-contain p-1.5" />}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-store-heading text-lg leading-tight font-black sm:text-xl">{line.name}</span>
+                      <span className="mt-1 block opacity-80">{t.order.quantity.replace("{count}", String(line.quantity))}</span>
+                    </span>
+                    <span className="shrink-0 font-store-heading text-lg font-black">
+                      {formatMinor(line.lineMinor, order.currency, store.locale)}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="mt-5 flex items-baseline justify-between gap-4 font-store-heading text-2xl font-black">
+              <span>{t.cart.total}</span>
+              <span>{formatMinor(order.total_minor, order.currency, store.locale)}</span>
+            </p>
+            {converted && (
+              <p className="mt-2 flex justify-between gap-4 text-lg">
+                <span>{t.order.charged}</span>
+                <span className="font-semibold">{formatMinor(order.charge_total_minor, order.charge_currency, store.locale)}</span>
+              </p>
+            )}
+            {order.delivery_note && (
+              <div className="mt-5 flex gap-3 border-t-2 border-store-ink/15 pt-5">
+                <MapPin className="mt-0.5 size-6 shrink-0 text-store-secondary" aria-hidden="true" />
+                <div>
+                  <h2 className="font-store-heading text-lg font-black">{t.order.delivery}</h2>
+                  <p className="mt-1 whitespace-pre-line opacity-80">{order.delivery_note}</p>
+                </div>
+              </div>
+            )}
+            <a
+              href={`/s/${store.slug}`}
+              className="mt-7 flex min-h-13 w-full cursor-pointer items-center justify-center gap-2 rounded-full border-2 border-store-ink bg-store-secondary px-6 text-lg font-bold text-store-on-secondary transition-[transform,background-color,color] duration-200 hover:-translate-y-0.5 hover:bg-store-ink hover:text-store-paper"
+            >
+              {t.order.back} <ArrowRight className="size-5" aria-hidden="true" />
+            </a>
+          </div>
+        </div>
+      </Band>
+
+      <Band tone="secondary" wave={0} className="h-40 overflow-x-clip md:h-56">
+        <StickerImage sticker={art.feature[1]} delay={0.5} className="-top-10 left-[4%] w-36 -rotate-6 md:-top-14 md:left-[10%] md:w-56" />
+        <StickerImage sticker={art.bursts[2]} delay={1.1} className="top-6 left-[46%] w-14 md:w-20" />
+        <StickerImage sticker={art.feature[2]} delay={1.7} className="-top-8 right-[4%] w-36 rotate-6 md:-top-12 md:right-[10%] md:w-56" />
+      </Band>
+    </main>
   );
 }

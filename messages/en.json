@@ -1027,7 +1027,13 @@
       "faqHeading": "Questions",
       "contactHeading": "Talk to us",
       "contactBody": "Message us to ask anything or to place an order."
-    }
+    },
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "navShop": "Shop",
+    "footerNav": "Store",
+    "footerShop": "Shop",
+    "footerTalk": "Talk to us"
   },
   "cart": {
     "add": "Add to cart",
@@ -1074,7 +1080,10 @@
     "unpaidBody": "If you've just paid, refresh this page. Otherwise, go back to the store to try again.",
     "charged": "Charged through PayPal",
     "delivery": "Delivery",
-    "back": "Back to the store"
+    "back": "Back to the store",
+    "paidThanks": "Thank you.",
+    "paidHeadline": "Your order is paid.",
+    "quantity": "Quantity {count}"
   },
   "chat": {
     "welcome": "Welcome to {store}! Tell me what you're looking for, in any language, and I'll help you order.",

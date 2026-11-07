@@ -19,6 +19,19 @@ type Preset = {
 };
 
 export const MARKET_PRESETS = {
+  bakery: {
+    label: "Bakery",
+    variants: {
+      hero: "split",
+      products: "grid",
+      story: "banner",
+      reviews: "cards",
+      faq: "accordion",
+      contact: "banner",
+      footer: "columns",
+    },
+    tokens: { radius: "round", spacing: "comfortable", imageStyle: "square" },
+  },
   "market/warm-bakery": {
     label: "Warm Bakery",
     variants: {

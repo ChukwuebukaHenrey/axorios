@@ -29,15 +29,16 @@ const kit = {
   nameOptions: [],
   tagline: "Celebration cakes, baked fresh in Lagos",
   tone: "Warm, joyful, proudly Lagos",
+  // Olive, pink, butter yellow, forest green and cream, from the bakery template's references.
   palette: {
-    primary: "#7A1F3D",
-    secondary: "#E8590C",
-    accent: "#FFC94D",
-    neutralDark: "#2A1A14",
-    neutralLight: "#FFF6E9",
+    primary: "#A6A03C",
+    secondary: "#E67391",
+    accent: "#F2C051",
+    neutralDark: "#143D26",
+    neutralLight: "#F5E8D5",
   },
   fonts: { heading: "Fraunces", body: "DM Sans" },
-  logoUrl: null,
+  logoUrl: null as string | null,
   referenceImageUrls: [],
 };
 
@@ -80,9 +81,9 @@ const products = [
     6_000_000,
     "Images/cakes/cakeAsset1.png",
   ],
-  ["Chin Chin Gift Jar", "Crunchy, lightly spiced chin chin in a 500 g gift jar.", 350_000, null],
 ] as const;
 
+// Products without a photo (the Chin Chin Gift Jar) are left out, so the extras step below sets them inactive.
 // Keeps existing product rows, because their IDs are what the Shopify sync and past orders point at.
 const { data: existing, error: existingError } = await admin.from("products").select("id, name").eq("store_id", store.id);
 if (existingError) throw existingError;
@@ -90,9 +91,12 @@ for (const [name, description, price_minor, localImage] of products) {
   const image_url = localImage
     ? await uploadAsset(store.id, name.toLowerCase().replace(/[^a-z0-9]+/g, "-"), localImage)
     : null;
-  const row = { store_id: store.id, name, description, price_minor, currency: "NGN", stock: 100, active: true, image_url };
+  const row = { store_id: store.id, name, description, price_minor, currency: "NGN", active: true, image_url };
   const found = existing.find((p) => p.name === name);
-  const { error } = found ? await admin.from("products").update(row).eq("id", found.id) : await admin.from("products").insert(row);
+  // Stock is set only on a new row, so re-seeding doesn't undo real sales.
+  const { error } = found
+    ? await admin.from("products").update(row).eq("id", found.id)
+    : await admin.from("products").insert({ ...row, stock: 100 });
   if (error) throw error;
 }
 const seeded = new Set<string>(products.map(([name]) => name));
@@ -103,11 +107,21 @@ if (extras.length > 0) {
 }
 
 const heroImageUrl = await uploadAsset(store.id, "hero", "Images/cakes/hero_lavender_celebration_cake.png");
+// The logo ships in the repo, so a fresh clone has it.
+kit.logoUrl = await uploadAsset(store.id, "logo", "public/images/stores/bakery/logo-eko-sweet-bakes.png");
+const { error: kitError } = await admin.from("stores").update({ brand_kit: kit }).eq("id", store.id);
+if (kitError) throw kitError;
 
-const config = buildSiteConfig(kit);
+const config = buildSiteConfig(kit, "bakery");
 for (const section of config.sections) {
   if (section.type === "hero") {
     section.content.imageUrl = heroImageUrl;
+    section.content.eyebrow = "Baked fresh in Lagos";
+    section.content.headline = "Celebration cakes, sent with love";
+    section.content.subhead = "Order from anywhere and pay in your own currency. We bake it and deliver it in Lagos.";
+  }
+  if (section.type === "products") {
+    section.content.heading = "Our cakes";
   }
   if (section.type === "story") {
     section.content.body =

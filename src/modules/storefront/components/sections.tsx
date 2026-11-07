@@ -7,6 +7,7 @@ import type { ContactChannels, Section } from "../schema";
 import { allowedImage } from "../theme";
 import { HeroArt, ProductArt } from "./art";
 import { AddToCart } from "./cart";
+import { WaveDivider } from "./wave-divider";
 
 type Of<T extends Section["type"]> = Extract<Section, { type: T }>;
 
@@ -27,22 +28,25 @@ export function Hero({ section, name }: { section: Of<"hero">; name: string }) {
   if (section.variant === "full-bleed") {
     const src = allowedImage(imageUrl);
     return (
-      <section className="relative isolate flex min-h-[75svh] items-end bg-store-primary text-store-on-primary">
-        {src && (
-          <>
-            <Image src={src} alt="" fill priority sizes="100vw" className="-z-20 object-cover" />
-            <div className="absolute inset-0 -z-10 bg-black/50" />
-          </>
-        )}
-        <div className={`${WRAP} ${src ? "text-white" : ""} py-12 md:py-20`}>
-          <p className="font-semibold">{eyebrow}</p>
-          <h1 className="mt-3 max-w-4xl font-store-heading text-5xl leading-[1.05] font-bold tracking-tight text-balance md:text-7xl">
-            {headline}
-          </h1>
-          {subhead && <p className="mt-5 max-w-xl text-lg">{subhead}</p>}
-          <div className="mt-8">{cta}</div>
-        </div>
-      </section>
+      <>
+        <section className="relative isolate flex min-h-[75svh] items-end bg-store-primary text-store-on-primary">
+          {src && (
+            <>
+              <Image src={src} alt="" fill priority sizes="100vw" className="-z-20 object-cover" />
+              <div className="absolute inset-0 -z-10 bg-black/50" />
+            </>
+          )}
+          <div className={`${WRAP} ${src ? "text-white" : ""} py-12 md:py-20`}>
+            <p className="font-semibold">{eyebrow}</p>
+            <h1 className="mt-3 max-w-4xl font-store-heading text-5xl leading-[1.05] font-bold tracking-tight text-balance md:text-7xl">
+              {headline}
+            </h1>
+            {subhead && <p className="mt-5 max-w-xl text-lg">{subhead}</p>}
+            <div className="mt-8">{cta}</div>
+          </div>
+        </section>
+        <WaveDivider flip className="-mt-px text-store-paper" />
+      </>
     );
   }
 
@@ -82,12 +86,13 @@ function Buy({ product }: { product: Product }) {
 
 function ProductCard({ product, index, locale }: { product: Product; index: number; locale: string }) {
   return (
-    <li>
+    <li className="group">
       <ProductArt
         name={product.name}
         imageUrl={product.imageUrl}
         index={index}
         sizes="(min-width: 768px) 33vw, 50vw"
+        className="shadow-sm transition duration-300 ease-out group-hover:-translate-y-1 group-hover:shadow-lg"
       />
       <h3 className="mt-3 font-store-heading text-lg leading-snug font-semibold">{product.name}</h3>
       {product.description && <p className="mt-1 line-clamp-3 text-sm opacity-80">{product.description}</p>}
@@ -176,12 +181,16 @@ export function Story({ section, name }: { section: Of<"story">; name: string })
 
   if (section.variant === "banner") {
     return (
-      <section className={`bg-store-primary text-store-on-primary ${SPACED}`}>
-        <div className={`${WRAP} max-w-3xl text-center`}>
-          <h2 className={HEADING}>{heading}</h2>
-          <p className="mt-5 text-lg leading-relaxed whitespace-pre-line md:text-xl">{body}</p>
-        </div>
-      </section>
+      <>
+        <WaveDivider className="text-store-primary" />
+        <section className={`bg-store-primary text-store-on-primary ${SPACED}`}>
+          <div className={`${WRAP} max-w-3xl text-center`}>
+            <h2 className={HEADING}>{heading}</h2>
+            <p className="mt-5 text-lg leading-relaxed whitespace-pre-line md:text-xl">{body}</p>
+          </div>
+        </section>
+        <WaveDivider flip className="text-store-primary" />
+      </>
     );
   }
 
@@ -301,26 +310,36 @@ export function Contact({
   const { heading, body } = section.content;
   const banner = section.variant === "banner";
 
-  return (
-    <section className={banner ? `bg-store-secondary text-store-on-secondary ${SPACED}` : `${WRAP} ${SPACED}`}>
-      <div className={banner ? `${WRAP} text-center` : ""}>
-        <h2 className={HEADING}>{heading}</h2>
-        {body && <p className={`mt-3 max-w-xl text-lg ${banner ? "mx-auto" : ""}`}>{body}</p>}
-        <div className={`mt-6 flex flex-wrap gap-3 ${banner ? "justify-center" : ""}`}>
-          {links.map(({ label, href, Icon }) => (
-            <a
-              key={href}
-              href={href}
-              target="_blank"
-              rel="noreferrer"
-              className={`${BUTTON} ${banner ? "bg-store-paper text-store-ink" : "bg-store-primary text-store-on-primary"}`}
-            >
-              <Icon className="size-5" aria-hidden="true" /> {label}
-            </a>
-          ))}
-        </div>
+  const inner = (
+    <div className={banner ? `${WRAP} text-center` : ""}>
+      <h2 className={HEADING}>{heading}</h2>
+      {body && <p className={`mt-3 max-w-xl text-lg ${banner ? "mx-auto" : ""}`}>{body}</p>}
+      <div className={`mt-6 flex flex-wrap gap-3 ${banner ? "justify-center" : ""}`}>
+        {links.map(({ label, href, Icon }) => (
+          <a
+            key={href}
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            className={`${BUTTON} ${banner ? "bg-store-paper text-store-ink" : "bg-store-primary text-store-on-primary"}`}
+          >
+            <Icon className="size-5" aria-hidden="true" /> {label}
+          </a>
+        ))}
       </div>
-    </section>
+    </div>
+  );
+
+  if (!banner) {
+    return <section className={`${WRAP} ${SPACED}`}>{inner}</section>;
+  }
+
+  return (
+    <>
+      <WaveDivider className="text-store-secondary" />
+      <section className={`bg-store-secondary text-store-on-secondary ${SPACED}`}>{inner}</section>
+      <WaveDivider flip className="text-store-secondary" />
+    </>
   );
 }
 

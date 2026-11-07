@@ -1,11 +1,23 @@
 // Seeds the live demo store at /s/demo, owned by the demo seller. Safe to run again. Prints no credentials.
 // Run: npx tsx --env-file=.env.local scripts/seed-demo-store.mts
+import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 import { buildSiteConfig } from "../src/modules/storefront/presets";
 
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
   auth: { persistSession: false },
 });
+
+/** Uploads a local product photo and returns its public URL. Re-running overwrites the same path. */
+async function uploadAsset(storeId: string, name: string, localPath: string) {
+  const path = `stores/${storeId}/seed/${name}.png`;
+  const { error } = await admin.storage.from("store-assets").upload(path, readFileSync(localPath), {
+    contentType: "image/png",
+    upsert: true,
+  });
+  if (error) throw error;
+  return admin.storage.from("store-assets").getPublicUrl(path).data.publicUrl;
+}
 
 const { data: users, error: usersError } = await admin.auth.admin.listUsers({ perPage: 1000 });
 if (usersError) throw usersError;
@@ -56,16 +68,29 @@ const { data: store, error: storeError } = await admin
 if (storeError) throw storeError;
 
 const products = [
-  ["Red Velvet Celebration Cake", "Three soft layers with cream cheese frosting, 8 inch. Serves 12 to 15.", 4_500_000],
-  ["Ube Coconut Cake", "Purple yam sponge and toasted coconut, 8 inch. Serves 12 to 15.", 6_000_000],
-  ["Chin Chin Gift Jar", "Crunchy, lightly spiced chin chin in a 500 g gift jar.", 350_000],
+  [
+    "Red Velvet Celebration Cake",
+    "Three soft layers with cream cheese frosting, 8 inch. Serves 12 to 15.",
+    4_500_000,
+    "Images/cakes/red_velvet_cake.png",
+  ],
+  [
+    "Ube Coconut Cake",
+    "Purple yam sponge and toasted coconut, 8 inch. Serves 12 to 15.",
+    6_000_000,
+    "Images/cakes/cakeAsset1.png",
+  ],
+  ["Chin Chin Gift Jar", "Crunchy, lightly spiced chin chin in a 500 g gift jar.", 350_000, null],
 ] as const;
 
 // Keeps existing product rows, because their IDs are what the Shopify sync and past orders point at.
 const { data: existing, error: existingError } = await admin.from("products").select("id, name").eq("store_id", store.id);
 if (existingError) throw existingError;
-for (const [name, description, price_minor] of products) {
-  const row = { store_id: store.id, name, description, price_minor, currency: "NGN", stock: 100, active: true };
+for (const [name, description, price_minor, localImage] of products) {
+  const image_url = localImage
+    ? await uploadAsset(store.id, name.toLowerCase().replace(/[^a-z0-9]+/g, "-"), localImage)
+    : null;
+  const row = { store_id: store.id, name, description, price_minor, currency: "NGN", stock: 100, active: true, image_url };
   const found = existing.find((p) => p.name === name);
   const { error } = found ? await admin.from("products").update(row).eq("id", found.id) : await admin.from("products").insert(row);
   if (error) throw error;
@@ -77,8 +102,13 @@ if (extras.length > 0) {
   if (error) throw error;
 }
 
+const heroImageUrl = await uploadAsset(store.id, "hero", "Images/cakes/hero_lavender_celebration_cake.png");
+
 const config = buildSiteConfig(kit);
 for (const section of config.sections) {
+  if (section.type === "hero") {
+    section.content.imageUrl = heroImageUrl;
+  }
   if (section.type === "story") {
     section.content.body =
       "Eko Sweet Bakes started in a Lagos kitchen, baking birthday cakes for neighbours. Today we bake to order for families here and for people abroad sending love home.";

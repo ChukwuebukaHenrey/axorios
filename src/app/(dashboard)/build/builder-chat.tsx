@@ -2,29 +2,32 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, lastAssistantMessageIsCompleteWithApprovalResponses, type UIMessage } from "ai";
-import { Loader2, Mic, SendHorizontal, Square, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type FormEvent } from "react";
+import { CheckCircle2, Loader2, Mic, PanelRightOpen } from "lucide-react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps } from "react";
+import { Logo } from "@/components/logo";
 import { t } from "@/lib/messages";
 import type { BrandKit } from "@/modules/brand";
 import type { Product } from "@/modules/catalog";
+import { AgentIntro } from "./agent-intro";
 import { BrandCard } from "./brand-card";
 import { CampaignCard } from "./campaign-card";
+import { ChatInput } from "./chat-input";
 import { PreviewPane } from "./preview-pane";
 import { ProductsCard } from "./products-card";
 import { PublishCard } from "./publish-card";
 import { ScheduleCard } from "./schedule-card";
 import { ShopifyCard } from "./shopify-card";
+import { StatusCards, type BuildOverview } from "./status-cards";
 import { useVoiceRecorder, type VoiceNote } from "./use-voice-recorder";
 
+const b = t.app.build;
 const BRAND_TOOL_TYPES = new Set(["tool-create_brand_kit", "tool-update_brand_kit", "tool-suggest_names"]);
 /** Any of these changes what the store looks like, so the preview reloads when one finishes. */
-const SITE_TOOL_TYPES = new Set([
-  ...BRAND_TOOL_TYPES,
-  "tool-add_products",
-  "tool-edit_site",
-  "tool-revert_site",
-  "tool-choose_template",
-]);
+const SITE_TOOL_TYPES = new Set([...BRAND_TOOL_TYPES, "tool-add_products", "tool-edit_site", "tool-revert_site", "tool-choose_template"]);
+/** These change what the status cards and sidebar show, so the server data refreshes when one finishes. */
+const REFRESH_TOOL_TYPES = new Set([...SITE_TOOL_TYPES, "tool-publish_store", "tool-schedule_posts", "tool-connect_shopify", "tool-sync_to_shopify", "tool-generate_campaign"]);
 
 type ToolPart = { type: string; state?: string; output?: unknown };
 
@@ -36,19 +39,52 @@ function productsOutput(part: ToolPart): Product[] | null {
   return part.type === "tool-add_products" && part.state === "output-available" ? (part.output as Product[]) : null;
 }
 
+function completed(messages: UIMessage[], types: Set<string>) {
+  return messages.flatMap((m) => m.parts as ToolPart[]).filter((p) => types.has(p.type) && p.state === "output-available").length;
+}
+
+function Speaker({ role, initials }: { role: UIMessage["role"]; initials: string }) {
+  return role === "user" ? (
+    <span className="flex items-center gap-2.5">
+      <span className="grid size-9 place-items-center rounded-full bg-panel-3 text-sm text-cream">{initials}</span>
+      <span className="font-medium text-cream">{b.you}</span>
+    </span>
+  ) : (
+    <span className="flex items-center gap-2.5">
+      <span className="grid size-9 place-items-center rounded-lg bg-lime">
+        <Logo className="size-6" />
+      </span>
+      <span className="font-medium text-cream">{b.agent}</span>
+    </span>
+  );
+}
+
 export function BuilderChat({
   initialMessages,
   previewUrl,
   initialHasKit,
   presets,
+  overview,
+  storeSlug,
+  initials,
+  initialInput,
+  templateLabel,
 }: {
   initialMessages: UIMessage[];
   previewUrl: string;
   initialHasKit: boolean;
   presets: { id: string; label: string }[];
+  overview: BuildOverview;
+  storeSlug: string;
+  initials: string;
+  initialInput: string;
+  templateLabel: string | null;
 }) {
-  const [input, setInput] = useState("");
+  const router = useRouter();
+  const [input, setInput] = useState(initialInput);
   const [view, setView] = useState<"chat" | "preview">("chat");
+  // Closing the preview hides it until the store next changes, then it opens again to show the change.
+  const [closedAt, setClosedAt] = useState<number | null>(null);
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const transport = useMemo(
@@ -75,50 +111,65 @@ export function BuilderChat({
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
   });
   const busy = status === "submitted" || status === "streaming";
-  const sendVoiceNote = useCallback(
-    ({ mediaType, url }: VoiceNote) => {
-      sendMessage({ files: [{ type: "file", mediaType, url }] });
-    },
-    [sendMessage],
-  );
+  const sendVoiceNote = useCallback(({ mediaType, url }: VoiceNote) => sendMessage({ files: [{ type: "file", mediaType, url }] }), [sendMessage]);
   const voice = useVoiceRecorder(sendVoiceNote);
 
-  const previewVersion = useMemo(
-    () =>
-      messages
-        .flatMap((message) => message.parts as ToolPart[])
-        .filter((part) => SITE_TOOL_TYPES.has(part.type) && part.state === "output-available").length,
-    [messages],
+  const previewVersion = useMemo(() => completed(messages, SITE_TOOL_TYPES), [messages]);
+  const refreshVersion = useMemo(() => completed(messages, REFRESH_TOOL_TYPES), [messages]);
+  const latestKit = useMemo(
+    () => messages.flatMap((m) => m.parts as ToolPart[]).map(brandOutput).filter(Boolean).at(-1) ?? overview.kit,
+    [messages, overview.kit],
   );
-
   // A store has nothing to preview until its brand kit exists.
-  const hasKit =
-    initialHasKit || messages.some((message) => (message.parts as ToolPart[]).some((part) => brandOutput(part) !== null));
+  const hasKit = initialHasKit || Boolean(latestKit);
+  const previewOpen = hasKit && (closedAt === null || refreshVersion > closedAt);
+  const setPreviewOpen = (open: boolean) => setClosedAt(open ? null : refreshVersion);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
+    endRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [messages]);
 
-  function selectSection(id: string) {
+  // Status cards and sidebar counts are server data: refresh them when a tool that changes them finishes.
+  const seen = useRef(refreshVersion);
+  useEffect(() => {
+    if (refreshVersion === seen.current) return;
+    seen.current = refreshVersion;
+    router.refresh();
+  }, [refreshVersion, router]);
+
+  const selectSection = useCallback((id: string) => {
     setSelectedSection(id);
+    setView("chat");
+  }, []);
+
+  function send(text: string) {
+    const clean = text.trim();
+    if (!clean || busy) return;
+    setInput("");
+    sendMessage({ text: clean }, selectedSection ? { body: { selectedSectionId: selectedSection } } : undefined);
+    setSelectedSection(null);
     setView("chat");
   }
 
-  function submit(e: FormEvent) {
-    e.preventDefault();
-    const text = input.trim();
-    if (!text || busy) return;
-    setInput("");
-    sendMessage({ text }, selectedSection ? { body: { selectedSectionId: selectedSection } } : undefined);
-    setSelectedSection(null);
+  /** Cards and quick actions draft the request; the seller still reads it and presses send. */
+  function draft(text: string) {
+    setInput(text);
+    setView("chat");
+    requestAnimationFrame(() => document.getElementById("builder-input")?.focus());
   }
 
-  const tab = (active: boolean) =>
-    `h-11 flex-1 text-sm font-semibold ${active ? "border-b-2 border-secondary text-primary" : "text-black/60"}`;
+  const publish = () => send(t.builder.publishRequest);
+
+  const tab = (active: boolean) => `h-10 flex-1 rounded-lg text-sm font-medium ${active ? "bg-panel-3 text-cream" : "text-stone"}`;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <div role="tablist" className="flex shrink-0 border-b border-black/10 bg-white md:hidden">
+    <div className="flex min-h-0 flex-1 flex-col px-4 pb-4 sm:px-6 lg:px-8">
+      <div className="shrink-0">
+        <h1 className="text-[clamp(1.6rem,2.6vw,2.25rem)] leading-tight font-semibold tracking-[-0.02em] text-cream">{b.title}</h1>
+        <p className="mt-1 hidden text-base text-cream/75 sm:block">{b.subtitle}</p>
+      </div>
+
+      <div role="tablist" className="mt-4 flex shrink-0 gap-1 rounded-xl border border-panel-3 bg-panel p-1 lg:hidden">
         <button type="button" role="tab" aria-selected={view === "chat"} onClick={() => setView("chat")} className={tab(view === "chat")}>
           {t.builder.tabChat}
         </button>
@@ -126,122 +177,135 @@ export function BuilderChat({
           {t.builder.tabPreview}
         </button>
       </div>
-      <div className="flex min-h-0 flex-1">
-        <section
-          className={`${view === "chat" ? "flex" : "hidden"} min-h-0 min-w-0 flex-1 flex-col md:flex md:max-w-md md:border-r md:border-black/10 lg:max-w-lg`}
-        >
-          <div className="flex-1 space-y-4 overflow-y-auto p-4" aria-live="polite">
-            {messages.length === 0 && <p className="rounded-2xl bg-white p-4 shadow-sm">{t.builder.greeting}</p>}
+
+      <div className="mt-4 grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,1fr)] gap-4 lg:mt-6 lg:grid-cols-[minmax(360px,460px)_minmax(0,1fr)] xl:grid-cols-[minmax(400px,480px)_minmax(0,1fr)]">
+        <section className={`${view === "chat" ? "flex" : "hidden"} min-h-0 flex-col rounded-2xl border border-panel-3 bg-panel lg:flex`}>
+          <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto p-5" aria-live="polite">
+            {messages.length === 0 && <AgentIntro onPick={send} />}
             {messages.map((message) => (
-              <div key={message.id} className={message.role === "user" ? "flex flex-col items-end" : "flex flex-col"}>
-                {message.parts.map((part, i) => {
-                  if (part.type === "text") {
-                    return (
-                      <p
-                        key={i}
-                        className={
-                          message.role === "user"
-                            ? "max-w-[85%] rounded-2xl bg-primary px-4 py-2.5 whitespace-pre-wrap text-white"
-                            : "max-w-[85%] rounded-2xl bg-white px-4 py-2.5 whitespace-pre-wrap shadow-sm"
-                        }
-                      >
-                        {part.text}
-                      </p>
-                    );
-                  }
-                  if (part.type === "tool-publish_store") {
-                    return (
-                      <PublishCard
-                        key={i}
-                        part={part as ComponentProps<typeof PublishCard>["part"]}
-                        onRespond={(id, approved) => addToolApprovalResponse({ id, approved })}
-                      />
-                    );
-                  }
-                  if (part.type === "file") {
-                    return (
-                      <p key={i} className="flex max-w-[85%] items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-white">
-                        <Mic className="size-4" aria-hidden="true" /> {t.builder.voiceNote}
-                      </p>
-                    );
-                  }
-                  if (part.type === "tool-show_transcript") {
-                    const said = (part as { input?: { transcript?: string } }).input?.transcript;
-                    return said ? (
-                      <p key={i} className="my-1 max-w-[85%] border-l-2 border-secondary pl-3 text-sm text-black/70">
-                        <span className="font-semibold">{t.builder.youSaid}</span> {said}
-                      </p>
-                    ) : null;
-                  }
-                  if (part.type === "tool-connect_shopify" || part.type === "tool-sync_to_shopify") {
-                    return (
-                      <ShopifyCard
-                        key={i}
-                        kind={part.type === "tool-connect_shopify" ? "connect" : "sync"}
-                        part={part as ComponentProps<typeof ShopifyCard>["part"]}
-                        onRespond={(id, approved) => addToolApprovalResponse({ id, approved })}
-                      />
-                    );
-                  }
-                  if (part.type === "tool-schedule_posts") {
-                    return (
-                      <ScheduleCard
-                        key={i}
-                        part={part as ComponentProps<typeof ScheduleCard>["part"]}
-                        onRespond={(id, approved) => addToolApprovalResponse({ id, approved })}
-                      />
-                    );
-                  }
-                  if (part.type === "tool-generate_campaign" && (part as ToolPart).state === "output-available") {
-                    const queued = (part as ToolPart).output as { campaignId?: string; count?: number };
-                    return queued.campaignId ? <CampaignCard key={i} campaignId={queued.campaignId} count={queued.count ?? 3} /> : null;
-                  }
-                  const kit = brandOutput(part as ToolPart);
-                  if (kit) {
-                    return (
-                      <div key={i} className="my-2 w-full max-w-sm">
-                        <BrandCard kit={kit} />
-                      </div>
-                    );
-                  }
-                  const products = productsOutput(part as ToolPart);
-                  return products ? (
-                    <div key={i} className="my-2 w-full max-w-sm">
-                      <ProductsCard products={products} />
-                    </div>
-                  ) : null;
-                })}
+              <div key={message.id} className="flex flex-col gap-2.5">
+                <Speaker role={message.role} initials={initials} />
+                <div className="flex flex-col gap-2 pl-11.5">
+                  {message.parts.map((part, i) => {
+                    if (part.type === "text") {
+                      return message.role === "user" ? (
+                        <p key={i} className="rounded-xl border border-panel-3 bg-panel-2 px-4 py-3 whitespace-pre-wrap text-cream [overflow-wrap:anywhere]">
+                          {part.text}
+                        </p>
+                      ) : (
+                        <p key={i} className="whitespace-pre-wrap text-cream/90 [overflow-wrap:anywhere]">
+                          {part.text}
+                        </p>
+                      );
+                    }
+                    if (part.type === "file") {
+                      return (
+                        <p key={i} className="flex items-center gap-3 rounded-xl border border-panel-3 bg-panel-2 px-4 py-3 text-cream">
+                          <Mic className="size-4 text-lime" aria-hidden="true" /> {t.builder.voiceNote}
+                        </p>
+                      );
+                    }
+                    if (part.type === "tool-show_transcript") {
+                      const said = (part as { input?: { transcript?: string } }).input?.transcript;
+                      return said ? (
+                        <p key={i} className="rounded-xl border border-panel-3 bg-panel-2 px-4 py-3 text-sm text-cream/90">
+                          <span className="font-semibold text-cream">{t.builder.youSaid}</span> “{said}”
+                        </p>
+                      ) : null;
+                    }
+                    if (part.type === "tool-publish_store") {
+                      return (
+                        <PublishCard key={i} part={part as ComponentProps<typeof PublishCard>["part"]} onRespond={(id, approved) => addToolApprovalResponse({ id, approved })} />
+                      );
+                    }
+                    if (part.type === "tool-connect_shopify" || part.type === "tool-sync_to_shopify") {
+                      return (
+                        <ShopifyCard
+                          key={i}
+                          kind={part.type === "tool-connect_shopify" ? "connect" : "sync"}
+                          part={part as ComponentProps<typeof ShopifyCard>["part"]}
+                          onRespond={(id, approved) => addToolApprovalResponse({ id, approved })}
+                        />
+                      );
+                    }
+                    if (part.type === "tool-schedule_posts") {
+                      return (
+                        <ScheduleCard key={i} part={part as ComponentProps<typeof ScheduleCard>["part"]} onRespond={(id, approved) => addToolApprovalResponse({ id, approved })} />
+                      );
+                    }
+                    if (part.type === "tool-generate_campaign" && (part as ToolPart).state === "output-available") {
+                      const queued = (part as ToolPart).output as { campaignId?: string; count?: number };
+                      return queued.campaignId ? <CampaignCard key={i} campaignId={queued.campaignId} count={queued.count ?? 3} /> : null;
+                    }
+                    const kit = brandOutput(part as ToolPart);
+                    if (kit) {
+                      return (
+                        <div key={i} className="w-full max-w-sm">
+                          <BrandCard kit={kit} />
+                        </div>
+                      );
+                    }
+                    const products = productsOutput(part as ToolPart);
+                    if (products) {
+                      return (
+                        <div key={i} className="w-full max-w-sm">
+                          <ProductsCard products={products} />
+                        </div>
+                      );
+                    }
+                    const tool = part as ToolPart;
+                    if (tool.type.startsWith("tool-") && tool.state === "output-available" && SITE_TOOL_TYPES.has(tool.type)) {
+                      return (
+                        <p key={i} className="flex items-center gap-2 text-sm text-cream/80">
+                          <CheckCircle2 className="size-4 text-lime" aria-hidden="true" /> {tool.type.replace("tool-", "").replaceAll("_", " ")}
+                        </p>
+                      );
+                    }
+                    return null;
+                  })}
+                </div>
               </div>
             ))}
+
+            {hasKit && messages.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setPreviewOpen(true);
+                  setView("preview");
+                }}
+                className="ml-11.5 flex items-center gap-4 rounded-xl border border-panel-3 bg-panel-2 p-3 text-left transition hover:border-lime/40"
+              >
+                <span className="relative grid h-14 w-20 shrink-0 place-items-center overflow-hidden rounded-lg bg-panel-3">
+                  {overview.products[0]?.imageUrl ? (
+                    <Image src={overview.products[0].imageUrl} alt="" fill sizes="80px" className="object-cover" />
+                  ) : (
+                    <Logo className="size-8" />
+                  )}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium text-cream">{b.artifactTitle.replace("{name}", latestKit?.name ?? storeSlug)}</span>
+                  <span className="block text-sm text-stone">{b.artifactBody}</span>
+                </span>
+                <PanelRightOpen className="size-5 shrink-0 text-stone" aria-label={b.openPreview} />
+              </button>
+            )}
+
             {busy && (
-              <p className="flex items-center gap-2 text-sm text-black/60">
+              <p className="flex items-center gap-2 pl-11.5 text-sm text-stone">
                 <Loader2 className="size-4 animate-spin" aria-hidden="true" /> {t.builder.thinking}
               </p>
             )}
             {error && (
-              <p role="alert" className="text-sm text-red-700">
+              <p role="alert" className="pl-11.5 text-sm text-red-300">
                 {t.builder.error}
               </p>
             )}
             <div ref={endRef} />
           </div>
-          {selectedSection && (
-            <p className="flex items-center justify-between gap-2 border-t border-black/10 bg-accent/30 px-4 py-2 text-sm">
-              <span className="truncate">
-                {t.builder.editing} <strong>{selectedSection}</strong>
-              </span>
-              <button
-                type="button"
-                aria-label={t.builder.clearSelection}
-                onClick={() => setSelectedSection(null)}
-                className="grid size-8 shrink-0 place-items-center rounded-lg hover:bg-black/5"
-              >
-                <X className="size-4" aria-hidden="true" />
-              </button>
-            </p>
-          )}
+
           {(voice.recording || voice.error) && (
-            <p role="status" className={`border-t border-black/10 px-4 py-2 text-sm ${voice.error ? "bg-red-50 text-red-800" : "bg-accent/30"}`}>
+            <p role="status" className={`mx-4 rounded-lg px-3 py-2 text-sm ${voice.error ? "bg-red-500/15 text-red-200" : "bg-[#2b3118] text-lime"}`}>
               {voice.error === "denied"
                 ? t.builder.micDenied
                 : voice.error === "unsupported"
@@ -249,48 +313,45 @@ export function BuilderChat({
                   : t.builder.micListening.replace("{seconds}", String(voice.seconds))}
             </p>
           )}
-          <form onSubmit={submit} className="flex gap-2 border-t border-black/10 bg-white p-3">
+          <div className="p-3">
+            <ChatInput
+              value={input}
+              onChange={setInput}
+              onSubmit={() => send(input)}
+              busy={busy}
+              recording={voice.recording}
+              onMic={voice.recording ? voice.stop : voice.start}
+              storeSlug={storeSlug}
+              template={templateLabel}
+              selectedSection={selectedSection}
+              onClearSection={() => setSelectedSection(null)}
+            />
+          </div>
+        </section>
+
+        <aside className={`${view === "preview" ? "flex" : "hidden"} min-h-0 flex-col gap-3 overflow-y-auto lg:flex`}>
+          {previewOpen ? (
+            <div className="flex h-[62vh] min-h-[420px] shrink-0 flex-col lg:h-[min(560px,58vh)]">
+              <PreviewPane
+                url={hasKit ? previewUrl : null}
+                version={previewVersion}
+                presets={presets}
+                publishing={busy}
+                onSelectSection={selectSection}
+                onPublish={publish}
+                onClose={() => setPreviewOpen(false)}
+              />
+            </div>
+          ) : (
             <button
               type="button"
-              disabled={busy}
-              onClick={voice.recording ? voice.stop : voice.start}
-              aria-label={voice.recording ? t.builder.micStop : t.builder.micStart}
-              aria-pressed={voice.recording}
-              className={`grid size-12 shrink-0 place-items-center rounded-xl transition disabled:opacity-50 ${
-                voice.recording ? "animate-pulse bg-red-600 text-white" : "bg-primary text-white hover:opacity-90"
-              }`}
+              onClick={() => setPreviewOpen(true)}
+              className="flex h-12 shrink-0 items-center justify-center gap-2 rounded-2xl border border-dashed border-panel-3 text-sm text-cream/80 transition hover:border-lime/40 hover:text-cream"
             >
-              {voice.recording ? <Square className="size-5" aria-hidden="true" /> : <Mic className="size-5" aria-hidden="true" />}
+              <PanelRightOpen className="size-4" aria-hidden="true" /> {b.showPreview}
             </button>
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={t.builder.placeholder}
-              aria-label={t.builder.placeholder}
-              className="h-12 min-w-0 flex-1 rounded-xl border border-black/15 px-4 text-base outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-            />
-            <button
-              type="submit"
-              disabled={busy || !input.trim()}
-              aria-label={t.builder.send}
-              className="grid size-12 shrink-0 place-items-center rounded-xl bg-secondary text-ink transition hover:bg-accent disabled:opacity-50"
-            >
-              <SendHorizontal className="size-5" aria-hidden="true" />
-            </button>
-          </form>
-        </section>
-        <aside className={`${view === "preview" ? "flex" : "hidden"} min-h-0 min-w-0 flex-1 flex-col md:flex`}>
-          <PreviewPane
-            url={hasKit ? previewUrl : null}
-            version={previewVersion}
-            presets={presets}
-            publishing={busy}
-            onSelectSection={selectSection}
-            onPublish={() => {
-              setView("chat");
-              sendMessage({ text: t.builder.publishRequest });
-            }}
-          />
+          )}
+          <StatusCards overview={{ ...overview, kit: latestKit ?? null }} busy={busy} onPrompt={draft} onPublish={publish} />
         </aside>
       </div>
     </div>

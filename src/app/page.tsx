@@ -1,23 +1,58 @@
-import { Logo } from "@/components/logo";
-import { SignInForm } from "@/components/sign-in-form";
+import Image from "next/image";
+import { AboutOrbit } from "@/components/marketing/about-orbit";
+import { FaqSection } from "@/components/marketing/faq-section";
+import { FeaturesGrid } from "@/components/marketing/features-grid";
+import { GlassFrame, PhotoHero } from "@/components/marketing/hero";
+import { IntegrationWall } from "@/components/marketing/integration-wall";
+import { LogoMarquee } from "@/components/marketing/logo-marquee";
+import { NotesSection } from "@/components/marketing/notes-section";
+import { PricingCards } from "@/components/marketing/pricing-cards";
+import { ProblemSection } from "@/components/marketing/problem-section";
+import { ProcessDial } from "@/components/marketing/process-dial";
+import { ServicesSection } from "@/components/marketing/services-section";
+import { CtaBanner, SiteFooter } from "@/components/marketing/site-footer";
+import { StatsGrid } from "@/components/marketing/stats-grid";
+import { StoriesCarousel } from "@/components/marketing/stories-carousel";
 import { t } from "@/lib/messages";
 
-export default async function Home({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
-  const { error } = await searchParams;
+const h = t.marketing.home;
 
+export default function Home() {
   return (
-    <main className="flex min-h-dvh flex-col bg-primary px-4 py-6 text-white sm:px-8">
-      <header className="flex items-center gap-2 text-white">
-        <Logo className="size-8" />
-        <span className="text-lg font-semibold">AxoriOS</span>
-      </header>
-      <section className="mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center gap-8 py-10 md:flex-row md:items-center md:justify-between md:gap-16">
-        <div className="max-w-xl">
-          <h1 className="text-4xl font-bold tracking-tight text-balance sm:text-6xl">{t.landing.headline}</h1>
-          <p className="mt-5 text-lg text-white/80">{t.landing.subhead}</p>
-        </div>
-        <SignInForm linkFailed={error === "link"} />
-      </section>
+    <main className="bg-black font-display text-cream">
+      <PhotoHero
+        background="/images/marketing/home-bg.png"
+        headline={h.headline}
+        subhead={h.subhead}
+        cta={h.cta}
+        visual={
+          <GlassFrame className="max-w-[1000px]">
+            <Image
+              src="/images/marketing/home-dash.png"
+              alt={h.dashAlt}
+              width={1448}
+              height={1086}
+              priority
+              sizes="(min-width: 1024px) 1000px, 100vw"
+              className="h-auto w-full rounded-2xl"
+            />
+          </GlassFrame>
+        }
+      />
+      <LogoMarquee />
+      <AboutOrbit />
+      <ProblemSection />
+      <FeaturesGrid />
+      <ProcessDial />
+      <ServicesSection />
+      <StatsGrid />
+      <IntegrationWall />
+      <PricingCards />
+      <StoriesCarousel />
+      <NotesSection />
+      <FaqSection />
+      <CtaBanner />
+      <SiteFooter />
     </main>
   );
 }

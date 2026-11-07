@@ -21,7 +21,7 @@ export function CampaignBoard({ posts, canPublish }: { posts: Post[]; canPublish
   }, [generating, scheduled, router]);
 
   if (posts.length === 0) {
-    return <p className="rounded-2xl border border-black/10 bg-white p-5 text-black/70">{t.campaigns.empty}</p>;
+    return <p className="rounded-2xl border border-panel-3 bg-panel p-6 text-stone">{t.campaigns.empty}</p>;
   }
 
   const campaigns = [...new Set(posts.map((p) => p.campaign_id).filter(Boolean))] as string[];
@@ -39,7 +39,7 @@ export function CampaignBoard({ posts, canPublish }: { posts: Post[]; canPublish
               ))}
             </ul>
             {group.some((p) => p.media_url) && (
-              <a href={`/api/campaigns/${campaignId}/pack`} className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-primary underline">
+              <a href={`/api/campaigns/${campaignId}/pack`} className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-lime underline">
                 {t.campaigns.downloadCampaign}
               </a>
             )}

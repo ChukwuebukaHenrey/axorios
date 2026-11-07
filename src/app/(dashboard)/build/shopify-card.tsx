@@ -13,17 +13,17 @@ type ShopifyPart = {
   approval?: { id: string; isAutomatic?: boolean };
 };
 
-const shell = "my-2 w-full max-w-sm rounded-2xl border border-black/10 bg-white p-4 shadow-sm";
+const shell = "my-2 w-full max-w-sm rounded-2xl border border-panel-3 bg-panel-2 p-4 text-cream";
 
 export function ThemeHandoffList({ theme }: { theme: NonNullable<SyncResult["theme"]> }) {
   return (
     <div className="mt-3 text-sm">
-      <p className="text-black/70">{t.shopifyCard.themeIntro}</p>
+      <p className="text-stone">{t.shopifyCard.themeIntro}</p>
       <p className="mt-2 font-semibold">{t.shopifyCard.colours}</p>
       <ul className="mt-1 flex flex-wrap gap-2">
         {Object.entries(theme.palette).map(([name, hex]) => (
           <li key={name} className="flex items-center gap-1.5">
-            <span className="size-4 rounded border border-black/15" style={{ background: hex }} aria-hidden="true" />
+            <span className="size-4 rounded border border-cream/20" style={{ background: hex }} aria-hidden="true" />
             <code>{hex}</code>
           </li>
         ))}
@@ -31,7 +31,7 @@ export function ThemeHandoffList({ theme }: { theme: NonNullable<SyncResult["the
       <p className="mt-2">
         <span className="font-semibold">{t.shopifyCard.fonts}:</span> {theme.fonts.heading}, {theme.fonts.body}
       </p>
-      <a href={theme.editorUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex min-h-11 items-center gap-1.5 font-semibold text-primary underline">
+      <a href={theme.editorUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex min-h-11 items-center gap-1.5 font-semibold text-lime underline">
         {t.shopifyCard.themeLink} <ExternalLink className="size-4" aria-hidden="true" />
       </a>
     </div>
@@ -95,23 +95,23 @@ export function ShopifyCard({
           <ShoppingBag className="size-5 text-secondary" aria-hidden="true" />
           {kind === "connect" ? t.shopifyCard.connectTitle : t.shopifyCard.syncTitle}
         </h3>
-        <p className="mt-1 text-sm break-words text-black/70">
+        <p className="mt-1 text-sm break-words text-stone">
           {kind === "connect" ? t.shopifyCard.connectBody.replace("{domain}", part.input?.shopDomain ?? "") : t.shopifyCard.syncBody}
         </p>
         <div className="mt-3 flex gap-2">
-          <button type="button" onClick={() => onRespond(id, true)} className="h-11 flex-1 rounded-xl bg-primary font-semibold text-white transition hover:opacity-90">
+          <button type="button" onClick={() => onRespond(id, true)} className="h-11 flex-1 rounded-lg bg-lime font-semibold text-black transition hover:bg-lime/85">
             {t.shopifyCard.approve}
           </button>
-          <button type="button" onClick={() => onRespond(id, false)} className="h-11 flex-1 rounded-xl border border-black/15 font-semibold transition hover:bg-black/5">
+          <button type="button" onClick={() => onRespond(id, false)} className="h-11 flex-1 rounded-lg border border-cream/20 font-semibold transition hover:bg-white/5">
             {t.shopifyCard.deny}
           </button>
         </div>
       </article>
     );
   }
-  if (part.state === "output-denied") return <p className="my-2 text-sm text-black/60">{t.shopifyCard.denied}</p>;
+  if (part.state === "output-denied") return <p className="my-2 text-sm text-stone">{t.shopifyCard.denied}</p>;
   if (part.state !== "output-available") return null;
-  if (part.output?.error) return <p className="my-2 text-sm text-black/60">{t.shopifyCard.refused}</p>;
+  if (part.output?.error) return <p className="my-2 text-sm text-stone">{t.shopifyCard.refused}</p>;
   if (kind === "connect") return <p className="my-2 text-sm font-medium">{t.shopifyCard.connected.replace("{shop}", part.output?.shopName ?? "")}</p>;
   return <SyncProgress />;
 }

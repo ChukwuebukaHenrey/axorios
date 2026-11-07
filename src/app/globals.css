@@ -1,12 +1,31 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-primary: #2b0b3f;
-  --color-secondary: #f97316;
-  --color-accent: #fbbf24;
-  --color-ink: #1f1f1f;
-  --color-paper: #f8fafc;
+  /* AxoriOS tokens. Dark surfaces run the signed-in app; paper/ivory run the signed-out marketing page.
+     Store tokens below are separate on purpose: a seller's own storefront is themed from their brand kit, never from this palette. */
+  --color-primary: #101310;
+  --color-secondary: #e3ff48;
+  --color-accent: #85d6a6;
+  --color-ink: #09090b;
+  --color-paper: #f5f7f1;
+  --color-ivory: #f6f3ec;
+  --color-surface: #191d18;
+  --color-elevated: #222720;
+  --color-line: #30372d;
+  --color-muted: #90998a;
+  --color-success: #2f9e5b;
   --font-sans: var(--font-dm-sans), system-ui, sans-serif;
+
+  /* Marketing site (ZenFlo reference): black canvas, cream type, nested dark panels, lime accent. */
+  --font-display: var(--font-geist), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --color-cream: #f5f1e8;
+  --color-lime: #e3ff48;
+  --color-panel: #161616;
+  --color-panel-2: #1f1f1f;
+  --color-panel-3: #2a2a2a;
+  --color-stone: #a3a29c;
+  --animate-marquee: marquee 40s linear infinite;
 
   /* Storefront tokens. Each store sets the values on its root, from its SiteConfig. */
   --color-store-primary: var(--store-primary);
@@ -26,4 +45,31 @@ body {
   background: var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-sans);
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation: none;
+  }
+}
+
+/* Film-grain overlay used on the lime glows, as in the reference. */
+.grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+/* Halftone dot screen for the 404 page. */
+.halftone {
+  background-image: radial-gradient(circle, rgb(0 0 0 / 0.85) 1px, transparent 1.6px);
+  background-size: 4px 4px;
 }

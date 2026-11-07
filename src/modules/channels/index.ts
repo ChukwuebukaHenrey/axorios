@@ -1,30 +1,8 @@
 import "server-only";
-import { env } from "@/lib/env";
-import { telegram } from "./adapters/telegram";
-import { twilioWhatsApp } from "./adapters/twilio-whatsapp";
-import type { Channel, ChannelName } from "./types";
 
 export { bindCustomer, boundStore, customerChatUrl, openConversation, recentMessages, recordMessage } from "./conversations";
 export type { BoundStore } from "./conversations";
+export { conversationMessages, listConversations, sendSellerReply, setAgentPaused, waitingCount } from "./inbox";
+export type { InboxConversation, InboxMessage, InboxRole } from "./inbox";
+export { getChannel, isChannelEnabled } from "./registry";
 export type { Channel, ChannelName, OutboundMessage, ParsedInbound } from "./types";
-
-/** Adding a vendor means one adapter file and one entry here. */
-const registry: Partial<Record<ChannelName, Channel>> = {
-  telegram,
-  whatsapp: twilioWhatsApp,
-};
-
-/** WhatsApp stays off until WHATSAPP_ENABLED=true and the TWILIO_* keys are set. */
-function flagOn(name: ChannelName): boolean {
-  return name !== "whatsapp" || env().WHATSAPP_ENABLED === "true";
-}
-
-export function isChannelEnabled(name: ChannelName): boolean {
-  return Boolean(registry[name]) && flagOn(name);
-}
-
-export function getChannel(name: ChannelName): Channel {
-  const channel = registry[name];
-  if (!channel || !flagOn(name)) throw new Error(`Channel is not enabled: ${name}`);
-  return channel;
-}

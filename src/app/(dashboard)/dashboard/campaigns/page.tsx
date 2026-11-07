@@ -1,40 +1,30 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { Logo } from "@/components/logo";
 import { t } from "@/lib/messages";
-import { createServerSupabase } from "@/lib/supabase/server";
-import { getOrCreateStore } from "@/modules/brand";
 import { listPosts } from "@/modules/creative";
 import { publishTargets } from "@/modules/publishers";
+import { PageHeader } from "../../page-header";
+import { requireSeller } from "../../session";
 import { CampaignBoard } from "./campaign-board";
 
-export const metadata = { title: "Marketing | AxoriOS" };
+export const metadata = { title: "Campaigns | AxoriOS" };
 
 export default async function CampaignsPage() {
-  const supabase = await createServerSupabase();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/");
-
-  const store = await getOrCreateStore(supabase, user.id);
+  const { supabase, store } = await requireSeller();
   const [posts, targets] = await Promise.all([listPosts(supabase, store.id), publishTargets(store.id)]);
 
   return (
-    <div className="min-h-dvh">
-      <header className="flex items-center gap-2 bg-primary px-4 py-3 text-white">
-        <Logo className="size-6" />
-        <h1 className="font-semibold">{t.campaigns.title}</h1>
-        <Link href="/dashboard" className="ml-auto inline-flex min-h-11 items-center px-2 text-sm font-semibold underline">
-          {t.dashboard.title}
+    <main className="flex-1 overflow-y-auto px-4 pb-10 sm:px-6 lg:px-8">
+      <PageHeader title={t.app.nav.campaigns} subtitle={t.app.campaignsSubtitle}>
+        <Link
+          href={`/build?prompt=${encodeURIComponent(t.app.cards.makePostsPrompt)}`}
+          className="inline-flex h-11 items-center rounded-lg bg-lime px-4 text-sm font-semibold text-black transition hover:bg-lime/85"
+        >
+          {t.app.cards.makePosts}
         </Link>
-        <Link href="/build" className="inline-flex min-h-11 items-center px-2 text-sm font-semibold underline">
-          {t.dashboard.toBuilder}
-        </Link>
-      </header>
-      <main className="mx-auto w-full max-w-5xl px-4 py-6">
+      </PageHeader>
+      <div className="mt-6">
         <CampaignBoard posts={posts} canPublish={targets.length > 0} />
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }

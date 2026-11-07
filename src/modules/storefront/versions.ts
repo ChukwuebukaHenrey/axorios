@@ -126,6 +126,47 @@ export async function revertDraft(storeId: string): Promise<boolean> {
   return true;
 }
 
+export type SiteVersion = {
+  id: string;
+  status: "draft" | "published" | "archived";
+  createdBy: "agent" | "seller";
+  preset: string;
+  createdAt: string;
+};
+
+/** Every saved version, newest first. Archived drafts stay listed, so an undone edit can be brought back. */
+export async function listVersions(storeId: string, limit = 30): Promise<SiteVersion[]> {
+  const { data, error } = await serviceRoleClient()
+    .from("site_versions")
+    .select("id, status, created_by, template_id, created_at")
+    .eq("store_id", storeId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(`Version list failed: ${error.code}`);
+  return data.map((row) => ({
+    id: row.id,
+    status: row.status as SiteVersion["status"],
+    createdBy: row.created_by as SiteVersion["createdBy"],
+    preset: row.template_id,
+    createdAt: row.created_at,
+  }));
+}
+
+/** Brings an older version back as a new draft, so the history only ever grows and restoring can itself be undone. */
+export async function restoreVersion(storeId: string, versionId: string): Promise<boolean> {
+  const { data, error } = await serviceRoleClient()
+    .from("site_versions")
+    .select("config")
+    .eq("store_id", storeId)
+    .eq("id", versionId)
+    .maybeSingle();
+  if (error) throw new Error(`Version read failed: ${error.code}`);
+  const parsed = SiteConfigSchema.safeParse(data?.config);
+  if (!parsed.success) return false;
+  await saveDraft(storeId, parsed.data, "seller");
+  return true;
+}
+
 export function draftPreviewToken(storeId: string): string {
   return signDraftToken(storeId, env().DRAFT_PREVIEW_SECRET);
 }

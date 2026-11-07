@@ -50,3 +50,10 @@ supabase/.temp
 .vercel
 .env*
 !.env.example
+.design-for-ai-main
+
+.secretel
+
+# raw design references and third-party moodboard screenshots: not for the public repo.
+# curated assets actually used by the app are copied into public/ instead.
+/Images/

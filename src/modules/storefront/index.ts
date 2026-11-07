@@ -1,5 +1,6 @@
 export { DraftBridge } from "./components/draft-bridge";
 export { SiteRenderer, StoreFrame } from "./components/site-renderer";
+export { WaveDivider } from "./components/wave-divider";
 export { SiteEditSchema } from "./edit";
 export type { SiteEdit } from "./edit";
 export { buildSiteConfig, DEFAULT_PRESET, MARKET_PRESETS } from "./presets";
@@ -13,8 +14,11 @@ export {
   draftPreviewToken,
   editDraft,
   getDraftConfig,
+  listVersions,
   publishDraft,
+  restoreVersion,
   revertDraft,
   switchDraftPreset,
   syncBrandToDraft,
 } from "./versions";
+export type { SiteVersion } from "./versions";

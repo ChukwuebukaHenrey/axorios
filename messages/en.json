@@ -1,16 +1,911 @@
 {
   "landing": {
-    "headline": "Your business idea, open for orders today.",
-    "subhead": "Tell AxoriOS about your business. It builds your brand and your store, takes payments through PayPal and answers your customers.",
+    "signInTitle": "Welcome back",
+    "signInSubtitle": "New to AxoriOS?",
+    "signUpLink": "Create an account",
+    "signUpTitle": "Create an account",
+    "signUpSubtitle": "Already have an account?",
+    "signInLink": "Sign in",
+    "firstNameLabel": "First name",
+    "lastNameLabel": "Last name",
     "emailLabel": "Email address",
+    "passwordLabel": "Password",
+    "createPasswordLabel": "Create a password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "termsPrefix": "I agree to the",
+    "termsLink": "Terms of Service",
+    "termsJoin": "and",
+    "privacyLink": "Privacy Policy",
+    "termsRequired": "Please agree to the terms to continue.",
+    "createAccount": "Create account",
+    "creating": "Creating your account",
+    "signUpSent": "Check your email to confirm your account, then come back to sign in.",
+    "signUpFailed": "We couldn't create your account. Check your details and try again.",
+    "passwordTooShort": "Use at least 8 characters for your password.",
+    "orContinue": "Or continue with",
+    "google": "Google",
+    "apple": "Apple",
+    "providerOff": "{provider} sign-in isn't switched on yet. Use your email for now.",
+    "providerFailed": "We couldn't reach {provider}. Please try again.",
     "magicLink": "Email me a sign-in link",
     "magicLinkSent": "Check your email for your sign-in link.",
     "passwordToggle": "Use a password instead",
     "magicToggle": "Use a sign-in link instead",
-    "passwordLabel": "Password",
     "signIn": "Sign in",
+    "signingIn": "Signing you in",
     "signInFailed": "We couldn't sign you in. Check your details and try again.",
-    "linkFailed": "That sign-in link has expired. Ask for a new one."
+    "linkFailed": "That sign-in link has expired. Ask for a new one.",
+    "slide": "Show photo {n} of {total}",
+    "slides": [
+      "A baker kneading dough in her kitchen",
+      "A cook preparing food at his stall",
+      "A tailor sewing in her workshop"
+    ],
+    "registerWith": "Or register with"
+  },
+  "marketing": {
+    "brand": "AxoriOS",
+    "nav": {
+      "home": "Home",
+      "features": "Feature",
+      "useCase": "Use Case",
+      "integrations": "Integrations",
+      "pricing": "Pricing",
+      "getStarted": "Get Started",
+      "signIn": "Sign in",
+      "label": "Main",
+      "menu": "Open menu",
+      "close": "Close menu"
+    },
+    "cta": {
+      "title": "Your first order could be one voice note away.",
+      "body": "Describe your business, approve your store and share the link. No code, no setup calls and no payment forms to configure.",
+      "button": "Start building"
+    },
+    "footer": {
+      "tagline": "Turn a business idea into a storefront that takes real payments, with an AI agent that sells while you sleep.",
+      "main": "Main Pages",
+      "other": "Other pages",
+      "utilities": "Utilities",
+      "home": "Home",
+      "features": "Feature",
+      "useCase": "Use Case",
+      "integrations": "Integration",
+      "pricing": "Price",
+      "demo": "Live demo store",
+      "signIn": "Sign in",
+      "source": "Source code (MIT)",
+      "spec": "Product spec",
+      "notFound": "404",
+      "copyright": "© 2026 AxoriOS. Built for the PayPal AI Hackathon."
+    },
+    "home": {
+      "headline": "Your business idea, open for orders today.",
+      "subhead": "Tell AxoriOS what you sell. It builds your brand and storefront, takes PayPal payments and answers your customers on Telegram.",
+      "cta": "Start building",
+      "dashAlt": "The AxoriOS build workspace: chat on the left, a live storefront preview and approval cards on the right",
+      "trust": "Built on the tools sellers already trust",
+      "about": {
+        "eyebrow": "ABOUT",
+        "title": "About AxoriOS",
+        "lead": "We built AxoriOS because a first sale shouldn't need a web developer.",
+        "body": "Every seller we talked to had the same problem: the product was there, the customers were there, the store wasn't. So we built an agent that sets the store up, takes the payment and answers the questions, and leaves the seller to do the work only they can do.",
+        "approvalTitle": "Needs your approval",
+        "approvals": [
+          {
+            "title": "Publish your storefront",
+            "meta": "Store builder · just now"
+          },
+          {
+            "title": "Schedule 3 Telegram posts",
+            "meta": "Marketing · 4 minutes ago"
+          },
+          {
+            "title": "Connect your Shopify store",
+            "meta": "Integrations · 12 minutes ago"
+          }
+        ],
+        "approvalCardTitle": "You approve everything",
+        "approvalCardBody": "Publishing, scheduling and Shopify always show a preview first and wait for your yes.",
+        "flowSteps": [
+          "Voice",
+          "Agent",
+          "Store"
+        ],
+        "flowTitle": "Store build",
+        "flowBody": "Describe it once. Get a brand and a store.",
+        "flowMeta": "4 steps / 1 approval",
+        "flowCardTitle": "Built for first-time sellers",
+        "flowCardBody": "Not designed for developers. Designed for the baker taking orders at 11 pm.",
+        "agentStatus": "Online",
+        "agentTitle": "Sales agent",
+        "agentBody": "Answers buyers on Telegram, in their own language.",
+        "agentCardTitle": "Trust by default",
+        "agentCardBody": "Prices and totals are always computed on the server. The agent never makes up a number."
+      },
+      "problem": {
+        "eyebrow": "PROBLEM",
+        "title": "Selling online is still slow. Across borders it's slower.",
+        "subhead": "Small sellers juggle a site builder, a payment app and three chat inboxes before a single order arrives.",
+        "items": [
+          {
+            "title": "Scattered tools",
+            "body": "Your products live in one app, your payments in another and your customers in a third, so every order means copying details by hand."
+          },
+          {
+            "title": "Manual payments",
+            "body": "Buyers abroad send transfers and screenshots. You check your bank, convert the currency in your head and hope the amount is right."
+          },
+          {
+            "title": "Slow first sale",
+            "body": "Weeks go into picking a theme, writing pages and wiring checkout, before anyone has even seen what you sell."
+          }
+        ],
+        "imageAlt": "A store admin asking for app permissions, one of many setup screens a new seller clicks through"
+      },
+      "features": {
+        "eyebrow": "FEATURES",
+        "title": "All-in-one selling agent",
+        "subhead": "From a voice note to a paid order: one agent, no plugins, no glue code.",
+        "cards": [
+          {
+            "title": "Always-on sales agent",
+            "body": "A Telegram agent that answers buyers, builds a cart and sends a payment link, day and night, in the buyer's own language."
+          },
+          {
+            "title": "Voice to storefront",
+            "body": "Describe your business in a voice note. AxoriOS drafts the brand kit, the catalog and the storefront for you to review."
+          },
+          {
+            "title": "Price local, get paid global",
+            "body": "Price in naira and get paid in dollars. The exchange rate and both totals are shown to the buyer before they pay."
+          },
+          {
+            "title": "Speak, don't type",
+            "body": "Change anything by asking in plain language: a new price, another product, a different colour. No dashboards to learn."
+          }
+        ],
+        "agentPill": "Agent online 24/7",
+        "agentChips": [
+          "Price check",
+          "Delivery question",
+          "Cart built",
+          "Payment link sent",
+          "Order logged",
+          "Reply in Yoruba"
+        ],
+        "voiceTitle": "New voice note",
+        "voiceRows": [
+          [
+            "Channel",
+            "Voice"
+          ],
+          [
+            "Language",
+            "English"
+          ],
+          [
+            "Length",
+            "0:32"
+          ]
+        ],
+        "actionTitle": "Agent action",
+        "actionRows": [
+          [
+            "Brand kit",
+            "Drafted"
+          ],
+          [
+            "Storefront",
+            "Built"
+          ],
+          [
+            "Status",
+            "Awaiting approval"
+          ]
+        ],
+        "fxTitle": "Checkout quote",
+        "fxPrice": "₦60,000",
+        "fxCharge": "$44.58 via PayPal",
+        "fxLegendLocal": "Store price",
+        "fxLegendCharge": "Charged",
+        "chatBubbles": [
+          "I bake birthday cakes in Lagos",
+          "Price them in naira, please"
+        ],
+        "chatPlaceholder": "Describe what to build or change…"
+      },
+      "process": {
+        "eyebrow": "PROCESS",
+        "title": "How it works",
+        "subhead": "Three steps from an idea to a paid order. In an afternoon, not a quarter.",
+        "steps": [
+          {
+            "title": "Describe your business",
+            "body": "By voice or text, in your own language. AxoriOS drafts your brand kit and storefront."
+          },
+          {
+            "title": "Approve your store",
+            "body": "Preview everything first. Nothing goes live until you say yes."
+          },
+          {
+            "title": "Take your first order",
+            "body": "Buyers pay through PayPal in their own currency, and the order lands in your dashboard."
+          }
+        ]
+      },
+      "services": {
+        "eyebrow": "SERVICES",
+        "title": "Built to simplify how selling gets done.",
+        "subhead": "AxoriOS sets up the store, connects the payments and keeps selling in chat, so you can get back to making things.",
+        "items": [
+          {
+            "title": "Brand & storefront",
+            "body": "From one description, AxoriOS drafts your name, tagline, colours and fonts, then builds a storefront around your products.",
+            "bullets": [
+              "Name, tagline and tone",
+              "Palette and fonts",
+              "Product catalog",
+              "Live draft preview"
+            ]
+          },
+          {
+            "title": "Payments & orders",
+            "body": "A PayPal checkout that works in any currency, with totals computed on the server and every order logged in one place.",
+            "bullets": [
+              "PayPal checkout",
+              "Any ISO currency",
+              "Server-side totals",
+              "Captured on return and webhook"
+            ]
+          },
+          {
+            "title": "Chat selling",
+            "body": "Every store gets a Telegram link. The agent answers questions, builds the cart and sends a payment link.",
+            "bullets": [
+              "Telegram bot per store",
+              "Replies in the buyer's language",
+              "Builds the cart",
+              "Sends a payment link"
+            ]
+          },
+          {
+            "title": "Marketing & sync",
+            "body": "On-brand posts for your channel on a schedule you approve, and a one-way copy of your store into Shopify.",
+            "bullets": [
+              "On-brand post images",
+              "Scheduled Telegram posts",
+              "Download pack",
+              "One-way Shopify sync"
+            ]
+          }
+        ],
+        "imageAlts": [
+          "The AxoriOS build workspace",
+          "A paid order on the live demo store",
+          "Placeholder image: chat selling screenshot not available yet",
+          "Shopify asking to install the AxoriOS app"
+        ]
+      },
+      "stats": {
+        "eyebrow": "STATS",
+        "title": "By the numbers",
+        "subhead": "What every AxoriOS store gets, counted in facts rather than promises.",
+        "blueprintTitle": "Store blueprint",
+        "blueprintBody": "Describe your business once and AxoriOS maps it into a brand kit, a catalog and a storefront. Every change is a draft until you approve it, every price is computed on the server, and every order lands in one dashboard. It isn't a one-time setup. It's a store that keeps selling.",
+        "items": [
+          {
+            "value": "24/7",
+            "label": "Chat selling",
+            "detail": "On Telegram, in the buyer's language"
+          },
+          {
+            "value": "1",
+            "label": "Voice note to start",
+            "detail": "From an idea to a live storefront"
+          },
+          {
+            "value": "0",
+            "label": "Unapproved changes",
+            "detail": "Every publish waits for your yes"
+          },
+          {
+            "value": "Any",
+            "label": "ISO currency",
+            "detail": "Converted for PayPal at checkout"
+          }
+        ]
+      },
+      "integration": {
+        "eyebrow": "INTEGRATION",
+        "title": "Connects to the tools you already use.",
+        "subhead": "AxoriOS takes payments through PayPal, sells on Telegram and syncs to Shopify. Every channel plugs in through the same adapter, so the list can grow.",
+        "live": "Live today: PayPal, Telegram, Shopify and Supabase. WhatsApp is built and switched off until it's tested end to end.",
+        "footnote": "Most store builders need a stack of their own. AxoriOS doesn't. No plugin store to browse, no payment form to configure, no chat inbox to set up. Describe your business and the pieces are already connected."
+      },
+      "stories": {
+        "eyebrow": "STORIES",
+        "title": "What sellers can do",
+        "subhead": "Illustrative stories of the sellers AxoriOS is built for, from florists to tailors to home bakers.",
+        "badge": "Example seller",
+        "prev": "Previous story",
+        "next": "Next story",
+        "label": "Seller stories",
+        "slide": "Story {n} of {total}",
+        "goTo": "Show story {n}",
+        "pause": "Pause stories",
+        "play": "Play stories",
+        "items": [
+          {
+            "quote": "Orders from my cousins in London used to arrive as screenshots. Now they pay in pounds and I see naira.",
+            "name": "Florist",
+            "role": "Abuja"
+          },
+          {
+            "quote": "I described my dishes in a voice note. By lunch I had a store link to send to customers.",
+            "name": "Home caterer",
+            "role": "Accra"
+          },
+          {
+            "quote": "The agent answers delivery questions on Telegram while my hands are in the clay.",
+            "name": "Ceramicist",
+            "role": "Lagos"
+          },
+          {
+            "quote": "Nothing goes live until I tap approve. That's the part that let me trust it.",
+            "name": "Bespoke tailor",
+            "role": "Nairobi"
+          },
+          {
+            "quote": "I priced in cedis and a buyer in Toronto paid in dollars. The totals matched to the pesewa.",
+            "name": "Home baker",
+            "role": "Kumasi"
+          }
+        ]
+      },
+      "notes": {
+        "eyebrow": "NOTES",
+        "title": "How AxoriOS is built.",
+        "subhead": "Short notes on the decisions behind the product: money, approvals and selling in chat.",
+        "items": [
+          {
+            "category": "Payments",
+            "title": "Pricing in naira, charging in dollars"
+          },
+          {
+            "category": "Approvals",
+            "title": "Why every publish waits for your yes"
+          },
+          {
+            "category": "Chat selling",
+            "title": "Selling on Telegram without a second inbox"
+          }
+        ],
+        "readMore": "Read the spec"
+      },
+      "faq": {
+        "eyebrow": "FAQ",
+        "title": "Frequently asked questions",
+        "subhead": "Everything sellers ask before getting started. Still curious? Open an issue on the repo.",
+        "left": [
+          {
+            "q": "What is AxoriOS?",
+            "a": "AxoriOS is an AI agent that takes a seller from a business idea to a first paid order. It drafts a brand, builds a storefront with PayPal checkout and sells for you on Telegram."
+          },
+          {
+            "q": "Do I need to code?",
+            "a": "No. You describe your business by voice or text, in your own language, and approve what AxoriOS builds."
+          },
+          {
+            "q": "Is this real money?",
+            "a": "Not yet. This hackathon build runs on PayPal's sandbox, so the checkout flow is real but no real money moves."
+          },
+          {
+            "q": "How is AxoriOS different from a store builder?",
+            "a": "A store builder gives you a theme to fill in. AxoriOS writes the store for you, takes the payment and keeps answering customers in chat."
+          }
+        ],
+        "right": [
+          {
+            "q": "Which tools does AxoriOS work with?",
+            "a": "PayPal for checkout, Telegram for chat selling and Shopify for a one-way product and page sync. WhatsApp is built but switched off until it's tested."
+          },
+          {
+            "q": "What currency can I sell in?",
+            "a": "Any ISO currency. If PayPal doesn't take it directly, AxoriOS converts to your settlement currency and shows the buyer both totals before they pay."
+          },
+          {
+            "q": "What if the agent gets something wrong?",
+            "a": "It can't publish, schedule or connect anything without your approval, and it never sets a price or total. Those are always computed on the server."
+          },
+          {
+            "q": "How long until my store is live?",
+            "a": "As long as it takes to describe your business and approve the preview. For most sellers that's one sitting."
+          }
+        ]
+      }
+    },
+    "featuresPage": {
+      "headline": "Powerful features built for sellers who'd rather be selling.",
+      "subhead": "Six capabilities. One agent. No code, no plugins and no setup calls. Describe your business, approve what it builds and start taking orders.",
+      "cta": "Start building",
+      "workflow": [
+        {
+          "title": "New voice note",
+          "rows": [
+            [
+              "Channel",
+              "Builder chat"
+            ],
+            [
+              "Trigger",
+              "Voice note"
+            ]
+          ],
+          "rows2": [
+            [
+              "Last",
+              "Just now"
+            ],
+            [
+              "Length",
+              "0:32"
+            ]
+          ]
+        },
+        {
+          "title": "Agent action",
+          "rows": [
+            [
+              "Agent",
+              "Store builder"
+            ],
+            [
+              "Task",
+              "Draft brand"
+            ]
+          ],
+          "rows2": [
+            [
+              "Status",
+              "Draft ready"
+            ],
+            [
+              "Steps",
+              "3 of 8"
+            ]
+          ]
+        },
+        {
+          "title": "Result",
+          "rows": [
+            [
+              "Store",
+              "Eko Sweet Bakes"
+            ],
+            [
+              "Preview",
+              "Signed link"
+            ]
+          ],
+          "rows2": [
+            [
+              "Approve",
+              "Publish"
+            ],
+            [
+              "Deny",
+              "Keep editing"
+            ]
+          ]
+        }
+      ],
+      "capabilities": {
+        "eyebrow": "CAPABILITIES",
+        "title": "Everything you need to start selling.",
+        "subhead": "AxoriOS combines a brand builder, a storefront, PayPal checkout and a sales agent in one place. No developer required.",
+        "cards": [
+          {
+            "title": "Voice-first builder",
+            "body": "Describe your business by voice or text, in any language. AxoriOS drafts a name, tagline, palette and fonts from it."
+          },
+          {
+            "title": "Storefront & checkout",
+            "body": "A mobile-ready store with your products and a real PayPal checkout, previewed on a signed link before it's public."
+          },
+          {
+            "title": "Chat selling",
+            "body": "A store-bound Telegram agent that answers questions, builds a cart and sends a payment link in the buyer's language."
+          },
+          {
+            "title": "Scheduled marketing",
+            "body": "On-brand posts drafted for your channel, reviewed by you and published on a schedule you approve."
+          },
+          {
+            "title": "Integrations",
+            "body": "PayPal, Telegram and Shopify today. Every vendor sits behind an adapter, so a new channel is one file, not a rewrite."
+          },
+          {
+            "title": "Safety & approvals",
+            "body": "Every store is scoped by row-level security, secrets stay on the server, and nothing irreversible runs without your yes."
+          }
+        ]
+      },
+      "rows": {
+        "eyebrow": "FEATURES",
+        "title": "All-in-one selling agent",
+        "subhead": "From a voice note to a paid order: one agent, no plugins, no glue code.",
+        "items": [
+          {
+            "title": "Always-on sales agent",
+            "body": "A Telegram agent that answers buyers, builds a cart and sends a payment link, day and night.",
+            "bullets": [
+              "Answers in the buyer's language",
+              "Reads your catalog, never invents prices",
+              "Sends a PayPal payment link"
+            ]
+          },
+          {
+            "title": "Voice to storefront",
+            "body": "Describe your business in a voice note. AxoriOS turns it into a brand kit and a storefront draft.",
+            "bullets": [
+              "Voice or text, any language",
+              "Brand kit, catalog and storefront",
+              "Every change saved as a draft"
+            ]
+          },
+          {
+            "title": "Price local, get paid global",
+            "body": "Price in your own currency. AxoriOS converts for PayPal and shows the buyer both totals before they pay.",
+            "bullets": [
+              "Any ISO currency",
+              "Rate and source stored on the order",
+              "Totals computed on the server"
+            ]
+          },
+          {
+            "title": "Speak, don't type",
+            "body": "Change anything by asking in plain language. No dashboards to learn and no settings to hunt for.",
+            "bullets": [
+              "Click any part of the preview",
+              "Ask for the change you want",
+              "Undo any edit"
+            ]
+          }
+        ]
+      }
+    },
+    "useCasePage": {
+      "headline": "Built for the way small sellers actually work.",
+      "subhead": "Bakers, tailors, florists and cooks: AxoriOS adapts to what you sell and who you sell to, wherever they are.",
+      "cta": "See the live demo store",
+      "cardAlt": "Orders and revenue for an AxoriOS store",
+      "section": {
+        "eyebrow": "USE CASE",
+        "title": "One agent. Every part of the shop.",
+        "subhead": "AxoriOS adapts to how your business already works. Pick a job and see what the agent handles.",
+        "handles": "What AxoriOS handles",
+        "items": [
+          {
+            "label": "Storefront",
+            "title": "Open the shop in one sitting.",
+            "body": "Describe what you sell and AxoriOS builds the brand and the storefront, then waits for you to approve it.",
+            "checks": [
+              "Draft the brand kit",
+              "Build the product catalog",
+              "Preview on a signed link",
+              "Publish when you approve"
+            ],
+            "stats": [
+              [
+                "1",
+                "Voice note"
+              ],
+              [
+                "24 h",
+                "Preview link"
+              ],
+              [
+                "0",
+                "Code"
+              ]
+            ],
+            "imageAlt": "The AxoriOS build workspace"
+          },
+          {
+            "label": "Sales",
+            "title": "Sell while you sleep.",
+            "body": "Every store gets a Telegram link. The agent answers buyers, builds the cart and sends a payment link.",
+            "checks": [
+              "Answer product questions",
+              "Reply in the buyer's language",
+              "Build the cart from chat",
+              "Send a PayPal payment link"
+            ],
+            "stats": [
+              [
+                "24/7",
+                "Chat selling"
+              ],
+              [
+                "8",
+                "Steps per reply, max"
+              ],
+              [
+                "Any",
+                "Language"
+              ]
+            ],
+            "imageAlt": "Placeholder image: chat selling screenshot not available yet"
+          },
+          {
+            "label": "Payments",
+            "title": "Get paid across borders.",
+            "body": "Price in naira and let a buyer in London pay in pounds. AxoriOS converts, shows both totals and captures the order.",
+            "checks": [
+              "Quote the exchange rate",
+              "Show both totals before paying",
+              "Capture on return and webhook",
+              "Log the order in your dashboard"
+            ],
+            "stats": [
+              [
+                "Any",
+                "ISO currency"
+              ],
+              [
+                "2",
+                "Capture paths"
+              ],
+              [
+                "0",
+                "Model-set prices"
+              ]
+            ],
+            "imageAlt": "A paid order on the live demo store"
+          },
+          {
+            "label": "Marketing",
+            "title": "Keep customers coming back.",
+            "body": "On-brand posts for your channel, scheduled when you approve them, and a one-way sync of your store into Shopify.",
+            "checks": [
+              "Draft on-brand post images",
+              "Schedule Telegram posts",
+              "Download a post pack",
+              "Copy your store to Shopify"
+            ],
+            "stats": [
+              [
+                "7",
+                "Days to schedule ahead"
+              ],
+              [
+                "1",
+                "Approval per batch"
+              ],
+              [
+                "1-way",
+                "Shopify sync"
+              ]
+            ],
+            "imageAlt": "Shopify asking to install the AxoriOS app"
+          }
+        ]
+      }
+    },
+    "integrationsPage": {
+      "all": {
+        "eyebrow": "ALL INTEGRATION",
+        "title": "Connect AxoriOS to the tools you already use.",
+        "subhead": "Payments, chat, commerce and data, each behind its own adapter. No code, no setup calls, no waiting on a developer.",
+        "tabs": {
+          "all": "All",
+          "payments": "Payments",
+          "chat": "Chat",
+          "commerce": "Commerce",
+          "data": "Data",
+          "ai": "AI Model"
+        },
+        "connect": "Connect",
+        "off": "Switched off",
+        "items": [
+          {
+            "id": "paypal",
+            "category": "payments",
+            "title": "PayPal",
+            "body": "Orders v2 checkout, sandbox-tested. Captured on the return page and on the webhook, so no paid order is missed."
+          },
+          {
+            "id": "telegram",
+            "category": "chat",
+            "title": "Telegram",
+            "body": "One bot serves every store. The link a buyer taps tells it which shop they came from."
+          },
+          {
+            "id": "shopify",
+            "category": "commerce",
+            "title": "Shopify",
+            "body": "A one-way copy of your products, a collection and your pages, kept current whenever you ask."
+          },
+          {
+            "id": "whatsapp",
+            "category": "chat",
+            "title": "WhatsApp",
+            "body": "The adapter is built. It stays switched off until it's tested end to end with a real account."
+          },
+          {
+            "id": "supabase",
+            "category": "data",
+            "title": "Supabase",
+            "body": "Your data, auth and storage, with row-level security on every table."
+          },
+          {
+            "id": "gemini",
+            "category": "ai",
+            "title": "Gemini",
+            "body": "The model behind the agent, for text, voice notes and on-brand images. Model IDs come from config, not code."
+          }
+        ]
+      }
+    },
+    "pricing": {
+      "eyebrow": "PRICING",
+      "title": "Simple pricing",
+      "subhead": "AxoriOS is free while it's in beta. Self-host it from the MIT repo whenever you like, and stay free forever.",
+      "toggleHosted": "Hosted",
+      "toggleSelf": "Self-hosted",
+      "plans": [
+        {
+          "name": "Beta",
+          "body": "For sellers trying AxoriOS during the hackathon beta, with everything this build can do.",
+          "priceHosted": "$0",
+          "periodHosted": "/during beta",
+          "priceSelf": "$0",
+          "periodSelf": "/forever",
+          "cta": "Start Free",
+          "items": [
+            "1 live storefront",
+            "PayPal checkout (sandbox)",
+            "Telegram chat selling",
+            "Scheduled posts",
+            "Shopify sync"
+          ]
+        },
+        {
+          "name": "Growth",
+          "body": "Planned for after the beta, for sellers who outgrow one store and one channel.",
+          "priceHosted": "Soon",
+          "periodHosted": "",
+          "priceSelf": "Soon",
+          "periodSelf": "",
+          "cta": "Join the beta",
+          "items": [
+            "Everything in Beta",
+            "Live PayPal payments",
+            "WhatsApp selling",
+            "More stores per seller",
+            "Priority fixes"
+          ]
+        },
+        {
+          "name": "Custom",
+          "body": "For teams who want to run AxoriOS on their own keys, their own domain or their own adapters.",
+          "priceHosted": "Custom",
+          "periodHosted": "",
+          "priceSelf": "Custom",
+          "periodSelf": "",
+          "cta": "Contact Us",
+          "items": [
+            "Self-host from the MIT repo",
+            "Your own PayPal and Telegram keys",
+            "Custom channel adapters",
+            "Custom storefront templates",
+            "Direct help from the builder"
+          ]
+        }
+      ],
+      "comparison": {
+        "eyebrow": "COMPARISON",
+        "title": "Every feature, side by side.",
+        "subhead": "See exactly what's in each plan, from storefronts to channels. Growth is planned, not live.",
+        "intro": "Compare Beta, Growth and Custom on building, selling and integrations.",
+        "groups": [
+          {
+            "title": "Build",
+            "rows": [
+              [
+                "Live storefronts",
+                "1",
+                "Several",
+                "Unlimited"
+              ],
+              [
+                "Voice or text builder",
+                "yes",
+                "yes",
+                "yes"
+              ],
+              [
+                "Brand kit and catalog",
+                "yes",
+                "yes",
+                "yes"
+              ],
+              [
+                "Custom templates",
+                "no",
+                "no",
+                "yes"
+              ]
+            ]
+          },
+          {
+            "title": "Sell",
+            "rows": [
+              [
+                "PayPal checkout",
+                "Sandbox",
+                "Live",
+                "Your keys"
+              ],
+              [
+                "Telegram chat selling",
+                "yes",
+                "yes",
+                "yes"
+              ],
+              [
+                "WhatsApp selling",
+                "no",
+                "yes",
+                "yes"
+              ],
+              [
+                "Approval on every publish",
+                "yes",
+                "yes",
+                "yes"
+              ]
+            ]
+          },
+          {
+            "title": "Integrations",
+            "rows": [
+              [
+                "Shopify sync",
+                "yes",
+                "yes",
+                "yes"
+              ],
+              [
+                "Scheduled posts",
+                "yes",
+                "yes",
+                "yes"
+              ],
+              [
+                "Custom adapters",
+                "no",
+                "no",
+                "yes"
+              ],
+              [
+                "Self-hosted deployment",
+                "no",
+                "no",
+                "yes"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "notFound": {
+      "title": "404",
+      "body": "The link may be broken, or the page may have moved. Let's get you back on track.",
+      "cta": "Back to home"
+    }
   },
   "builder": {
     "title": "Build your store",
@@ -191,5 +1086,191 @@
     "paymentTotal": "Total: {total}",
     "paymentCharge": "You pay {charge} through PayPal (1 {from} = {rate} {to}).",
     "paymentLink": "Pay here: {url}"
+  },
+  "app": {
+    "nav": {
+      "workspace": "Workspace",
+      "operations": "Operations",
+      "build": "Build",
+      "orders": "Orders",
+      "inbox": "Inbox",
+      "campaigns": "Campaigns",
+      "integrations": "Integrations",
+      "search": "Search orders, products, campaigns…",
+      "searchLabel": "Search",
+      "notifications": "Notifications",
+      "waiting": "{count} customer chats waiting for you",
+      "caughtUp": "You're all caught up.",
+      "openInbox": "Open inbox",
+      "account": "Account",
+      "signOut": "Sign out",
+      "viewLive": "View live store",
+      "viewDraft": "Open draft preview",
+      "live": "Live",
+      "draft": "Draft",
+      "unnamed": "Your store",
+      "menu": "Open menu",
+      "close": "Close menu"
+    },
+    "build": {
+      "title": "Build your storefront",
+      "subtitle": "Tell AxoriOS what you sell, and it helps you shape your brand, products, storefront, and launch content.",
+      "agentName": "AxoriOS agent",
+      "agentIntro": "Your store-building agent. Describe your business by voice or text, in any language, and I'll draft the brand, products and storefront for you to approve.",
+      "agentMeta": "Voice or text · Any language · You approve every change",
+      "suggestions": [
+        "I bake celebration cakes in Lagos and price in naira",
+        "I sell handmade ankara bags, about $40 each",
+        "I cook home-made meals for delivery in Nairobi"
+      ],
+      "you": "You",
+      "agent": "AxoriOS",
+      "placeholder": "Describe what to build or change…",
+      "send": "Send",
+      "quick": "Quick actions",
+      "integrations": "Integrations",
+      "storeChip": "Store",
+      "templateChip": "Template",
+      "quickActions": [
+        {
+          "label": "Add a product",
+          "prompt": "Add a product: "
+        },
+        {
+          "label": "Change my colours",
+          "prompt": "Change my colours to "
+        },
+        {
+          "label": "Rewrite my headline",
+          "prompt": "Rewrite my homepage headline so it sounds "
+        },
+        {
+          "label": "Make marketing posts",
+          "prompt": "Make me 3 posts for "
+        },
+        {
+          "label": "Connect Shopify",
+          "prompt": "Connect my Shopify store: "
+        }
+      ],
+      "artifactTitle": "{name} storefront",
+      "artifactBody": "Your draft store. Open it to preview, then click any section to edit it.",
+      "openPreview": "Open preview",
+      "previewTitle": "Storefront Preview",
+      "closePreview": "Close preview",
+      "showPreview": "Show preview",
+      "reload": "Reload preview",
+      "openTab": "Open in a new tab",
+      "history": "Version history",
+      "historyEmpty": "No saved versions yet.",
+      "restore": "Restore",
+      "current": "Current",
+      "byAgent": "Agent edit",
+      "bySeller": "Your edit",
+      "publishedVersion": "Published",
+      "restoreFailed": "That version couldn't be restored.",
+      "noPreview": "Your storefront appears here once you describe your business."
+    },
+    "cards": {
+      "brand": "Brand",
+      "brandEmpty": "No brand yet. Describe your business to start.",
+      "name": "Name",
+      "tagline": "Tagline",
+      "palette": "Palette",
+      "fonts": "Fonts",
+      "tone": "Tone",
+      "products": "Products ({count})",
+      "productsEmpty": "No products yet.",
+      "addProduct": "Add product",
+      "publish": "Publish",
+      "publishLive": "Your store is live.",
+      "publishDraft": "Review and publish your store to make it live.",
+      "publishButton": "Publish store",
+      "viewStore": "View store",
+      "campaigns": "Campaign drafts ({count})",
+      "campaignsEmpty": "No posts yet.",
+      "makePosts": "Make posts",
+      "makePostsPrompt": "Make me 3 posts for my store.",
+      "reviewPosts": "Review posts",
+      "schedule": "Schedule",
+      "scheduleNone": "Nothing scheduled yet.",
+      "scheduleNext": "Next post goes out",
+      "scheduleCount": "{count} posts scheduled",
+      "shopify": "Shopify Connect",
+      "connected": "Connected",
+      "notConnected": "Not connected",
+      "connect": "Connect Shopify",
+      "connectPrompt": "Connect my Shopify store: ",
+      "syncedTo": "Synced to {domain}",
+      "lastSync": "Last copied {time}",
+      "neverSynced": "Not copied yet",
+      "sync": "Copy to Shopify",
+      "syncPrompt": "Copy my store to Shopify."
+    },
+    "orders": {
+      "title": "Orders",
+      "subtitle": "Every paid order from your store and your chats, in your currency and the buyer's.",
+      "revenue": "Revenue",
+      "revenueDetail": "Paid orders, in {currency}",
+      "orders": "Orders",
+      "ordersDetail": "{paid} paid · {waiting} confirming",
+      "conversations": "Conversations",
+      "conversationsDetail": "{count} waiting for you",
+      "scheduled": "Scheduled posts",
+      "scheduledNone": "None scheduled",
+      "scheduledNext": "Next {time}",
+      "results": "Results for “{q}”",
+      "clear": "Clear search",
+      "noResults": "No orders match that search.",
+      "colOrder": "Order",
+      "colItems": "Items",
+      "colChannel": "Channel",
+      "colTotal": "Total",
+      "colStatus": "Status",
+      "colDate": "Date",
+      "deliver": "Deliver to"
+    },
+    "inbox": {
+      "title": "Inbox",
+      "subtitle": "Every customer chat across your channels. Take over any chat to reply yourself.",
+      "empty": "No customer chats yet. They show up here when someone messages your store on Telegram.",
+      "pick": "Pick a chat to read it.",
+      "agentOn": "Agent replying",
+      "agentOff": "You're replying",
+      "takeOver": "Take over",
+      "handBack": "Hand back to agent",
+      "hint": "Take over to reply yourself. The agent stops replying until you hand the chat back.",
+      "placeholder": "Write a reply…",
+      "send": "Send reply",
+      "sendFailed": "That reply didn't send. Please try again.",
+      "channelOff": "This channel can't send replies right now.",
+      "customer": "Customer",
+      "agent": "Agent",
+      "seller": "You",
+      "back": "All chats",
+      "needsReply": "Needs a reply"
+    },
+    "integrations": {
+      "title": "Integrations",
+      "subtitle": "The tools your store runs on. Connecting or syncing always goes through the agent, so you approve it first.",
+      "connected": "Connected",
+      "sandbox": "Sandbox",
+      "off": "Switched off",
+      "notConnected": "Not connected",
+      "paypal": "PayPal",
+      "paypalBody": "Checkout for your storefront and chat payment links. This build runs on PayPal's sandbox.",
+      "telegram": "Telegram",
+      "telegramBody": "Customers chat with your store's agent on Telegram. Share this link to start a chat.",
+      "copyLink": "Copy chat link",
+      "copied": "Copied",
+      "shopify": "Shopify",
+      "shopifyBody": "A one-way copy of your products, a collection and your pages.",
+      "askConnect": "Ask the agent to connect",
+      "askSync": "Ask the agent to copy",
+      "whatsapp": "WhatsApp",
+      "whatsappBody": "Built and switched off until it's tested end to end with a real account.",
+      "needsPublish": "Publish your store to get a chat link."
+    },
+    "campaignsSubtitle": "On-brand posts the agent made for your store. Edit captions, schedule them or download the pack."
   }
 }

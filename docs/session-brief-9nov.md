@@ -1,30 +1,38 @@
-# Session brief (9 Nov 2026): Cloudflare Flux images, JPEG posts, env hygiene
+# Session brief (9 Nov 2026, session 2): Phase 6 backend
 
-Handoff for the next session. **Nothing below is committed.** Lint, 101/101 tests and `npm run build` pass on the working tree.
+Handoff for the next session. Everything below is **committed and pushed** (`70b0829`). 138/138 tests, lint and `npm run build` pass.
 
-## Done
+## Done this session (backend first, per the user)
 
-**Cloudflare Flux `ImageProvider`** (`src/modules/creative/adapters/cloudflare-flux.tsx`)
-- `IMAGE_PROVIDER=cloudflare-flux` + `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_AI_TOKEN`, `CLOUDFLARE_IMAGE_MODEL` (zod: required only when selected).
-- Flux paints the **background only** (`backgroundPrompt` in `copy.ts`): colour *words* from the brand palette (hex codes made Flux paint swatch strips), "no text…". `next/og` then typesets headline, subline, brand and the **database** `priceLabel` over a dark scrim.
-- 429 or quota/capacity errors (Cloudflare codes 3036/3040, `cloudflare-errors.ts`) fall back to the template provider. Other errors still fail the post.
-- Flux posts are re-encoded to **JPEG q85 via `sharp`** (~95 KB vs 2.4 MB PNG). Template posts stay PNG.
-- `template.tsx` now exports a shared `renderPng()`; storage path extension follows `contentType` (`posts.ts`); the download pack names `image.jpg`/`image.png` by magic bytes (`publishers/pack.ts`).
-- Note: next/og (satori) ignores the `inset` shorthand; use `top/left/width/height`.
+| Step | Result |
+|---|---|
+| 0.4 | Last session's Cloudflare Flux work committed (`1ef07cf`, `9fc5769`) |
+| 6.0 | `docs/spec-v2.md` (the v2 build doc, renamed), CLAUDE.md edits, env schema + `.env.example` for Kapso, demo adapters, AG Studio, Zapier, `SANDBOX_BUYERS`, `SEED`. `IMAGE_PROVIDER` accepts `cloudflare`/`og` aliases. **Vercel env keys not added yet.** |
+| 6.1 | `src/modules/agent/approvals.ts`: one list of gated tools, used as a generic `toolApproval` policy. 14 tests through a mock model. |
+| 6.2 | Migration `20261109000000_v2.sql` pushed; types regenerated; `scripts/e2e-rls-v2.mts` passes; `src/modules/analytics/metrics.ts` (+10 tests). VAT stored on new orders; capture stores PayPal fee/net/payer country. |
+| 6.4 | `src/modules/imports` (CSV + Zod + service), `scripts/seed-v2.mts`, `scripts/check-demo.mts`, `scripts/reset-demo.mts` (`npx tsx scripts/reset-demo.mts`). Demo: 1,704 orders, ₦9m → ₦14m/month; UK store `eko-sweet-kitchen-uk` in GBP. Two runs give identical counts. |
+| 6.7 backend | `orders/refund-plan.ts` + `orders/refunds.ts`, `refund_order` tool, refund webhook in the job, `scripts/e2e-refund.mts` passed on the real sandbox. **Money UI and the Orders Refund button are not built.** |
 
-**Verification**: `npx tsx --import ./scripts/no-server-only.mjs --env-file=.env.local scripts/spike-image.mts [folder]`. 9 Nov run: live Flux background + "₦45,000" → 94 KB JPEG uploaded to Storage and read back publicly; a stubbed 429 falls back to the template PNG; exit 0. `scripts/no-server-only.mjs` lets scripts import server modules.
+## Next, in order
 
-**Vercel**: the 3 `CLOUDFLARE_*` keys are in **Production** (sensitive). `IMAGE_PROVIDER` on Vercel is still `template`. Switch on with `npx vercel env add IMAGE_PROVIDER production` (value `cloudflare-flux`), then redeploy.
+1. **6.3 Shell and Axori AI** (UI starts here). New top bar + grouped sidebar (spec v2 IA), Axori AI side panel (Ctrl/⌘+J, Esc), full page, threads in `ai_threads` (account + store), context chips, mobile bottom bar + floating button. Use shadcn components (`components.json` is set up with the @aceternity, @magicui and @originui registries).
+   - **Animated mascot:** `Images/new assets/AxoriOS_Emotion_States/{happy,thinking,listening,speaking,confused,surprised}.png` (1254 px RGBA, transparent, ~750 KB each). Resize to ~256/512 px WebP into `public/mascot/`. Map agent states: idle → happy, streaming text → speaking, tool running / waiting → thinking, mic recording → listening, error → confused, approval card arrives → surprised. Use `motion` for a float/breathe idle, squash on state change, a crossfade between faces and a glow pulse while speaking. `Glossy Lime Blob AI Mascot.png` is the hero/marketing pose.
+   - UI references in `Images/new assets/`: `chatinterface*.webp` (EchoAI chat layout: suggestion cards, composer with mic), `ChatGPT Image Nov 9…` (Bankio-style finance dashboards for Money and Home tiles), `integration.png` (Connections directory), `Discord iOS 28.png` (mobile).
+2. **6.6 Analytics (AG Studio)**: pin `ag-grid-community` 36.2.0, `ag-grid-react` 36.2.0, `ag-studio` 3.0.0, `ag-studio-react` 3.0.0. Install in the background (npm is slow here). Read the boilerplate for the pattern only (no licence there).
+3. **6.7 UI**: Money tab (Overview, Money in, Money out, Expenses, Withdrawals, VAT, Statements) + the Refund card on Orders (calls `previewRefund`, then `executeRefund` with an approval id).
+4. **6.8 Home + Store overview**, **6.9 Customers**, **6.10 Marketing performance + demo adapters**, then 6.12, 6.14, 6.11, 6.13 (cut list order: the last ones go first).
 
-**Env hygiene**: `.env.local` fixed (space after `TELEGRAM_CHANNEL_ID=`, Kapso notes now `#` comments). `node scripts/check-env.mjs [file]` names any line bash can't source; CLAUDE.md's load command now runs it first.
+## Open / user tasks
 
-**Plan**: decision row + 0.4 progress row updated in `plans/axorios.md`.
+- PayPal `GET /v1/reporting/balances` failed from the sandbox app, so the refund card shows the balance as unknown. Enable **Transaction search** (and balance reporting) on the sandbox REST app. 6.6's PayPal grid needs it too.
+- Vercel: add the new env keys to production (names in `.env.example`), then redeploy. Production already gets `PAYMENT.CAPTURE.REFUNDED`; the event from 9 Nov 03:23 UTC is stored and is processed once the new code is live.
+- The full-refund e2e used the 5 Nov Telegram test order (913eade6, now `refunded`). It is hidden (`source = 'test'`); its 3.2 evidence stays in Progress.
+- Kapso and Zapier keys and `SANDBOX_BUYERS` are still needed from the user (spec v2 "Tasks for Ebuka").
+- Not committed, not from this session: `.claude/`, `.mcp.json`, `test-cake.jpg`.
 
-## Not done / open
+## Gotchas found
 
-- **Commit**: suggested `feat(creative): 0.4 cloudflare-flux image provider with JPEG posts` + `chore(scripts): env file check`. Don't include files this session didn't make (below) without asking.
-- Files in the tree **not from this session**: `shadcn` in `package.json`/lockfile, `components.json`, `.mcp.json`, `.claude/`, `test-cake.jpg`, `docs/AxoriOS v2 — Product & Build Spec (1).md`. Ask the user before committing them.
-- Not run on production yet: `scripts/e2e-campaign.mts` with `IMAGE_PROVIDER=cloudflare-flux` (it now accepts PNG or JPEG).
-- Node 26 `fetch` on this machine resets large (>~1 MB) uploads; curl works. JPEG sizes avoid it; production unaffected as far as known.
-- Earlier (7 Nov, committed since in `b2f3f33`/`06fff90`): visual pass of /features, /use-case, /integrations, /pricing against `Images/ZenFlo…/` exports was **not finished**; the Edge screenshot helper lives in the job temp folder (gone after the job).
-- Windows note: Python `open(..., "w")` writes CRLF; the repo is LF. Write with `newline=""` or check `git diff --stat` for whole-file diffs.
+- Node 26 `fetch` here resets uploads over ~1 MB: seed images go up as ~1200 px JPEG via `sharp`.
+- `next build` and `npm test` must run from `C:\Users\ADMIN\AxoriOS` (real casing).
+- `tsc -p .` includes `scripts/`; keep scripts type-clean.
+- PostgREST paging needs a stable `order()`, or rows repeat or go missing across pages.

@@ -8,7 +8,7 @@ import { allowedPermissions, TOOL_CATALOG } from "@/modules/agent/permissions";
 import { listOwnerStores } from "@/modules/brand";
 import { WHATSAPP_TEMPLATES } from "@/modules/channels";
 import { shopConnection } from "@/modules/platforms";
-import { PageHeader } from "../../page-header";
+import { PageHeader, Panel } from "../../page-header";
 import { requireSeller } from "../../session";
 import { signOut } from "../../shell-actions";
 import { signOutEverywhere } from "./actions";
@@ -35,7 +35,10 @@ function SectionNav({ current }: { current: Section }) {
     </Link>
   );
   return (
-    <nav aria-label={s.title} className="flex gap-1 overflow-x-auto pb-2 lg:w-56 lg:shrink-0 lg:flex-col lg:overflow-visible">
+    <nav
+      aria-label={s.title}
+      className="sticky top-0 z-10 flex gap-1 overflow-x-auto border-b border-panel-3 bg-background/95 px-4 py-2 backdrop-blur sm:px-6 lg:static lg:w-60 lg:shrink-0 lg:flex-col lg:overflow-y-auto lg:border-r lg:border-b-0 lg:bg-transparent lg:px-4 lg:py-5 lg:backdrop-blur-none"
+    >
       <p className="hidden px-3 pt-1 pb-1 text-xs tracking-wide text-stone uppercase lg:block">{s.groupAccount}</p>
       {ACCOUNT.map(link)}
       <p className="hidden px-3 pt-4 pb-1 text-xs tracking-wide text-stone uppercase lg:block">{s.groupBusiness}</p>
@@ -44,21 +47,21 @@ function SectionNav({ current }: { current: Section }) {
   );
 }
 
-function Panel({ title, children }: { title: string; children: ReactNode }) {
+/** Shared Panel card with the settings body spacing. */
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="rounded-xl border border-panel-3 bg-panel p-5 sm:p-6">
-      <h2 className="text-xl font-semibold text-cream">{title}</h2>
-      <div className="mt-4 flex flex-col gap-4 text-sm text-cream/80">{children}</div>
-    </section>
+    <Panel title={title}>
+      <div className="flex flex-col gap-4 text-sm text-cream/80">{children}</div>
+    </Panel>
   );
 }
 
 function Later({ title, body }: { title: string; body: string }) {
   return (
-    <Panel title={title}>
+    <Section title={title}>
       <p>{body}</p>
       <p className="w-fit rounded-full border border-panel-3 px-3 py-1 text-xs text-stone">{s.later}</p>
-    </Panel>
+    </Section>
   );
 }
 
@@ -72,11 +75,16 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const { supabase, user, store } = await requireSeller();
 
   return (
-    <main className="flex-1 overflow-y-auto px-4 pt-6 pb-10 sm:px-6 lg:px-8">
-      <PageHeader title={s.title} subtitle={s.subtitle} />
-      <div className="mt-6 flex flex-col gap-6 lg:flex-row">
+    // From lg the header and section list stay put and only the section body scrolls.
+    <main className="flex-1 overflow-y-auto lg:flex lg:min-h-0 lg:flex-col lg:overflow-hidden">
+      <div className="border-b border-panel-3 px-4 pt-6 pb-5 sm:px-6 lg:px-8">
+        <PageHeader title={s.title} subtitle={s.subtitle} />
+      </div>
+      <div className="flex flex-col lg:min-h-0 lg:flex-1 lg:flex-row">
         <SectionNav current={section} />
-        <div className="min-w-0 flex-1">{await body(section)}</div>
+        <div data-settings-body className="min-w-0 flex-1 px-4 pt-5 pb-10 sm:px-6 lg:overflow-y-auto lg:px-8 lg:pt-6">
+          {await body(section)}
+        </div>
       </div>
     </main>
   );
@@ -86,18 +94,18 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
       case "profile": {
         const { displayName } = await getAccountSettings(supabase, user.id);
         return (
-          <Panel title={s.sections.profile}>
+          <Section title={s.sections.profile}>
             <p>
               <span className="text-stone">{s.profile.email}: </span>
               <span className="text-cream">{user.email}</span>
             </p>
             <NameForm initial={displayName ?? ""} />
-          </Panel>
+          </Section>
         );
       }
       case "security":
         return (
-          <Panel title={s.sections.security}>
+          <Section title={s.sections.security}>
             <p>{s.security.methods}</p>
             <div className="flex flex-col gap-3 border-t border-panel-3 pt-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -122,7 +130,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
               </form>
             </div>
             <p className="text-stone">{s.security.twoFactor}</p>
-          </Panel>
+          </Section>
         );
       case "preferences":
         return <Later title={s.sections.preferences} body={s.preferences.body} />;
@@ -139,7 +147,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         const own = TOOL_CATALOG.filter((x) => !x.connection);
         const names = s.ai.tools as Record<string, string>;
         return (
-          <Panel title={s.sections.ai}>
+          <Section title={s.sections.ai}>
             <p className="max-w-2xl">{s.ai.body}</p>
             <ul className="flex flex-col divide-y divide-panel-3 border-t border-panel-3">
               {own.map(({ name }) => (
@@ -154,7 +162,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                 {s.ai.connectionTools}
               </Link>
             </p>
-          </Panel>
+          </Section>
         );
       }
       case "connections": {
@@ -168,7 +176,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
       case "stores": {
         const stores = await listOwnerStores(supabase, user.id);
         return (
-          <Panel title={s.sections.stores}>
+          <Section title={s.sections.stores}>
             <p>{s.stores.body}</p>
             <ul className="flex flex-col divide-y divide-panel-3 border-t border-panel-3">
               {stores.map((x) => (
@@ -190,13 +198,13 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
               ))}
             </ul>
             <p className="text-stone">{s.stores.archive}</p>
-          </Panel>
+          </Section>
         );
       }
       case "payments": {
         const { data } = await supabase.from("stores").select("currency, settlement_currency").eq("id", store.id).single();
         return (
-          <Panel title={s.sections.payments}>
+          <Section title={s.sections.payments}>
             <div>
               <p className="text-cream">{s.payments.paypal}</p>
               <p>{s.payments.paypalBody}</p>
@@ -211,13 +219,13 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                 {s.payments.openMoney}
               </Link>
             </div>
-          </Panel>
+          </Section>
         );
       }
       case "messages": {
         const previews = t.app.inbox.templates as Record<string, string>;
         return (
-          <Panel title={s.sections.messages}>
+          <Section title={s.sections.messages}>
             <p className="max-w-2xl">{s.messages.body}</p>
             <ul className="flex flex-col gap-2">
               {WHATSAPP_TEMPLATES.map((x) => (
@@ -228,7 +236,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
               ))}
             </ul>
             <p className="text-stone">{s.messages.editLater}</p>
-          </Panel>
+          </Section>
         );
       }
       case "usage": {
@@ -237,7 +245,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         const stores = await listOwnerStores(supabase, user.id);
         const name = (id: string) => stores.find((x) => x.id === id)?.name ?? s.stores.unnamed;
         return (
-          <Panel title={s.sections.usage}>
+          <Section title={s.sections.usage}>
             <p>{s.usage.body.replace("{cap}", String(DAILY_REQUEST_CAP))}</p>
             <ul className="flex flex-col divide-y divide-panel-3 border-t border-panel-3">
               {(data ?? []).map((x) => {
@@ -258,7 +266,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
               })}
             </ul>
             <p className="text-stone">{s.usage.images}</p>
-          </Panel>
+          </Section>
         );
       }
       case "activity": {
@@ -268,7 +276,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         const names = s.ai.tools as Record<string, string>;
         const actors = s.activity.actors as Record<string, string>;
         return (
-          <Panel title={s.sections.activity}>
+          <Section title={s.sections.activity}>
             <p>{s.activity.body}</p>
             {rows.length === 0 ? (
               <p className="text-stone">{s.activity.empty}</p>
@@ -305,7 +313,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                 {s.activity.older}
               </Link>
             )}
-          </Panel>
+          </Section>
         );
       }
     }

@@ -1,10 +1,11 @@
 "use client";
 
-import { Plus, Trash2, Upload, X } from "lucide-react";
+import { ArrowUpRight, Link2, Plus, Trash2, Upload, X } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { t } from "@/lib/messages";
 import { MEDIA_ACCEPT, useMediaUpload } from "../../_axori/use-media-upload";
 import { removeMedia, saveTags } from "./actions";
@@ -197,5 +198,46 @@ export function DeleteMedia({ id, name }: { id: string; name: string }) {
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+type Use = { kind: "product" | "post" | "logo" | "reference"; label: string; href: string; store: string };
+
+/** "Used in N places" opens a dialog listing each product, post and brand kit that shows the file. */
+export function UsagesDialog({ name, uses }: { name: string; uses: Use[] }) {
+  if (uses.length === 0) return <span className="text-xs text-stone">{m.unused}</span>;
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <button
+          type="button"
+          data-usages={uses.length}
+          className="inline-flex items-center gap-1.5 rounded-md text-xs text-cream underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-lime/30 focus-visible:outline-none"
+        >
+          <Link2 className="size-3.5 text-stone" aria-hidden="true" />
+          {(uses.length === 1 ? m.usagesOne : m.usages).replace("{count}", String(uses.length))}
+        </button>
+      </DialogTrigger>
+      <DialogContent className="gap-0 border-panel-3 bg-panel p-0 sm:max-w-md">
+        <DialogHeader className="border-b border-panel-3 px-5 py-4 text-left">
+          <DialogTitle className="text-base text-cream">{m.usagesTitle.replace("{name}", name)}</DialogTitle>
+          <DialogDescription className="text-xs text-stone">{m.usagesNote}</DialogDescription>
+        </DialogHeader>
+        <ul className="flex max-h-[60dvh] flex-col divide-y divide-panel-3 overflow-y-auto">
+          {uses.map((u, i) => (
+            <li key={i}>
+              <Link href={u.href} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-panel-2">
+                <span className="w-28 shrink-0 text-xs text-stone">{m.use[u.kind]}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm text-cream">{u.label}</span>
+                  <span className="block truncate text-xs text-stone">{u.store}</span>
+                </span>
+                <ArrowUpRight className="size-4 shrink-0 text-stone" aria-hidden="true" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </DialogContent>
+    </Dialog>
   );
 }

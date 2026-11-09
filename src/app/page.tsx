@@ -40,17 +40,40 @@ export default function Home() {
         }
       />
       <LogoMarquee />
-      <AboutOrbit />
-      <ProblemSection />
-      <FeaturesGrid />
-      <ProcessDial />
-      <ServicesSection />
-      <StatsGrid />
-      <IntegrationWall />
-      <PricingCards />
-      <StoriesCarousel />
-      <NotesSection />
-      <FaqSection />
+      {/* Each section fades up as it scrolls into view (CSS only, see .reveal in globals.css). */}
+      <div className="reveal">
+        <AboutOrbit />
+      </div>
+      <div className="reveal">
+        <ProblemSection />
+      </div>
+      <div className="reveal">
+        <FeaturesGrid />
+      </div>
+      <div className="reveal">
+        <ProcessDial />
+      </div>
+      <div className="reveal">
+        <ServicesSection />
+      </div>
+      <div className="reveal">
+        <StatsGrid />
+      </div>
+      <div className="reveal">
+        <IntegrationWall />
+      </div>
+      <div className="reveal">
+        <PricingCards />
+      </div>
+      <div className="reveal">
+        <StoriesCarousel />
+      </div>
+      <div className="reveal">
+        <NotesSection />
+      </div>
+      <div className="reveal">
+        <FaqSection />
+      </div>
       <CtaBanner />
       <SiteFooter />
     </main>

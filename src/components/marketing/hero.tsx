@@ -1,6 +1,6 @@
 import { Mic } from "lucide-react";
 import Image from "next/image";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { SiteNav } from "./site-nav";
 import { Button } from "./ui";
 
@@ -29,18 +29,20 @@ export function PhotoHero({
       <SiteNav theme="light" />
 
       <div className="mx-auto flex w-full max-w-[1160px] flex-col items-center px-5 pt-10 text-center sm:px-8 sm:pt-14 lg:pt-20 xl:px-0">
-        <h1 className="max-w-[1100px] font-display text-[clamp(2.4rem,6.2vw,5.4rem)] leading-[0.98] font-semibold tracking-[-0.045em] text-balance text-black">
+        <h1 className="hero-rise max-w-[1100px] font-display text-[clamp(2.4rem,6.2vw,5.4rem)] leading-[0.98] font-semibold tracking-[-0.045em] text-balance text-black">
           {headline}
         </h1>
-        <p className="mt-6 max-w-[720px] text-base leading-relaxed text-black/65 text-balance sm:text-xl">{subhead}</p>
-        <Button href={ctaHref} variant="black" className="mt-8 h-12 px-6 text-base">
-          <Mic className="size-5" aria-hidden="true" />
-          {cta}
-        </Button>
+        <p style={{ "--rise-delay": "90ms" } as CSSProperties} className="hero-rise mt-6 max-w-[720px] text-base leading-relaxed text-black/65 text-balance sm:text-xl">{subhead}</p>
+        <div style={{ "--rise-delay": "180ms" } as CSSProperties} className="hero-rise">
+          <Button href={ctaHref} variant="black" className="mt-8 h-12 px-6 text-base">
+            <Mic className="size-5" aria-hidden="true" />
+            {cta}
+          </Button>
+        </div>
       </div>
 
       <div className="relative mt-10 flex-1 sm:mt-14">
-        <div className="absolute inset-x-0 top-0 mx-auto w-full max-w-[1160px] px-5 sm:px-8 xl:px-0">{visual}</div>
+        <div style={{ "--rise-delay": "280ms" } as CSSProperties} className="hero-rise absolute inset-x-0 top-0 mx-auto w-full max-w-[1160px] px-5 sm:px-8 xl:px-0">{visual}</div>
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-b from-transparent via-black/60 to-black"

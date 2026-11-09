@@ -1,5 +1,4 @@
 import { FileText } from "lucide-react";
-import Link from "next/link";
 import { connection } from "next/server";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Segmented } from "@/components/ui/segmented";
@@ -10,7 +9,7 @@ import { listVersions, MARKET_PRESETS, TEMPLATE_VERSIONS, type MarketPresetId } 
 import { PageHeader, Panel } from "../../page-header";
 import { requireSeller } from "../../session";
 import { AskButton } from "../money/ask-button";
-import { DeleteMedia, MediaUpload, TagEditor } from "./controls";
+import { DeleteMedia, MediaUpload, TagEditor, UsagesDialog } from "./controls";
 
 export const metadata = { title: "Design | AxoriOS" };
 
@@ -119,23 +118,11 @@ async function MediaTab({ supabase, storeName, q, tag }: { supabase: Session; st
                       </p>
                     </div>
                     <TagEditor id={item.id} tags={item.tags} />
-                    <div className="text-sm">
-                      <p className="text-xs font-medium tracking-wide text-stone uppercase">{m.usedIn}</p>
-                      {uses.length === 0 ? (
-                        <p className="text-stone">{m.unused}</p>
-                      ) : (
-                        <ul className="mt-1 flex flex-col gap-0.5">
-                          {uses.map((u, i) => (
-                            <li key={i} className="truncate">
-                              <Link href={u.href} className="text-cream underline-offset-2 hover:underline">
-                                {m.use[u.kind]}: {u.label}
-                              </Link>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                    <div className="mt-auto flex justify-end">
+                    <div className="mt-auto flex items-center justify-between gap-2 border-t border-panel-3 pt-3">
+                      <UsagesDialog
+                        name={item.name}
+                        uses={uses.map((u) => ({ kind: u.kind, label: u.label, href: u.href, store: (u.storeId && storeName.get(u.storeId)) || m.account }))}
+                      />
                       <DeleteMedia id={item.id} name={item.name} />
                     </div>
                   </div>

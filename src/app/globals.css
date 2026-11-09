@@ -136,6 +136,34 @@ body {
   }
 }
 
+/* Landing motion, CSS only: the hero rises in on load, later sections fade up as they scroll into view.
+   Scroll reveal needs animation-timeline support; elsewhere sections just show. Both are off under reduced motion. */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero-rise {
+    animation: rise-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: var(--rise-delay, 0ms);
+  }
+
+  @supports (animation-timeline: view()) {
+    .reveal {
+      animation: rise-in linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 40%;
+    }
+  }
+}
+
 /* Film-grain overlay used on the lime glows, as in the reference. */
 .grain {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
@@ -186,6 +214,7 @@ body {
 }
 
 .dark {
+  color-scheme: dark;
   /* SmoothUI brand slots mapped onto AxoriOS lime. */
   --brand: #e3ff48;
   --brand-light: #ecff7a;

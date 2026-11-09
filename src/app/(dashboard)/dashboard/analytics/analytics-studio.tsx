@@ -5,8 +5,9 @@
 import { useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { AgReportState, AgStudioApi, AgStudioMode } from "ag-studio";
 import { AgStudio, AgStudioProvider } from "ag-studio-react";
-import { Pencil, RotateCcw, Save, X } from "lucide-react";
+import { Eraser, ListFilter, PanelRight, Pencil, RotateCcw, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PopoverContent, PopoverRoot, PopoverTrigger } from "@/components/smoothui/popover";
 import { Segmented } from "@/components/ui/segmented";
 import type { StudioRows } from "@/modules/analytics/studio-rows";
 import { buildStudioData } from "./studio-data";
@@ -24,9 +25,17 @@ type Labels = {
   reset: string;
   loading: string;
   pages: string;
+  filters: string;
+  filtersNote: string;
+  filterPanel: string;
+  clearFilters: string;
+  noFilters: string;
+  activeFilters: string;
 };
 
 const noSubscription = () => () => {};
+const menuItem =
+  "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm text-cream transition-colors hover:bg-panel-2 focus-visible:bg-panel-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-40";
 
 /** Puts the period on every page that has a period field, replacing an earlier period filter there. */
 function withPeriod(
@@ -119,6 +128,8 @@ function Studio({
     );
   });
   const data = useMemo(() => buildStudioData(rows), [rows]);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [filterCount, setFilterCount] = useState(0);
 
   const update = (next: (s: AgReportState) => AgReportState) => {
     const api = apiRef.current;
@@ -132,6 +143,23 @@ function Studio({
     setPageId(id);
     update((s) => ({ ...s, selectedPageId: id }));
   };
+  /** Page filters on the open page, not counting the period (it has its own strip). */
+  const ownFilters = (st: AgReportState) => {
+    const page = st.pages.find((p) => p.id === st.selectedPageId);
+    return (page?.filter?.page ?? []).filter((f) => f.field.id !== PERIOD_FIELD[st.selectedPageId]);
+  };
+  const toggleFilterPanel = () => {
+    const next = !panelOpen;
+    setPanelOpen(next);
+    update((st) => ({ ...st, panels: { ...st.panels, filters: { ...st.panels?.filters, collapsed: !next } } }));
+  };
+  const clearFilters = () =>
+    update((st) => ({
+      ...st,
+      pages: st.pages.map((p) =>
+        p.id !== st.selectedPageId ? p : { ...p, filter: { ...p.filter, page: (p.filter?.page ?? []).filter((f) => f.field.id === PERIOD_FIELD[p.id]) } },
+      ),
+    }));
   const save = () => {
     const api = apiRef.current;
     if (!api) return;
@@ -183,6 +211,46 @@ function Studio({
               </button>
             ))}
           </div>
+          <PopoverRoot onOpenChange={(open) => open && apiRef.current && setFilterCount(ownFilters(apiRef.current.getState()).length)}>
+            <PopoverTrigger asChild>
+              <Button size="sm" variant="outline" data-filters={filterCount}>
+                <ListFilter className="size-4" aria-hidden="true" /> {labels.filters}
+                {filterCount > 0 && <span className="rounded-full bg-lime px-1.5 text-[11px] leading-4 font-semibold text-ink tabular-nums">{filterCount}</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-72 border-panel-3 bg-panel p-0 text-cream">
+              <div className="border-b border-panel-3 px-4 py-3">
+                <p className="text-sm font-semibold">{labels.filters}</p>
+                <p className="mt-0.5 text-xs text-stone">{labels.filtersNote}</p>
+              </div>
+              <p className="px-4 pt-3 text-xs text-stone" role="status">
+                {filterCount === 0 ? labels.noFilters : labels.activeFilters.replace("{count}", String(filterCount))}
+              </p>
+              <div className="flex flex-col gap-0.5 p-2">
+                <button type="button" onClick={toggleFilterPanel} aria-pressed={panelOpen} className={menuItem}>
+                  <PanelRight className="size-4 text-stone" aria-hidden="true" />
+                  <span className="flex-1">{labels.filterPanel}</span>
+                  <span className={`h-4 w-7 rounded-full p-0.5 transition-colors ${panelOpen ? "bg-lime" : "bg-panel-3"}`} aria-hidden="true">
+                    <span className={`block size-3 rounded-full bg-ink transition-transform ${panelOpen ? "translate-x-3" : ""}`} />
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  disabled={filterCount === 0}
+                  onClick={() => {
+                    clearFilters();
+                    setFilterCount(0);
+                  }}
+                  className={menuItem}
+                >
+                  <Eraser className="size-4 text-stone" aria-hidden="true" /> {labels.clearFilters}
+                </button>
+                <button type="button" onClick={reset} className={menuItem}>
+                  <RotateCcw className="size-4 text-stone" aria-hidden="true" /> {labels.reset}
+                </button>
+              </div>
+            </PopoverContent>
+          </PopoverRoot>
           {mode === "edit" ? (
             <>
               <Button size="sm" onClick={save}>
@@ -201,15 +269,6 @@ function Studio({
               <Pencil className="size-4" aria-hidden="true" /> {labels.edit}
             </Button>
           )}
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={reset}
-            title={labels.reset}
-          >
-            <RotateCcw className="size-4" aria-hidden="true" />
-            <span className="sr-only">{labels.reset}</span>
-          </Button>
           {note && (
             <span className="text-xs text-stone" role="status">
               {note}

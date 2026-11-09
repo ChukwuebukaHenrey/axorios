@@ -14,6 +14,7 @@ import { BrandDraftSchema, BrandPatchSchema, createBrandKit, getBrandKit, update
 import { addProducts, AddProductsSchema, listProducts, setStoreCurrency } from "@/modules/catalog";
 import { draftPosts, MAX_POSTS_PER_CAMPAIGN, queueCampaign, ScheduleError, schedulePosts } from "@/modules/creative";
 import { logExpense } from "@/modules/analytics";
+import { MAX_ORDERS_PER_EXPORT, runOrderExport, zapierEnabled } from "@/modules/connections";
 import { executeRefund, getOrder } from "@/modules/orders";
 import { isChargeable } from "@/modules/payments";
 import { connectShop, PlatformError, queueSync, shopConnection } from "@/modules/platforms";
@@ -54,8 +55,10 @@ export const CHOICES_TOOL = tool({
   execute: async () => ({ shown: true }),
 });
 
+type ActivityLine = { action: string; target?: string; approvalId?: string; details?: Record<string, unknown> };
+
 /** storeId is closed over from the session. The model can never supply it. */
-function sellerTools(storeId: string) {
+function sellerTools(storeId: string, log: (line: ActivityLine) => Promise<void> = async () => undefined) {
   return {
     offer_choices: CHOICES_TOOL,
     show_transcript: tool({
@@ -230,6 +233,27 @@ function sellerTools(storeId: string) {
         return { saved: true, amount: formatMinor(row.amount_minor, row.currency), category: row.category, day: row.day };
       },
     }),
+    // Only when Zapier is switched on, so the model never offers an action that can't run. The sales agent never gets it.
+    ...(zapierEnabled() && {
+      zapier_action: tool({
+        description: `Run an approved Zapier action. The only action is export_orders_to_sheets: add the store's paid orders to the owner's Google Sheet, one row each. Call it when the owner asks to export, copy or send orders to Sheets or a spreadsheet. They get a card showing the app, the sheet, the fields and the orders, and nothing is sent until they approve. Give orderIds only when the owner named specific orders; otherwise give count (default 5, at most ${MAX_ORDERS_PER_EXPORT}): the latest orders not yet in the sheet. Orders already in the sheet are skipped, never added twice. Results: zapier_quota means the Zapier task allowance is used up, zapier_unavailable means Zapier is down (try later), zapier_auth means the Google Sheets connection needs reconnecting, sheet_columns_missing means the sheet's header row is wrong, not_available means this store can't use the demo Zapier connection. Orders and payments are never changed.`,
+        inputSchema: z.object({
+          action: z.enum(["export_orders_to_sheets"]),
+          orderIds: z.array(z.uuid()).min(1).max(MAX_ORDERS_PER_EXPORT).optional().describe("Only if the owner named specific orders"),
+          count: z.number().int().min(1).max(MAX_ORDERS_PER_EXPORT).optional().describe("How many of the latest orders"),
+        }),
+        execute: async ({ orderIds, count }, { toolCallId }) => {
+          const outcome = await runOrderExport(storeId, { orderIds, count }, { approvalId: toolCallId });
+          await log({
+            action: "zapier_action",
+            target: outcome.destination ? `Google Sheets › ${outcome.destination}` : "Google Sheets",
+            approvalId: toolCallId,
+            details: { app: "Google Sheets", action: "export_orders_to_sheets", sent: outcome.sent, skipped: outcome.skipped, notSent: outcome.notSent, error: outcome.error ?? null },
+          });
+          return outcome;
+        },
+      }),
+    }),
     publish_store: tool({
       description:
         "Put the current draft live so customers can see it. Call this as soon as the owner asks to publish or go live: they get a card to approve, and nothing is public until they do. If they don't approve, don't call it again until they ask. After it succeeds, give them the link.",
@@ -287,7 +311,7 @@ export async function runSellerAgent(storeId: string, messages: UIMessage[], opt
     model: textModel(),
     system: [SYSTEM, ...context].join("\n\n"),
     messages: await convertToModelMessages(modelMessages),
-    tools: gateTools(sellerTools(storeId), permissions, ({ toolName, toolCallId, ok }) =>
+    tools: gateTools(sellerTools(storeId, (line) => logActivity({ ownerId, storeId, actor: "axori_ai", ...line })), permissions, ({ toolName, toolCallId, ok }) =>
       // approval_id only when the seller pressed Approve for it.
       logActivity({ ownerId, storeId, actor: "axori_ai", action: toolName, approvalId: permissions[toolName] === "approve" ? toolCallId : null, details: { ok } }),
     ),

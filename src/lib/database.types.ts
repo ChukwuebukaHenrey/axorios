@@ -280,6 +280,70 @@ export type Database = {
           },
         ]
       }
+      connection_exports: {
+        Row: {
+          action: string
+          approval_id: string | null
+          connection: string
+          created_at: string
+          destination: string
+          error: string | null
+          id: string
+          order_id: string
+          status: string
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          action: string
+          approval_id?: string | null
+          connection: string
+          created_at?: string
+          destination: string
+          error?: string | null
+          id?: string
+          order_id: string
+          status?: string
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          approval_id?: string | null
+          connection?: string
+          created_at?: string
+          destination?: string
+          error?: string | null
+          id?: string
+          order_id?: string
+          status?: string
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "connection_exports_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "order_items"
+            referencedColumns: ["order_id"]
+          },
+          {
+            foreignKeyName: "connection_exports_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "connection_exports_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_consents: {
         Row: {
           channel: string

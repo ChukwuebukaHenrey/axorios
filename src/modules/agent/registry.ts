@@ -10,7 +10,7 @@ import { catalogEntry, withoutBlocked } from "./permissions";
 export type ToolRunLog = (entry: { toolName: string; toolCallId: string; ok: boolean }) => Promise<void> | void;
 
 /** Tools that write their own activity line with richer details. */
-const SELF_LOGGING = new Set(["refund_order", "create_store"]);
+const SELF_LOGGING = new Set(["refund_order", "create_store", "zapier_action"]);
 
 export function gateTools<T extends ToolSet>(tools: T, permissions: Record<string, ToolPermission>, log?: ToolRunLog): T {
   const allowed = withoutBlocked(tools, permissions) as ToolSet;

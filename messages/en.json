@@ -1472,6 +1472,32 @@
       "switchToStore": "Switch to it",
       "choose": "Pick one:"
     },
+    "zapier": {
+      "title": "Export orders to Google Sheets",
+      "app": "App",
+      "appValue": "Zapier · Google Sheets",
+      "action": "Action",
+      "actionValue": "Add one row per order",
+      "destination": "Sheet",
+      "fields": "Fields sent",
+      "orders": "Orders",
+      "none": "No new paid orders to send. Orders already in the sheet are never added twice.",
+      "already": "already in the sheet, skipped",
+      "tasks": "Uses {tasks} Zapier tasks. Orders and payments are not changed.",
+      "checking": "Checking which orders will go…",
+      "sent": "{count} rows added to {destination}.",
+      "skipped": "{count} already there, skipped.",
+      "notSent": "Not sent: {orders}. Approve again later to send just these.",
+      "errors": {
+        "not_enabled": "The Zapier connection isn't switched on.",
+        "not_available": "This store can't use the demo Zapier connection yet.",
+        "zapier_quota": "Zapier's task allowance is used up for now. Nothing else was changed; try again when it resets.",
+        "zapier_auth": "Zapier can't reach Google Sheets. Reconnect Google Sheets in Zapier, then try again.",
+        "zapier_unavailable": "Zapier isn't responding right now. Nothing else was changed; try again in a few minutes.",
+        "sheet_columns_missing": "The sheet's first row needs these headers: {fields}.",
+        "zapier_failed": "Zapier refused the row. Nothing else was changed."
+      }
+    },
     "refund": {
       "button": "Refund",
       "title": "Refund this order",

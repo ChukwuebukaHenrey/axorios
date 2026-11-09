@@ -14,6 +14,7 @@ import { PublishCard } from "../build/publish-card";
 import { ScheduleCard } from "../build/schedule-card";
 import { ShopifyCard } from "../build/shopify-card";
 import { RefundToolSummary } from "../dashboard/orders/refund-card";
+import { ZapierSummary } from "./zapier-card";
 
 const a = t.app.axori;
 
@@ -204,6 +205,21 @@ export function MessageParts({ message, handlers }: { message: UIMessage; handle
           return (
             <ApprovalCard key={i} part={part} title={(a.approval.tools as Record<string, string>).refund_order ?? t.app.refund.title} onRespond={onRespond}>
               <RefundToolSummary input={part.input} output={part.output} waiting={part.state === "approval-requested"} />
+            </ApprovalCard>
+          );
+        }
+        if (part.type === "tool-zapier_action") {
+          // A Zapier failure shows its own plain reason, not the generic "That didn't work".
+          if (part.state === "output-available" && (part.output as { error?: string } | null)?.error) {
+            return (
+              <div key={i} className="text-sm">
+                <ZapierSummary input={part.input} output={part.output} waiting={false} />
+              </div>
+            );
+          }
+          return (
+            <ApprovalCard key={i} part={part} title={t.app.zapier.title} onRespond={onRespond}>
+              <ZapierSummary input={part.input} output={part.output} waiting={part.state === "approval-requested"} />
             </ApprovalCard>
           );
         }

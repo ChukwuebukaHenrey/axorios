@@ -56,6 +56,9 @@ const schema = z.object({
   ZAPIER_ENABLED: z.enum(["true", "false"]).default("false"),
   ZAPIER_MCP_URL: optional,
   ZAPIER_MCP_TOKEN: optional,
+  ZAPIER_SHEET_SPREADSHEET_ID: optional,
+  ZAPIER_SHEET_WORKSHEET_ID: optional,
+  ZAPIER_SHEET_LABEL: optional,
 
   TELEGRAM_BOT_TOKEN: z.string().min(1),
   TELEGRAM_WEBHOOK_SECRET: z.string().min(1),
@@ -88,7 +91,7 @@ const checked = schema.superRefine((e, ctx) => {
   if (e.WHATSAPP_PROVIDER === "kapso") {
     need(["KAPSO_API_KEY", "KAPSO_PHONE_NUMBER_ID", "KAPSO_WEBHOOK_SECRET"], "WHATSAPP_PROVIDER=kapso");
   }
-  if (e.ZAPIER_ENABLED === "true") need(["ZAPIER_MCP_URL", "ZAPIER_MCP_TOKEN"], "ZAPIER_ENABLED=true");
+  if (e.ZAPIER_ENABLED === "true") need(["ZAPIER_MCP_URL", "ZAPIER_MCP_TOKEN", "ZAPIER_SHEET_SPREADSHEET_ID", "ZAPIER_SHEET_WORKSHEET_ID"], "ZAPIER_ENABLED=true");
 });
 
 export type Env = z.infer<typeof checked>;

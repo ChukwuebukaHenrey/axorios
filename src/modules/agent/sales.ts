@@ -41,8 +41,8 @@ function paymentBlock(order: Order): string {
 /** Saved to the conversation and sent with the agent's reply, in one message. */
 type Outgoing = Map<string, string>;
 
-/** The store and customer are closed over from the chat's binding. The model can never supply them. */
-function salesTools(store: BoundStore, chat: ChatRef, outgoing: Outgoing) {
+/** The store and customer are closed over from the chat's binding. The model can never supply them. Exported for the test that it has no connection tools. */
+export function salesTools(store: BoundStore, chat: ChatRef, outgoing: Outgoing) {
   return {
     create_order: tool({
       description:

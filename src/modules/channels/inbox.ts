@@ -105,3 +105,15 @@ export async function sendSellerReply(storeId: string, conversationId: string, b
   if (insertError) throw new Error(`Message save failed: ${insertError.code}`);
   await db.from("conversations").update({ last_message_at: now }).eq("store_id", storeId).eq("id", conversationId);
 }
+
+/** The conversation an order came from: the same contact, or the same chat on the same channel. */
+export async function conversationForOrder(storeId: string, order: { channel: string; customer_ref: string | null; contact_id: string | null }): Promise<string | null> {
+  const db = serviceRoleClient();
+  if (order.contact_id) {
+    const { data } = await db.from("conversations").select("id").eq("store_id", storeId).eq("contact_id", order.contact_id).order("last_message_at", { ascending: false }).limit(1);
+    if (data?.[0]) return data[0].id;
+  }
+  if (!order.customer_ref || order.channel === "web") return null;
+  const { data } = await db.from("conversations").select("id").eq("store_id", storeId).eq("channel", order.channel).eq("customer_ref", order.customer_ref).limit(1);
+  return data?.[0]?.id ?? null;
+}

@@ -82,7 +82,7 @@ function navGroups(counts: Props["counts"]): { label: string | null; items: NavI
       label: n.groupGrow,
       items: [
         { href: "/dashboard/campaigns", label: n.marketing, icon: Megaphone },
-        { href: "/dashboard/money", label: n.money, icon: Wallet, soon: true },
+        { href: "/dashboard/money", label: n.money, icon: Wallet },
         { href: "/dashboard/analytics", label: n.analytics, icon: BarChart3, soon: true },
       ],
     },

@@ -13,6 +13,7 @@ import { formatMinor, isIsoCurrency, parseToMinor } from "@/lib/money";
 import { BrandDraftSchema, BrandPatchSchema, createBrandKit, getBrandKit, updateBrandKit } from "@/modules/brand";
 import { addProducts, AddProductsSchema, listProducts, setStoreCurrency } from "@/modules/catalog";
 import { draftPosts, MAX_POSTS_PER_CAMPAIGN, queueCampaign, ScheduleError, schedulePosts } from "@/modules/creative";
+import { logExpense } from "@/modules/analytics";
 import { executeRefund, getOrder } from "@/modules/orders";
 import { isChargeable } from "@/modules/payments";
 import { connectShop, PlatformError, queueSync, shopConnection } from "@/modules/platforms";
@@ -208,6 +209,21 @@ function sellerTools(storeId: string) {
           reason,
           actor: "axori_ai",
         });
+      },
+    }),
+    log_expense: tool({
+      description:
+        "Record money the owner spent on the business (\"I spent 20,000 on flour\"). They get a card to approve; nothing is saved until they do. Amount is in the store's currency. Use a short category like Flour, Packaging, Riders, Gas, Staff, Ads.",
+      inputSchema: z.object({
+        amount: z.string().regex(/^\d+(\.\d{1,2})?$/).describe("Amount in the store currency, digits only, e.g. 20000"),
+        category: z.string().trim().min(2).max(40),
+        note: z.string().trim().max(200).optional(),
+        day: z.iso.date().optional().describe("YYYY-MM-DD when they spent it; leave out for today"),
+      }),
+      execute: async ({ amount, category, note, day }, { toolCallId }) => {
+        if (day && day > new Date().toISOString().slice(0, 10)) return { error: "future_date" };
+        const row = await logExpense(storeId, { amount, category, note, day, approvalId: toolCallId });
+        return { saved: true, amount: formatMinor(row.amount_minor, row.currency), category: row.category, day: row.day };
       },
     }),
     publish_store: tool({

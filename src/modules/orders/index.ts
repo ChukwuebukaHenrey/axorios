@@ -1,6 +1,6 @@
 export { CheckoutBodySchema, CheckoutError, priceCart, vatFor } from "./schema";
 export type { CartItem, CheckoutBody, CheckoutErrorCode, OrderLine } from "./schema";
-export { countToFulfil, createOrder, getOrder, listSellerOrders, settleByProviderOrder, settleOrder, startWebCheckout } from "./service";
+export { countToFulfil, createOrder, getOrder, listOrdersPage, listSellerOrders, ORDER_LIST_STATUSES, ORDERS_PAGE_SIZE, settleByProviderOrder, settleOrder, startWebCheckout } from "./service";
 export type { Order } from "./service";
 export { planRefund, REFUND_WINDOW_DAYS } from "./refund-plan";
 export type { RefundPlan } from "./refund-plan";

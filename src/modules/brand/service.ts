@@ -40,7 +40,7 @@ export async function getOrCreateStore(supabase: SupabaseClient<Database>, owner
   if (preferredId && /^[0-9a-f-]{36}$/i.test(preferredId)) {
     const { data: chosen } = await supabase
       .from("stores")
-      .select("id, slug, status")
+      .select("id, slug, status, currency")
       .eq("owner_id", ownerId)
       .eq("id", preferredId)
       .maybeSingle();
@@ -48,7 +48,7 @@ export async function getOrCreateStore(supabase: SupabaseClient<Database>, owner
   }
   const { data: existing, error } = await supabase
     .from("stores")
-    .select("id, slug, status")
+    .select("id, slug, status, currency")
     .eq("owner_id", ownerId)
     // A seller works on their live store, if they have one: 'live' sorts before 'draft' when descending.
     .order("status", { ascending: false })
@@ -61,7 +61,7 @@ export async function getOrCreateStore(supabase: SupabaseClient<Database>, owner
   const { data: created, error: insertError } = await supabase
     .from("stores")
     .insert({ owner_id: ownerId, slug: `${PLACEHOLDER_SLUG_PREFIX}${randomBytes(4).toString("hex")}` })
-    .select("id, slug, status")
+    .select("id, slug, status, currency")
     .single();
   if (insertError) throw new Error(`Store create failed: ${insertError.code}`);
   return created;

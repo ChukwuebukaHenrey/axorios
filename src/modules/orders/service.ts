@@ -141,6 +141,54 @@ export async function listSellerOrders(supabase: SupabaseClient<Database>, store
   return data.map(toOrder);
 }
 
+export const ORDER_LIST_STATUSES = ["paid", "approved", "failed", "refunded", "partially_refunded"] as const;
+export const ORDERS_PAGE_SIZE = 25;
+
+/**
+ * One page of the seller's orders, newest first, with the total count for paging. RLS applies (seller's client).
+ * `q` matches a product name, the customer, the delivery note, the channel, or the start of the order id.
+ * Test orders stay hidden.
+ */
+export async function listOrdersPage(
+  supabase: SupabaseClient<Database>,
+  storeId: string,
+  { page = 1, q = "", status }: { page?: number; q?: string; status?: (typeof ORDER_LIST_STATUSES)[number] } = {},
+): Promise<{ orders: Order[]; total: number; page: number; pages: number }> {
+  let query = supabase
+    .from("orders")
+    .select("*", { count: "exact" })
+    .eq("store_id", storeId)
+    .neq("source", "test")
+    .in("status", status ? [status] : [...ORDER_LIST_STATUSES]);
+
+  const term = q.trim().slice(0, 80);
+  if (term) {
+    // PostgREST filter syntax: drop characters that would end or split the expression.
+    const safe = term.replace(/[^\p{L}\p{N} @._'-]/gu, " ").trim();
+    const ors: string[] = [];
+    if (safe) ors.push(`customer_ref.ilike.*${safe}*`, `delivery_note.ilike.*${safe}*`, `channel.ilike.*${safe}*`);
+    const hex = term.replace(/^#/, "").toLowerCase();
+    if (/^[0-9a-f]{4,8}$/.test(hex)) ors.push(`and(id.gte.${hex.padEnd(8, "0")}-0000-0000-0000-000000000000,id.lte.${hex.padEnd(8, "f")}-ffff-ffff-ffff-ffffffffffff)`);
+    if (safe) {
+      const { data: products } = await supabase.from("products").select("id").eq("store_id", storeId).ilike("name", `%${safe}%`).limit(20);
+      for (const p of products ?? []) ors.push(`items.cs.${JSON.stringify(JSON.stringify([{ productId: p.id }]))}`);
+    }
+    if (ors.length === 0) return { orders: [], total: 0, page: 1, pages: 1 };
+    query = query.or(ors.join(","));
+  }
+
+  const pageNo = Math.max(1, Math.floor(page));
+  const from = (pageNo - 1) * ORDERS_PAGE_SIZE;
+  const { data, error, count } = await query
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
+    .range(from, from + ORDERS_PAGE_SIZE - 1);
+  // Asking past the last page returns 416 from PostgREST; treat as empty.
+  if (error && error.code !== "PGRST103") throw new Error(`Order list failed: ${error.code}`);
+  const total = count ?? 0;
+  return { orders: (data ?? []).map(toOrder), total, page: pageNo, pages: Math.max(1, Math.ceil(total / ORDERS_PAGE_SIZE)) };
+}
+
 /** For a provider's webhook, where the store comes from our own order row. An order we don't know is ignored. */
 export async function settleByProviderOrder(providerOrderId: string): Promise<Order | null> {
   const { data, error } = await serviceRoleClient()

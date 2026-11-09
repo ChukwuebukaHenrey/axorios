@@ -13,6 +13,7 @@ import { ProductsCard } from "../build/products-card";
 import { PublishCard } from "../build/publish-card";
 import { ScheduleCard } from "../build/schedule-card";
 import { ShopifyCard } from "../build/shopify-card";
+import { RefundToolSummary } from "../dashboard/orders/refund-card";
 
 const a = t.app.axori;
 
@@ -179,6 +180,13 @@ export function MessageParts({ message, handlers }: { message: UIMessage; handle
             <div key={i} className="w-full max-w-sm">
               <ProductsCard products={part.output as Product[]} />
             </div>
+          );
+        }
+        if (part.type === "tool-refund_order") {
+          return (
+            <ApprovalCard key={i} part={part} title={(a.approval.tools as Record<string, string>).refund_order ?? t.app.refund.title} onRespond={onRespond}>
+              <RefundToolSummary input={part.input} output={part.output} waiting={part.state === "approval-requested"} />
+            </ApprovalCard>
           );
         }
         const name = part.type.replace(/^tool-/, "");

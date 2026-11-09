@@ -27,15 +27,17 @@ import {
   syncBrandToDraft,
   type MarketPresetId,
 } from "@/modules/storefront";
+import { approvalPolicy } from "./approvals";
 import { MAX_TOOL_STEPS } from "./limits";
 import { textModel } from "./model";
 import { saveSellerSession } from "./session";
 import { collapseVoiceNotes, latestIsVoiceNote } from "./voice";
 
-const SYSTEM = `You are AxoriOS, a warm, capable partner helping a small business owner with no technical experience go from an idea to a first paid order.
+const SYSTEM = `You are Axori AI, the assistant inside AxoriOS: a warm, capable partner helping a small business owner with no technical experience go from an idea to a first paid order.
 Reply in the language of the owner's latest message: English to English, Nigerian Pidgin to Pidgin, French to French, and so on. Their location doesn't decide it. Keep replies short, in plain text with no markdown, and with no e-commerce jargon. Suggesting something is not changing it: only save a change the owner asked for.
 Act rather than ask: if the owner has described their business, use your tools straight away and invent sensible details they can change later. Prices are the exception: never invent one.
 Your tools are the only way anything gets saved. Whenever the owner gives you products or asks for a change, call the tool first. Never say something was added, saved or changed unless a tool call in this reply succeeded.
+Publishing, scheduling, sending to customers, Shopify, payment links, refunds, imports and connection actions show the owner an approval card. Until they press Approve, nothing has happened: say "Here's the card to approve", never "I have scheduled" or "it's done". Describe the result only after the tool returns it.
 The owner sees a live preview of their store beside this chat, so don't describe what it looks like.`;
 
 /** storeId is closed over from the session. The model can never supply it. */
@@ -227,12 +229,7 @@ export async function runSellerAgent(
     // The seller must see what was heard, so this isn't left to the model: it skipped the tool in testing.
     prepareStep: ({ stepNumber }) =>
       heardVoiceNote && stepNumber === 0 ? { toolChoice: { type: "tool", toolName: "show_transcript" } } : {},
-    toolApproval: {
-      publish_store: "user-approval",
-      schedule_posts: "user-approval",
-      connect_shopify: "user-approval",
-      sync_to_shopify: "user-approval",
-    },
+    toolApproval: approvalPolicy(),
     stopWhen: isStepCount(MAX_TOOL_STEPS),
     maxRetries: 3,
   });

@@ -5,6 +5,7 @@
  */
 import { currencyDecimals } from "../../lib/money";
 import { chargeToStore, isCounted, lineSales } from "./metrics";
+import { lengthBucket } from "./marketing";
 import type {
   CampaignRow,
   ClickDayRow,
@@ -69,6 +70,7 @@ export type MatchKey =
   | "notOurs";
 
 const SEARCH_DAYS = 31;
+const LENGTH_LABEL: Record<string, string> = { short: "Short", medium: "Medium", long: "Long" };
 const LAG_MS = 3 * 3_600_000;
 
 export function buildStudioRows(input: StudioInput) {
@@ -271,14 +273,7 @@ export function buildStudioRows(input: StudioInput) {
       at: p.scheduled_at ?? p.created_at,
       channel: channel(p.channel ?? p.targets[0] ?? null),
       contentType: p.content_type,
-      length:
-        p.caption_length === null
-          ? ""
-          : p.caption_length < 80
-            ? "Short"
-            : p.caption_length < 200
-              ? "Medium"
-              : "Long",
+      length: LENGTH_LABEL[lengthBucket(p.caption_length) ?? ""] ?? "",
       product: p.product_ids
         .map((id) => productName.get(id))
         .filter(Boolean)

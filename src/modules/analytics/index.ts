@@ -1,5 +1,6 @@
 export * from "./metrics";
 export * from "./money";
+export * from "./marketing";
 export {
   loadCampaigns,
   loadClicksByDay,

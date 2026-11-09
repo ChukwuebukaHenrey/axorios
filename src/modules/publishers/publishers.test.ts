@@ -62,3 +62,15 @@ describe("buildZip", () => {
     expect(files[0].crc).toBe(crc32(image));
   });
 });
+
+describe("demo publishers", () => {
+  it("publish returns a permalink on the store's own domain, never a platform URL", async () => {
+    const { DEMO_PUBLISHERS, demoPublisher } = await import("./adapters/demo");
+    for (const name of DEMO_PUBLISHERS) {
+      const { url } = await demoPublisher(name, () => "https://axorios.example").publish({ caption: "Hi", postId: "11111111-2222-3333-4444-555555555555", storeSlug: "demo" });
+      expect(url).toBe("https://axorios.example/s/demo/p/11111111-2222-3333-4444-555555555555");
+      expect(url).not.toMatch(/facebook|instagram|tiktok|google/);
+    }
+    expect(DEMO_PUBLISHERS).toEqual(["facebook", "instagram", "tiktok", "google"]);
+  });
+});

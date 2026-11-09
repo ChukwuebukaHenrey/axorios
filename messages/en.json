@@ -1001,7 +1001,8 @@
     "failed": "This post didn't go out. Check the time and try again.",
     "errorTime": "Pick a time in the next 7 days.",
     "errorGeneric": "That didn't work. Please try again.",
-    "imageAlt": "Post image"
+    "imageAlt": "Post image",
+    "shopNow": "Shop now"
   },
   "brandCard": {
     "title": "Brand kit",
@@ -1813,6 +1814,101 @@
       "deleteContact": "Delete contact",
       "deleteConfirm": "This removes the contact, their consent, labels and campaign history. Orders stay in your books without their name or email.",
       "merged": "Merged into another contact"
+    },
+    "marketing": {
+      "tabs": {
+        "posts": "Posts",
+        "campaigns": "Campaigns",
+        "performance": "Performance"
+      },
+      "periodNote": "Posts that went out in this period. Orders and revenue count every order through the post's link, even after the period.",
+      "posts": "Posts",
+      "reach": "Reach",
+      "engagements": "Engagement",
+      "clicks": "Clicks",
+      "orders": "Orders",
+      "revenue": "Revenue",
+      "newContacts": "New contacts",
+      "clickRate": "{rate} of reach clicked",
+      "orderRate": "{rate} of clicks ordered",
+      "ordersDetail": "Orders through tracked links",
+      "newContactsDetail": "First order came through a post",
+      "clicksChart": "Clicks per day",
+      "clicksChartLabel": "Tracked link clicks per day",
+      "breakdown": "What works",
+      "breakdownNote": "Posts grouped by one attribute. Sorted by orders.",
+      "by": {
+        "channel": "Channel",
+        "contentType": "Content type",
+        "length": "Caption length",
+        "product": "Product",
+        "weekday": "Day posted",
+        "daypart": "Time posted"
+      },
+      "timesIn": "Times in {zone}.",
+      "productNote": "A post about two products counts for both.",
+      "contentType": {
+        "image": "Image",
+        "carousel": "Carousel",
+        "text": "Text",
+        "video": "Video"
+      },
+      "length": {
+        "short": "Short (under 80)",
+        "medium": "Medium (80–199)",
+        "long": "Long (200+)"
+      },
+      "weekday": [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday"
+      ],
+      "daypart": {
+        "morning": "Morning (6–12)",
+        "afternoon": "Afternoon (12–17)",
+        "evening": "Evening (17–22)",
+        "night": "Night (22–6)"
+      },
+      "none": "None",
+      "perPost": "Per post",
+      "perPostNote": "Latest first. Reach and engagement come from each platform.",
+      "sort": {
+        "latest": "Latest",
+        "orders": "Most orders",
+        "revenue": "Most revenue",
+        "clicks": "Most clicks"
+      },
+      "colDate": "Date",
+      "colChannel": "Channel",
+      "colType": "Type",
+      "colPost": "Post",
+      "colCampaign": "Campaign",
+      "colKind": "Kind",
+      "colStatus": "Status",
+      "colSends": "Sent",
+      "noPosts": "No posts went out in this period.",
+      "showing": "Showing {shown} of {total}",
+      "campaignsNote": "Broadcasts and promotions. Orders are the campaign's own orders; for post campaigns, orders through its posts' links.",
+      "noCampaigns": "No campaigns yet. Ask Axori AI to plan one.",
+      "kind": {
+        "broadcast": "Broadcast",
+        "new_product": "New product",
+        "promo_ending": "Promo ending",
+        "restock": "Restock",
+        "manual": "Manual"
+      },
+      "status": {
+        "draft": "Draft",
+        "scheduled": "Scheduled",
+        "sending": "Sending",
+        "sent": "Sent",
+        "cancelled": "Cancelled"
+      },
+      "demoNote": "Facebook, Instagram, TikTok and Google run on demo connections: reach comes from seeded data and posts link back to your store."
     }
   }
 }

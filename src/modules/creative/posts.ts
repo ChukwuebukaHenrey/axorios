@@ -234,3 +234,17 @@ export async function finishPublish(storeId: string, postId: string, status: "pu
   const { error: updateError } = await db.from("posts").update(patch).eq("id", postId).eq("store_id", storeId);
   if (updateError) throw new Error(`Post update failed: ${updateError.code}`);
 }
+
+/** A published post for its public page (the demo publishers' permalink). Only published posts, only this store's. */
+export async function publishedPost(storeId: string, postId: string): Promise<Pick<Post, "id" | "caption" | "media_url" | "scheduled_at"> | null> {
+  if (!/^[0-9a-f-]{36}$/i.test(postId)) return null;
+  const { data, error } = await serviceRoleClient()
+    .from("posts")
+    .select("id, caption, media_url, scheduled_at")
+    .eq("id", postId)
+    .eq("store_id", storeId)
+    .eq("status", "published")
+    .maybeSingle();
+  if (error) throw new Error(`Post read failed: ${error.code}`);
+  return data;
+}

@@ -8,6 +8,7 @@ export {
   finishPost,
   finishPublish,
   listPosts,
+  publishedPost,
   MAX_SCHEDULE_AHEAD_MS,
   queueCampaign,
   savePublishResults,

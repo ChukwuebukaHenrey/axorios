@@ -1,6 +1,6 @@
 import "server-only";
 import { duePost, finishPublish, savePublishResults } from "@/modules/creative";
-import { getPublisher } from "@/modules/publishers";
+import { getPublisher, storeSlug } from "@/modules/publishers";
 import { inngest, POST_PUBLISH } from "./client";
 
 type PublishEvent = { storeId: string; postId: string; scheduledAt: string };
@@ -25,9 +25,10 @@ export const postPublish = inngest.createFunction(
       if (!post) return { skipped: true };
 
       const results = { ...(post.publish_results as Record<string, unknown>) };
+      const slug = await storeSlug(storeId);
       for (const target of post.targets) {
         if (results[target]) continue; // Already posted by an earlier attempt.
-        const { url } = await getPublisher(target).publish({ caption: post.caption, mediaUrl: post.media_url ?? undefined });
+        const { url } = await getPublisher(target).publish({ caption: post.caption, mediaUrl: post.media_url ?? undefined, postId, storeSlug: slug });
         results[target] = { url: url ?? null, at: new Date().toISOString() };
         await savePublishResults(storeId, postId, results);
       }

@@ -1,6 +1,23 @@
 import { describe, expect, it } from "vitest";
 import { vatFor } from "../orders/schema";
-import { aov, chargeToStore, fees, isCounted, net, periodRange, previousRange, repeatRate, sales, summary, vatCollected, type MetricOrder } from "./metrics";
+import {
+  aov,
+  chargeToStore,
+  fees,
+  inRange,
+  isCounted,
+  lineSales,
+  lowStockCount,
+  net,
+  periodRange,
+  previousRange,
+  productRanking,
+  repeatRate,
+  sales,
+  summary,
+  vatCollected,
+  type MetricOrder,
+} from "./metrics";
 
 let n = 0;
 function order(p: Partial<MetricOrder>): MetricOrder {
@@ -42,16 +59,32 @@ describe("metrics", () => {
     expect(fees([order({})])).toBe(197_847);
     expect(net([order({})])).toBe(4_500_000 - 197_847);
     // same currency: no conversion
-    expect(chargeToStore(order({ currency: "GBP", charge_currency: "GBP", fx_rate: null }), 150)).toBe(150);
+    expect(
+      chargeToStore(
+        order({ currency: "GBP", charge_currency: "GBP", fx_rate: null }),
+        150,
+      ),
+    ).toBe(150);
   });
 
   it("AOV rounds to the minor unit and is 0 with no orders", () => {
     expect(aov([])).toBe(0);
-    expect(aov([order({ total_minor: 100 }), order({ total_minor: 101 })])).toBe(101);
+    expect(
+      aov([order({ total_minor: 100 }), order({ total_minor: 101 })]),
+    ).toBe(101);
   });
 
   it("VAT kept shrinks with refunds", () => {
-    expect(vatCollected([order({ total_minor: 1000, tax_minor: 70, refunded_minor: 500, status: "partially_refunded" })])).toBe(35);
+    expect(
+      vatCollected([
+        order({
+          total_minor: 1000,
+          tax_minor: 70,
+          refunded_minor: 500,
+          status: "partially_refunded",
+        }),
+      ]),
+    ).toBe(35);
   });
 
   it("repeat rate counts orders from customers who bought before", () => {
@@ -74,25 +107,137 @@ describe("metrics", () => {
   it("Home's Sales equals Money's Sales for every period (one definition)", () => {
     const now = new Date("2026-11-09T12:00:00Z");
     const os = Array.from({ length: 200 }, (_, i) =>
-      order({ paid_at: new Date(now.getTime() - i * 86_400_000).toISOString(), refunded_minor: i % 25 === 0 ? 500_000 : 0 }),
+      order({
+        paid_at: new Date(now.getTime() - i * 86_400_000).toISOString(),
+        refunded_minor: i % 25 === 0 ? 500_000 : 0,
+      }),
     );
     for (const p of ["7d", "30d", "3m", "6m"] as const) {
       const home = summary(os, periodRange(p, now)).sales;
-      const money = sales(os.filter((o) => Date.parse(o.paid_at!) >= periodRange(p, now).from.getTime() && Date.parse(o.paid_at!) < now.getTime()));
+      const money = sales(
+        os.filter(
+          (o) =>
+            Date.parse(o.paid_at!) >= periodRange(p, now).from.getTime() &&
+            Date.parse(o.paid_at!) < now.getTime(),
+        ),
+      );
       expect(home).toBe(money);
     }
   });
 });
 
 describe("VAT", () => {
-  const registered = { vatRegistered: true, vatRateBp: 750, pricesIncludeTax: true };
+  const registered = {
+    vatRegistered: true,
+    vatRateBp: 750,
+    pricesIncludeTax: true,
+  };
   it("inclusive 7.5%: ₦45,000 carries ₦3,139.53", () => {
-    expect(vatFor(4_500_000, registered)).toEqual({ taxMinor: 313_953, rateBp: 750, inclusive: true, grossMinor: 4_500_000 });
+    expect(vatFor(4_500_000, registered)).toEqual({
+      taxMinor: 313_953,
+      rateBp: 750,
+      inclusive: true,
+      grossMinor: 4_500_000,
+    });
   });
   it("exclusive adds on top", () => {
-    expect(vatFor(10_000, { ...registered, pricesIncludeTax: false })).toMatchObject({ taxMinor: 750, grossMinor: 10_750 });
+    expect(
+      vatFor(10_000, { ...registered, pricesIncludeTax: false }),
+    ).toMatchObject({ taxMinor: 750, grossMinor: 10_750 });
   });
   it("not registered is 0", () => {
-    expect(vatFor(10_000, { ...registered, vatRegistered: false }).taxMinor).toBe(0);
+    expect(
+      vatFor(10_000, { ...registered, vatRegistered: false }).taxMinor,
+    ).toBe(0);
+  });
+});
+
+describe("catalogue metrics", () => {
+  it("low stock counts only active tracked products at or under the threshold", () => {
+    const p = (
+      q: Partial<{
+        inventory_mode: string;
+        stock: number;
+        low_stock_threshold: number;
+        active: boolean;
+      }>,
+    ) => ({
+      inventory_mode: "tracked",
+      stock: 10,
+      low_stock_threshold: 5,
+      active: true,
+      ...q,
+    });
+    expect(
+      lowStockCount([
+        p({ stock: 5 }),
+        p({ stock: 0 }),
+        p({ stock: 6 }),
+        p({ stock: 1, active: false }),
+        p({ inventory_mode: "made_to_order", stock: 0 }),
+        p({ inventory_mode: "unlimited", stock: 0 }),
+      ]),
+    ).toBe(2);
+  });
+
+  it("product ranking spreads refunds over lines, so products sum to Sales", () => {
+    const range = {
+      from: new Date("2026-11-01T00:00:00Z"),
+      to: new Date("2026-11-08T00:00:00Z"),
+    };
+    const a = order({
+      total_minor: 9_000_000,
+      refunded_minor: 3_000_000,
+      status: "partially_refunded",
+      paid_at: "2026-11-02T10:00:00Z",
+    });
+    const b = order({
+      total_minor: 4_500_000,
+      paid_at: "2026-11-03T10:00:00Z",
+    });
+    const old = order({
+      total_minor: 4_500_000,
+      paid_at: "2026-10-28T10:00:00Z",
+    });
+    const items = [
+      {
+        order_id: a.id,
+        product_id: "cake",
+        name: "Cake",
+        quantity: 1,
+        line_minor: 6_000_000,
+      },
+      {
+        order_id: a.id,
+        product_id: "jar",
+        name: "Jar",
+        quantity: 2,
+        line_minor: 3_000_000,
+      },
+      {
+        order_id: b.id,
+        product_id: "jar",
+        name: "Jar",
+        quantity: 3,
+        line_minor: 4_500_000,
+      },
+      {
+        order_id: old.id,
+        product_id: "cake",
+        name: "Cake",
+        quantity: 1,
+        line_minor: 4_500_000,
+      },
+    ];
+    const r = productRanking(items, [a, b, old], range);
+    expect(r.reduce((s, x) => s + x.sales, 0)).toBe(
+      sales(inRange([a, b, old], range)),
+    );
+    expect(r.map((x) => [x.productId, x.sales, x.units])).toEqual([
+      ["jar", 2_000_000 + 4_500_000, 5],
+      ["cake", 4_000_000, 1],
+    ]);
+    expect(r[1].change).toBeCloseTo(4_000_000 / 4_500_000 - 1, 10);
+    expect(lineSales(items[0], a)).toBe(4_000_000);
   });
 });

@@ -72,7 +72,7 @@ function navGroups(counts: Props["counts"]): { label: string | null; items: NavI
     {
       label: n.groupBusiness,
       items: [
-        { href: "/build", label: n.store, icon: Store },
+        { href: "/dashboard/store", label: n.store, icon: Store },
         { href: "/dashboard/orders", label: n.orders, icon: Package, count: counts.orders },
         { href: "/dashboard/customers", label: n.customers, icon: Users, soon: true },
         { href: "/dashboard/inbox", label: n.inbox, icon: Inbox, count: counts.inbox },
@@ -83,7 +83,7 @@ function navGroups(counts: Props["counts"]): { label: string | null; items: NavI
       items: [
         { href: "/dashboard/campaigns", label: n.marketing, icon: Megaphone },
         { href: "/dashboard/money", label: n.money, icon: Wallet },
-        { href: "/dashboard/analytics", label: n.analytics, icon: BarChart3, soon: true },
+        { href: "/dashboard/analytics", label: n.analytics, icon: BarChart3 },
       ],
     },
     { label: n.groupWorkspace, items: [{ href: "/dashboard/design", label: n.design, icon: Palette, soon: true }] },

@@ -23,11 +23,21 @@ export type MetricOrder = {
   link_id: string | null;
 };
 
-export const COUNTED_STATUSES = ["paid", "refunded", "partially_refunded"] as const;
+export const COUNTED_STATUSES = [
+  "paid",
+  "refunded",
+  "partially_refunded",
+] as const;
 
 /** Orders that count as sales: paid at some point, and not a test order. */
-export function isCounted(o: Pick<MetricOrder, "status" | "source" | "paid_at">): boolean {
-  return o.paid_at !== null && o.source !== "test" && (COUNTED_STATUSES as readonly string[]).includes(o.status);
+export function isCounted(
+  o: Pick<MetricOrder, "status" | "source" | "paid_at">,
+): boolean {
+  return (
+    o.paid_at !== null &&
+    o.source !== "test" &&
+    (COUNTED_STATUSES as readonly string[]).includes(o.status)
+  );
 }
 
 // ─── periods ───
@@ -52,7 +62,10 @@ export function previousRange({ from, to }: Range): Range {
   return { from: new Date(from.getTime() - ms), to: from };
 }
 
-export function inRange<T extends { paid_at: string | null }>(orders: T[], { from, to }: Range): T[] {
+export function inRange<T extends { paid_at: string | null }>(
+  orders: T[],
+  { from, to }: Range,
+): T[] {
   const a = from.getTime();
   const b = to.getTime();
   return orders.filter((o) => {
@@ -66,19 +79,27 @@ export function inRange<T extends { paid_at: string | null }>(orders: T[], { fro
 
 /** Paid orders minus refunds, store currency, at the rate recorded at sale. Labelled "Sales". */
 export function sales(orders: MetricOrder[]): number {
-  return orders.filter(isCounted).reduce((sum, o) => sum + o.total_minor - o.refunded_minor, 0);
+  return orders
+    .filter(isCounted)
+    .reduce((sum, o) => sum + o.total_minor - o.refunded_minor, 0);
 }
 
 /** A charge-currency amount in store minor units, using the order's own locked rate. */
-export function chargeToStore(o: Pick<MetricOrder, "currency" | "charge_currency" | "fx_rate">, chargeMinor: number): number {
+export function chargeToStore(
+  o: Pick<MetricOrder, "currency" | "charge_currency" | "fx_rate">,
+  chargeMinor: number,
+): number {
   if (o.charge_currency === o.currency || !o.fx_rate) return chargeMinor;
-  const shift = 10 ** (currencyDecimals(o.currency) - currencyDecimals(o.charge_currency));
+  const shift =
+    10 ** (currencyDecimals(o.currency) - currencyDecimals(o.charge_currency));
   return Math.round((chargeMinor / o.fx_rate) * shift);
 }
 
 /** PayPal fees in store currency. */
 export function fees(orders: MetricOrder[]): number {
-  return orders.filter(isCounted).reduce((sum, o) => sum + chargeToStore(o, o.paypal_fee_minor ?? 0), 0);
+  return orders
+    .filter(isCounted)
+    .reduce((sum, o) => sum + chargeToStore(o, o.paypal_fee_minor ?? 0), 0);
 }
 
 /** Sales minus PayPal fees. */
@@ -100,7 +121,17 @@ export function aov(orders: MetricOrder[]): number {
 export function vatCollected(orders: MetricOrder[]): number {
   return orders
     .filter(isCounted)
-    .reduce((sum, o) => sum + (o.total_minor === 0 ? 0 : Math.round((o.tax_minor * (o.total_minor - o.refunded_minor)) / o.total_minor)), 0);
+    .reduce(
+      (sum, o) =>
+        sum +
+        (o.total_minor === 0
+          ? 0
+          : Math.round(
+              (o.tax_minor * (o.total_minor - o.refunded_minor)) /
+                o.total_minor,
+            )),
+      0,
+    );
 }
 
 // ─── rates (0..1) ───
@@ -113,14 +144,19 @@ export function conversion(orders: MetricOrder[], visits: number): number {
 /** Share of counted orders with any refund. */
 export function refundRate(orders: MetricOrder[]): number {
   const counted = orders.filter(isCounted);
-  return counted.length === 0 ? 0 : counted.filter((o) => o.refunded_minor > 0).length / counted.length;
+  return counted.length === 0
+    ? 0
+    : counted.filter((o) => o.refunded_minor > 0).length / counted.length;
 }
 
 /**
  * Share of the period's orders placed by a returning customer: one whose first counted order
  * (in all history) is earlier than this order. Orders without a contact count as new.
  */
-export function repeatRate(periodOrders: MetricOrder[], allOrders: MetricOrder[]): number {
+export function repeatRate(
+  periodOrders: MetricOrder[],
+  allOrders: MetricOrder[],
+): number {
   const first = new Map<string, number>();
   for (const o of allOrders.filter(isCounted)) {
     if (!o.contact_id || !o.paid_at) continue;
@@ -130,7 +166,11 @@ export function repeatRate(periodOrders: MetricOrder[], allOrders: MetricOrder[]
   }
   const counted = periodOrders.filter(isCounted);
   if (counted.length === 0) return 0;
-  const repeat = counted.filter((o) => o.contact_id && Date.parse(o.paid_at!) > (first.get(o.contact_id) ?? Infinity));
+  const repeat = counted.filter(
+    (o) =>
+      o.contact_id &&
+      Date.parse(o.paid_at!) > (first.get(o.contact_id) ?? Infinity),
+  );
   return repeat.length / counted.length;
 }
 
@@ -145,9 +185,20 @@ export function change(current: number, previous: number): number | null {
 }
 
 /** Daily Sales for sparklines and charts: one entry per UTC day in the range, zeros included. */
-export function dailySales(orders: MetricOrder[], { from, to }: Range): { day: string; sales: number; orders: number }[] {
+export function dailySales(
+  orders: MetricOrder[],
+  { from, to }: Range,
+): { day: string; sales: number; orders: number }[] {
   const days = new Map<string, { sales: number; orders: number }>();
-  for (let t = Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), from.getUTCDate()); t < to.getTime(); t += 86_400_000) {
+  for (
+    let t = Date.UTC(
+      from.getUTCFullYear(),
+      from.getUTCMonth(),
+      from.getUTCDate(),
+    );
+    t < to.getTime();
+    t += 86_400_000
+  ) {
     days.set(new Date(t).toISOString().slice(0, 10), { sales: 0, orders: 0 });
   }
   for (const o of inRange(orders.filter(isCounted), { from, to })) {
@@ -175,4 +226,118 @@ export function summary(orders: MetricOrder[], range: Range, visits = 0) {
     repeatRate: repeatRate(current, orders),
     conversion: conversion(current, visits),
   };
+}
+
+// ─── catalogue ───
+
+export type StockProduct = {
+  inventory_mode: string;
+  stock: number;
+  low_stock_threshold: number;
+  active: boolean;
+};
+
+/** Tracked, active and at or under its threshold. Made-to-order and unlimited products are never "low". */
+export function isLowStock(p: StockProduct): boolean {
+  return (
+    p.active &&
+    p.inventory_mode === "tracked" &&
+    p.stock <= p.low_stock_threshold
+  );
+}
+
+export function lowStockCount(products: StockProduct[]): number {
+  return products.filter(isLowStock).length;
+}
+
+export type MetricItem = {
+  order_id: string;
+  product_id: string | null;
+  name: string | null;
+  quantity: number;
+  line_minor: number;
+};
+
+/** A line's share of Sales: the line scaled by the share of its order not refunded. Lines of one order sum to its Sales. */
+export function lineSales(
+  line: Pick<MetricItem, "line_minor">,
+  order: Pick<MetricOrder, "total_minor" | "refunded_minor">,
+): number {
+  return order.total_minor === 0
+    ? 0
+    : Math.round(
+        (line.line_minor * (order.total_minor - order.refunded_minor)) /
+          order.total_minor,
+      );
+}
+
+/** Products ranked by Sales in `range`, with units and the change vs the previous period of the same length. */
+export function productRanking(
+  items: MetricItem[],
+  orders: MetricOrder[],
+  range: Range,
+) {
+  const byId = new Map(orders.filter(isCounted).map((o) => [o.id, o]));
+  const prev = previousRange(range);
+  const rows = new Map<
+    string,
+    {
+      productId: string;
+      name: string;
+      sales: number;
+      units: number;
+      previous: number;
+    }
+  >();
+  for (const i of items) {
+    const o = byId.get(i.order_id);
+    if (!o?.paid_at) continue;
+    const t = Date.parse(o.paid_at);
+    const now = t >= range.from.getTime() && t < range.to.getTime();
+    const before = t >= prev.from.getTime() && t < prev.to.getTime();
+    if (!now && !before) continue;
+    const key = i.product_id ?? i.name ?? "?";
+    const r = rows.get(key) ?? {
+      productId: i.product_id ?? "",
+      name: i.name ?? "",
+      sales: 0,
+      units: 0,
+      previous: 0,
+    };
+    if (now) {
+      r.sales += lineSales(i, o);
+      r.units += i.quantity;
+    } else r.previous += lineSales(i, o);
+    rows.set(key, r);
+  }
+  return [...rows.values()]
+    .filter((r) => r.sales > 0 || r.previous > 0)
+    .map((r) => ({ ...r, change: change(r.sales, r.previous) }))
+    .sort((a, b) => b.sales - a.sales);
+}
+
+// ─── visits ───
+
+/** Visits on the UTC days the range touches (visits are stored per day). */
+export function visitsIn(
+  visits: { day: string; visits: number }[],
+  { from, to }: Range,
+): number {
+  const a = from.toISOString().slice(0, 10);
+  const b = new Date(to.getTime() - 1).toISOString().slice(0, 10);
+  return visits.reduce(
+    (s, v) => (v.day >= a && v.day <= b ? s + v.visits : s),
+    0,
+  );
+}
+
+/** When the store started trading: its creation or its first paid order, whichever is earlier. */
+export function openedAt(
+  storeCreatedAt: string,
+  orders: Pick<MetricOrder, "paid_at" | "status" | "source">[],
+): Date {
+  let t = Date.parse(storeCreatedAt);
+  for (const o of orders)
+    if (isCounted(o) && o.paid_at) t = Math.min(t, Date.parse(o.paid_at));
+  return new Date(t);
 }

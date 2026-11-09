@@ -1470,7 +1470,11 @@
       },
       "storeCreated": "New store created.",
       "switchToStore": "Switch to it",
-      "choose": "Pick one:"
+      "choose": "Pick one:",
+      "attach": "Attach a photo or file",
+      "attaching": "Saving {name} to your media library…",
+      "attached": "Saved {name} to Design · tags: {tags}",
+      "dismiss": "Dismiss"
     },
     "zapier": {
       "title": "Export orders to Google Sheets",
@@ -2164,6 +2168,80 @@
             "data": "Whatever you allow it."
           }
         }
+      }
+    },
+    "design": {
+      "title": "Design",
+      "subtitle": "Brand kits, storefront templates and the media library shared by your stores.",
+      "tabs": {
+        "media": "Media library",
+        "brand": "Brand kits",
+        "templates": "Templates"
+      },
+      "media": {
+        "uploadTitle": "Add to the library",
+        "uploadBody": "JPG, PNG, WebP, GIF or PDF, up to 4 MB. Files are tagged by type and by the product they show; fix any tag by hand. Files dropped into Axori AI land here too.",
+        "choose": "Choose file",
+        "note": "What is it? (optional)",
+        "notePlaceholder": "e.g. red velvet slice for the weekend promo",
+        "upload": "Upload",
+        "uploading": "Uploading…",
+        "uploaded": "Saved {name} · tags: {tags}",
+        "uploadFailed": "The upload didn't go through. Try again.",
+        "search": "Search name or tag",
+        "allTags": "All tags",
+        "filter": "Filter",
+        "count": "{count} files",
+        "none": "No files yet. Upload one here or drop it into Axori AI.",
+        "noMatch": "No files match.",
+        "tags": "Tags",
+        "addTag": "Add tag",
+        "removeTag": "Remove tag {tag}",
+        "products": "Products",
+        "usedIn": "Used in",
+        "unused": "Not used yet",
+        "use": {
+          "product": "Product photo",
+          "post": "Post",
+          "logo": "Logo",
+          "reference": "Brand reference"
+        },
+        "source": {
+          "upload": "Uploaded",
+          "generated": "Generated",
+          "seed": "Demo"
+        },
+        "account": "Account",
+        "open": "Open",
+        "delete": "Delete",
+        "deleteTitle": "Delete {name}?",
+        "deleteBody": "The file leaves the library for good. Files in use can’t be deleted.",
+        "cancel": "Cancel",
+        "saveError": "Couldn’t save. Try again."
+      },
+      "brand": {
+        "note": "One brand kit per store. Axori AI writes it from how you describe the business; ask it to change any field.",
+        "empty": "No brand kit yet.",
+        "palette": "Palette",
+        "fonts": "Fonts",
+        "tone": "Tone",
+        "logo": "Logo",
+        "noLogo": "No logo yet: the link preview shows a monogram.",
+        "references": "Reference images",
+        "edit": "Edit with Axori AI",
+        "editPrompt": "I want to change my brand kit for {name}.",
+        "create": "Create with Axori AI",
+        "createPrompt": "Help me create a brand kit for this store."
+      },
+      "templates": {
+        "note": "Templates are layouts and spacing, never code. Each store stays on the version it has; a change to a template reaches a store only when you approve it.",
+        "version": "v{n}",
+        "stores": "Stores on it",
+        "noStores": "No stores on it",
+        "current": "Current",
+        "sections": "Sections",
+        "switch": "Move a store with Axori AI",
+        "switchPrompt": "Switch my storefront to the {name} template."
       }
     }
   }

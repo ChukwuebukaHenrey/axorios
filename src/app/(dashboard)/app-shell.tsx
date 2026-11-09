@@ -86,7 +86,7 @@ function navGroups(counts: Props["counts"]): { label: string | null; items: NavI
         { href: "/dashboard/analytics", label: n.analytics, icon: BarChart3 },
       ],
     },
-    { label: n.groupWorkspace, items: [{ href: "/dashboard/design", label: n.design, icon: Palette, soon: true }] },
+    { label: n.groupWorkspace, items: [{ href: "/dashboard/design", label: n.design, icon: Palette }] },
   ];
 }
 

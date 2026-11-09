@@ -74,6 +74,13 @@ export const MARKET_PRESETS = {
 } as const satisfies Record<string, Preset>;
 
 export type MarketPresetId = keyof typeof MARKET_PRESETS;
+/** Template versions. A store keeps the version it was built on (`stores.template_version`) until the seller approves a move. */
+export const TEMPLATE_VERSIONS: Record<MarketPresetId, number> = {
+  bakery: 1,
+  "market/warm-bakery": 1,
+  "market/bold-grid": 1,
+  "market/photo-led": 1,
+};
 export const DEFAULT_PRESET: MarketPresetId = "market/warm-bakery";
 
 /** Same store in another preset: new layout and spacing, with the seller's colours, fonts and content kept. */

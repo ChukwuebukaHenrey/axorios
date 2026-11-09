@@ -6,7 +6,7 @@ export type { TemplateArt } from "./components/template-art";
 export { WaveDivider } from "./components/wave-divider";
 export { SiteEditSchema } from "./edit";
 export type { SiteEdit } from "./edit";
-export { buildSiteConfig, DEFAULT_PRESET, MARKET_PRESETS } from "./presets";
+export { buildSiteConfig, DEFAULT_PRESET, MARKET_PRESETS, TEMPLATE_VERSIONS } from "./presets";
 export type { MarketPresetId } from "./presets";
 export { ContactChannelsSchema, DesignTokensSchema, SectionSchema, SiteConfigSchema } from "./schema";
 export type { ContactChannels, DesignTokens, Section, SiteConfig } from "./schema";

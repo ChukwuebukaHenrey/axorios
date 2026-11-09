@@ -8,7 +8,7 @@ import type { MascotState } from "./mascot";
 /** What a chip shows the seller. Only `kind` and `id` (or the page key) go to the server, which re-reads the object. */
 export type Chip =
   | { kind: "page"; page: PageKey; label: string }
-  | { kind: "order" | "product" | "customer"; id: string; label: string };
+  | { kind: "order" | "product" | "customer" | "media"; id: string; label: string };
 
 export const chipKey = (c: Chip) => (c.kind === "page" ? `page:${c.page}` : `${c.kind}:${c.id}`);
 export const chipPayload = (c: Chip) => (c.kind === "page" ? { kind: c.kind, page: c.page } : { kind: c.kind, id: c.id });

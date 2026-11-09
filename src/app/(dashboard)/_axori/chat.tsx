@@ -2,15 +2,16 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, lastAssistantMessageIsCompleteWithApprovalResponses, type UIMessage } from "ai";
-import { ArrowUp, Mic, Square, Store, X } from "lucide-react";
+import { ArrowUp, Mic, Paperclip, Square, Store, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type KeyboardEvent } from "react";
 import { t } from "@/lib/messages";
 import { useVoiceRecorder, type VoiceNote } from "../build/use-voice-recorder";
 import { switchStore } from "../shell-actions";
 import { Mascot, useMomentary, type MascotState } from "./mascot";
 import { ApprovalCard, MessageParts, type ToolPart } from "./parts";
-import { chipKey, chipPayload, useAxori } from "./provider";
+import { chipKey, chipPayload, useAxori, type Chip } from "./provider";
+import { MEDIA_ACCEPT, useMediaUpload } from "./use-media-upload";
 
 const a = t.app.axori;
 
@@ -32,6 +33,11 @@ function deriveMascot(messages: UIMessage[], status: string, failed: boolean, re
   return "idle";
 }
 
+/** The server takes 4 chips: the page chip plus the 3 newest objects (an upload pushes out the oldest). */
+function chipsToSend(chips: Chip[]) {
+  return [...chips.filter((c) => c.kind === "page"), ...chips.filter((c) => c.kind !== "page").slice(-3)].map(chipPayload);
+}
+
 export type ChatThread = { id: string; storeId: string | null; messages: UIMessage[] };
 
 export function AxoriChat({
@@ -48,7 +54,7 @@ export function AxoriChat({
   onTitle?: () => void;
 }) {
   const router = useRouter();
-  const { chips, getChips, removeChip, setMascot, holding, takePending, pending } = useAxori();
+  const { chips, getChips, addChip, removeChip, setMascot, holding, takePending, pending } = useAxori();
   const [input, setInput] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
   const areaRef = useRef<HTMLTextAreaElement>(null);
@@ -62,7 +68,7 @@ export function AxoriChat({
           body: {
             ...body,
             threadId: thread.id,
-            context: isAccount ? [] : getChips().map(chipPayload),
+            context: isAccount ? [] : chipsToSend(getChips()),
             // Audio goes up once, in the turn it was spoken; later turns carry the transcript.
             messages: messages.map((message, index) =>
               index === messages.length - 1
@@ -83,6 +89,20 @@ export function AxoriChat({
   const busy = status === "submitted" || status === "streaming";
   const sendVoice = useCallback(({ mediaType, url }: VoiceNote) => sendMessage({ files: [{ type: "file", mediaType, url }] }), [sendMessage]);
   const voice = useVoiceRecorder(sendVoice);
+  const media = useMediaUpload(thread.id);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [dragging, setDragging] = useState(false);
+  const attach = async (file: File | undefined) => {
+    if (!file || media.state.status === "uploading") return;
+    const item = await media.upload(file);
+    // Store threads see the file through a chip; the server re-reads it, scoped to the store.
+    if (item && !isAccount) addChip({ kind: "media", id: item.id, label: item.name });
+  };
+  const onDrop = (e: DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+    void attach(e.dataTransfer.files[0]);
+  };
 
   // Hold-to-talk from the mobile button.
   const { start: startVoice, stop: stopVoice, recording } = voice;
@@ -230,7 +250,35 @@ export function AxoriChat({
             {voice.error === "denied" ? t.builder.micDenied : voice.error === "unsupported" ? t.builder.micUnsupported : a.listening.replace("{seconds}", String(voice.seconds))}
           </p>
         )}
-        <div className="rounded-2xl border border-panel-3 bg-panel-2 p-3 focus-within:border-cream/30">
+        {media.state.status !== "idle" && (
+          <p
+            role="status"
+            data-media-status={media.state.status}
+            className={`mb-2 flex items-start justify-between gap-2 rounded-lg px-3 py-2 text-sm ${media.state.status === "error" ? "bg-red-500/15 text-red-200" : "bg-[#2b3118] text-lime"}`}
+          >
+            <span className="min-w-0 [overflow-wrap:anywhere]">
+              {media.state.status === "uploading" && a.attaching.replace("{name}", media.state.name)}
+              {media.state.status === "error" && media.state.message}
+              {media.state.status === "done" &&
+                a.attached.replace("{name}", media.state.item.name).replace("{tags}", media.state.item.tags.join(", ") || "—")}
+            </span>
+            {media.state.status !== "uploading" && (
+              <button type="button" onClick={media.reset} aria-label={a.dismiss} className="grid size-5 shrink-0 place-items-center rounded-full hover:bg-black/30">
+                <X className="size-3" aria-hidden="true" />
+              </button>
+            )}
+          </p>
+        )}
+        <div
+          onDragOver={(e) => {
+            if (!e.dataTransfer.types.includes("Files")) return;
+            e.preventDefault();
+            setDragging(true);
+          }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={onDrop}
+          className={`rounded-2xl border bg-panel-2 p-3 focus-within:border-cream/30 ${dragging ? "border-lime" : "border-panel-3"}`}
+        >
           <div className="mb-2 flex flex-wrap items-center gap-1.5 text-xs" aria-label={a.sees}>
             <span className="text-stone">{a.sees}:</span>
             <span className="inline-flex items-center gap-1 rounded-full bg-panel-3 px-2 py-0.5 text-cream">
@@ -266,6 +314,27 @@ export function AxoriChat({
             className="block max-h-40 w-full resize-none bg-transparent text-base text-cream placeholder:text-stone outline-none"
           />
           <div className="mt-2 flex items-center justify-end gap-2">
+            <input
+              ref={fileRef}
+              type="file"
+              accept={MEDIA_ACCEPT}
+              className="hidden"
+              data-axori-file
+              onChange={(e) => {
+                void attach(e.target.files?.[0]);
+                e.target.value = "";
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={media.state.status === "uploading"}
+              aria-label={a.attach}
+              title={a.attach}
+              className="mr-auto grid size-9 place-items-center rounded-full text-cream/80 transition hover:bg-panel-3 hover:text-cream disabled:opacity-40"
+            >
+              <Paperclip className="size-4.5" aria-hidden="true" />
+            </button>
             <button
               type="button"
               onClick={voice.recording ? voice.stop : voice.start}

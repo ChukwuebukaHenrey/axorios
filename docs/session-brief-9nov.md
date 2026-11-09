@@ -36,3 +36,32 @@ Handoff for the next session. Everything below is **committed and pushed** (`70b
 - `next build` and `npm test` must run from `C:\Users\ADMIN\AxoriOS` (real casing).
 - `tsc -p .` includes `scripts/`; keep scripts type-clean.
 - PostgREST paging needs a stable `order()`, or rows repeat or go missing across pages.
+
+---
+
+# Session 3 (9 Nov 2026): 6.3 done
+
+`448af3d` is pushed: **6.3 Shell and Axori AI**. 139/139 tests, lint, `tsc` and build pass. `scripts/e2e-shell.mts --chat` passes against `next start -p 3100`.
+
+## What exists now (to build on)
+
+- **Shell:** `src/app/(dashboard)/app-shell.tsx`. Sidebar items with `soon: true` (Customers, Money, Analytics, Design) show "Soon". **Flip `soon` off, and set the real `href`, as each page lands** (Store still points at `/build`; Settings at `/dashboard/integrations`).
+- **Axori AI:** `src/app/(dashboard)/_axori/` holds `provider.tsx` (open state, chips, `AxoriSees` for object chips, `ask()`), `chat.tsx`, `panel.tsx`, `parts.tsx` (`MessageParts`, generic `ApprovalCard` for any gated tool without its own card), `threads.tsx`, and `mascot.tsx`. The full page is `dashboard/ai`.
+- **Chips:** a page adds `<AxoriSees chip={{ kind: "order", id, label }} />`. The server re-reads the object in `modules/agent/context.ts`.
+- **Store switcher:** the `axorios_store` cookie, read with `storeChoice()` from `src/lib/store-cookie.ts`. `requireSeller()` already honours it.
+- **Orders** moved to `/dashboard/orders`. `/dashboard` is a bare Home placeholder, which 6.8 replaces with tiles.
+- **shadcn** in `src/components/ui/` (button, sheet, dialog, command, dropdown-menu, tooltip, tabs, badge, scroll-area, table, card), with `cn` in `src/lib/utils.ts`. No `tw-animate-css`, so `animate-in` classes do nothing. Use `motion`.
+- **AG packages are installed and pinned:** ag-grid-community/react 36.2.0, ag-studio/-react 3.0.0.
+- `orders.countToFulfil(storeId)` exists. **Watch out:** the Orders page still calls `listSellerOrders`, which loads all ~1,700 demo orders. Paginate it in 6.7.
+
+## Next, in order
+
+1. **6.7 UI:** Money tab (Overview, Money in, Money out, Expenses, Withdrawals, VAT, Statements) on `analytics/metrics.ts`. Orders gets a Refund card: server actions call `previewRefund(storeId, orderId, amount?)`, then `executeRefund(storeId, orderId, approvalId)` with an approval id made when the card opens, so a repeat is idempotent. Give `parts.tsx` a dedicated `refund_order` renderer too.
+2. **6.6** AG Studio at `dashboard/analytics` (spec v2, Analytics).
+3. **6.8** Home tiles and Store overview. **6.9** Customers. **6.10** Marketing performance and demo adapters.
+
+## Notes
+
+- Commit as the user, with **no Co-Authored-By line** (user's request, 9 Nov).
+- Port 3100 for `next start`. Stop it afterwards with PowerShell `Get-NetTCPConnection -LocalPort 3100`.
+- The editor's old `agent_sessions` became the demo store's "Store setup" thread, which includes the 8 Nov "I have scheduled…" regression text (history only).

@@ -79,7 +79,7 @@ docs/spec.md
 
 ## Commands
 
-CLI tools don't read `.env.local`. Load it first: `set -a; source .env.local; set +a`. Never echo the values.
+CLI tools don't read `.env.local`. Load it first: `node scripts/check-env.mjs && set -a; source .env.local; set +a`. Never echo the values. The check names any line bash can't source (a space after `=`, or a note without `#`); fix the line, don't skip the check.
 
 - `npm run dev` · `npx inngest-cli@latest dev` · `npm run build` · `npm run lint` · `npm test`
 - `npx supabase link --project-ref $SUPABASE_PROJECT_REF --password $SUPABASE_DB_PASSWORD` (once; `SUPABASE_ACCESS_TOKEN` handles login)

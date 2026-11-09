@@ -2,7 +2,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, lastAssistantMessageIsCompleteWithApprovalResponses, type UIMessage } from "ai";
-import { ArrowUp, Mic, Paperclip, Square, Store, X } from "lucide-react";
+import { ArrowUp, Mic, Paperclip, Square, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type KeyboardEvent } from "react";
 import { t } from "@/lib/messages";
@@ -40,19 +40,31 @@ function chipsToSend(chips: Chip[]) {
 
 export type ChatThread = { id: string; storeId: string | null; messages: UIMessage[] };
 
+/** A new chat that has no database row yet. The row is made on the first send. */
+export const DRAFT = "draft";
+export type Handoff = { text?: string; voice?: VoiceNote; file?: File };
+const handoffs = new Map<string, Handoff>();
+/** Passes the draft's first message to the real thread's chat, which sends it on mount. */
+export function handOff(threadId: string, first: Handoff) {
+  handoffs.set(threadId, first);
+}
+
 export function AxoriChat({
   thread,
-  storeName,
   greetingName,
   variant,
   onTitle,
+  onDraft,
 }: {
   thread: ChatThread;
-  storeName: string;
+  storeName?: string;
   greetingName: string;
   variant: "panel" | "page";
   onTitle?: () => void;
+  /** Draft only: called with the first message so the parent can create the thread. */
+  onDraft?: (first: Handoff) => void;
 }) {
+  const isDraft = thread.id === DRAFT;
   const router = useRouter();
   const { chips, getChips, addChip, removeChip, setMascot, holding, takePending, pending } = useAxori();
   const [input, setInput] = useState("");
@@ -87,13 +99,17 @@ export function AxoriChat({
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
   });
   const busy = status === "submitted" || status === "streaming";
-  const sendVoice = useCallback(({ mediaType, url }: VoiceNote) => sendMessage({ files: [{ type: "file", mediaType, url }] }), [sendMessage]);
+  const sendVoice = useCallback(
+    (note: VoiceNote) => (isDraft ? onDraft?.({ voice: note }) : sendMessage({ files: [{ type: "file", mediaType: note.mediaType, url: note.url }] })),
+    [sendMessage, isDraft, onDraft],
+  );
   const voice = useVoiceRecorder(sendVoice);
   const media = useMediaUpload(thread.id);
   const fileRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const attach = async (file: File | undefined) => {
     if (!file || media.state.status === "uploading") return;
+    if (isDraft) return onDraft?.({ file });
     const item = await media.upload(file);
     // Store threads see the file through a chip; the server re-reads it, scoped to the store.
     if (item && !isAccount) addChip({ kind: "media", id: item.id, label: item.name });
@@ -112,12 +128,25 @@ export function AxoriChat({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [holding]);
 
+  // A draft's first message arrives here once the thread exists.
+  useEffect(() => {
+    const first = handoffs.get(thread.id);
+    if (!first) return;
+    handoffs.delete(thread.id);
+    if (first.text) sendMessage({ text: first.text });
+    if (first.voice) sendMessage({ files: [{ type: "file", mediaType: first.voice.mediaType, url: first.voice.url }] });
+    if (first.file) void attach(first.file);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [thread.id]);
+
   // Search's "Ask Axori AI" hands its text over once.
   useEffect(() => {
     if (pending === null || busy) return;
     const text = takePending();
-    if (text) sendMessage({ text });
-  }, [pending, busy, takePending, sendMessage]);
+    if (!text) return;
+    if (isDraft) onDraft?.({ text });
+    else sendMessage({ text });
+  }, [pending, busy, takePending, sendMessage, isDraft, onDraft]);
 
   const approvalsSeen = useMemo(
     () => messages.flatMap((m) => m.parts as ToolPart[]).filter((p) => p.state === "approval-requested").length,
@@ -159,7 +188,8 @@ export function AxoriChat({
     const clean = text.trim();
     if (!clean || busy) return;
     setInput("");
-    sendMessage({ text: clean });
+    if (isDraft) onDraft?.({ text: clean });
+    else sendMessage({ text: clean });
   }
   function onKey(e: KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -192,171 +222,190 @@ export function AxoriChat({
     );
   };
 
+
   const suggestions = isAccount ? a.accountSuggestions : a.suggestions;
   const empty = messages.length === 0;
+  const page = variant === "page";
+  // The page and store are known from the session; only things the seller pinned (an order, a file) show here.
+  const pinned = isAccount ? [] : chips.filter((c) => c.kind !== "page");
+
+  const notices = (
+    <>
+      {(voice.recording || voice.error) && (
+        <p role="status" className={`mb-2 rounded-lg px-3 py-2 text-sm ${voice.error ? "bg-red-500/15 text-red-200" : "bg-[#2b3118] text-lime"}`}>
+          {voice.error === "denied" ? t.builder.micDenied : voice.error === "unsupported" ? t.builder.micUnsupported : a.listening.replace("{seconds}", String(voice.seconds))}
+        </p>
+      )}
+      {media.state.status !== "idle" && (
+        <p
+          role="status"
+          data-media-status={media.state.status}
+          className={`mb-2 flex items-start justify-between gap-2 rounded-lg px-3 py-2 text-sm ${media.state.status === "error" ? "bg-red-500/15 text-red-200" : "bg-[#2b3118] text-lime"}`}
+        >
+          <span className="min-w-0 [overflow-wrap:anywhere]">
+            {media.state.status === "uploading" && a.attaching.replace("{name}", media.state.name)}
+            {media.state.status === "error" && media.state.message}
+            {media.state.status === "done" && a.attached.replace("{name}", media.state.item.name).replace("{tags}", media.state.item.tags.join(", ") || "—")}
+          </span>
+          {media.state.status !== "uploading" && (
+            <button type="button" onClick={media.reset} aria-label={a.dismiss} className="grid size-5 shrink-0 place-items-center rounded-full hover:bg-black/30">
+              <X className="size-3" aria-hidden="true" />
+            </button>
+          )}
+        </p>
+      )}
+    </>
+  );
+
+  const composer = (
+    <div
+      onDragOver={(e) => {
+        if (!e.dataTransfer.types.includes("Files")) return;
+        e.preventDefault();
+        setDragging(true);
+      }}
+      onDragLeave={() => setDragging(false)}
+      onDrop={onDrop}
+      className={`rounded-xl border bg-panel-2 shadow-[0_4px_24px_rgb(0_0_0/0.35)] transition-colors focus-within:border-cream/25 ${dragging ? "border-lime" : "border-panel-3"}`}
+    >
+      {pinned.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5 px-3 pt-3 text-xs">
+          {pinned.map((chip) => (
+            <span key={chipKey(chip)} className="inline-flex items-center gap-1 rounded-md border border-lime/20 bg-[#2b3118] py-0.5 pr-1 pl-2 text-lime">
+              {chip.label}
+              <button
+                type="button"
+                onClick={() => removeChip(chipKey(chip))}
+                aria-label={a.removeChip.replace("{label}", chip.label)}
+                className="grid size-4 place-items-center rounded hover:bg-black/30"
+              >
+                <X className="size-3" aria-hidden="true" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+      <label htmlFor={`axori-input-${variant}`} className="sr-only">
+        {a.placeholder}
+      </label>
+      <textarea
+        id={`axori-input-${variant}`}
+        ref={areaRef}
+        rows={page && empty ? 2 : 1}
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onKeyDown={onKey}
+        placeholder={a.placeholder}
+        autoFocus
+        className="block max-h-40 w-full resize-none bg-transparent px-4 pt-3.5 pb-1 text-[15px] leading-6 text-cream placeholder:text-stone outline-none"
+      />
+      <div className="flex items-center gap-1 px-2 pb-2">
+        <input
+          ref={fileRef}
+          type="file"
+          accept={MEDIA_ACCEPT}
+          className="hidden"
+          data-axori-file
+          onChange={(e) => {
+            void attach(e.target.files?.[0]);
+            e.target.value = "";
+          }}
+        />
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={media.state.status === "uploading"}
+          aria-label={a.attach}
+          title={a.attach}
+          className="grid size-8 place-items-center rounded-md border border-panel-3 text-cream/80 transition hover:bg-panel-3 hover:text-cream disabled:opacity-40"
+        >
+          <Paperclip className="size-4" aria-hidden="true" />
+        </button>
+        <div className="ml-auto flex items-center gap-1">
+          <button
+            type="button"
+            onClick={voice.recording ? voice.stop : voice.start}
+            disabled={busy && !voice.recording}
+            aria-label={voice.recording ? a.micStop : a.micStart}
+            aria-pressed={voice.recording}
+            className={`grid size-8 place-items-center rounded-md transition disabled:opacity-40 ${voice.recording ? "bg-red-600 text-white" : "text-cream/80 hover:bg-panel-3 hover:text-cream"}`}
+          >
+            {voice.recording ? <Square className="size-3.5" aria-hidden="true" /> : <Mic className="size-4" aria-hidden="true" />}
+          </button>
+          <button
+            type="button"
+            onClick={() => send(input)}
+            disabled={busy || !input.trim()}
+            aria-label={a.send}
+            className="grid size-8 place-items-center rounded-md bg-lime text-black transition hover:bg-lime/85 active:scale-95 disabled:opacity-40"
+          >
+            <ArrowUp className="size-4" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (empty) {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4" aria-live="polite">
+        <div className={`m-auto flex w-full flex-col py-8 ${page ? "max-w-2xl" : ""}`}>
+          <div className="mb-6 flex items-center justify-center gap-3">
+            <Mascot state={mascot} size={page ? 48 : 40} />
+            <h2 className={`font-medium tracking-tight text-cream ${page ? "text-[28px]" : "text-xl"}`}>
+              {isAccount ? a.accountGreeting : greetingName ? a.greeting.replace("{name}", greetingName) : a.greetingAnon}
+            </h2>
+          </div>
+          {notices}
+          {composer}
+          <div className={`mt-3 flex flex-wrap justify-center gap-2 ${page ? "" : "flex-col"}`}>
+            {suggestions.map((s) => (
+              <button
+                key={s.title}
+                type="button"
+                onClick={() => send(s.prompt)}
+                title={s.body}
+                className="rounded-md border border-panel-3 px-3 py-1.5 text-left text-[13px] text-cream/80 transition hover:border-cream/25 hover:bg-panel-2 hover:text-cream"
+              >
+                {s.title}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className={`flex min-h-0 flex-1 flex-col overflow-y-auto ${variant === "page" ? "px-4 sm:px-8" : "px-4"}`} aria-live="polite">
-        {empty ? (
-          <div className="m-auto flex w-full max-w-2xl flex-col items-center py-8 text-center">
-            <Mascot state={mascot} size={variant === "page" ? 140 : 96} />
-            <h2 className="mt-4 text-2xl font-semibold tracking-tight text-cream">
-              {isAccount ? a.accountGreeting : a.greeting.replace("{name}", greetingName)}
-            </h2>
-            <p className="mt-2 max-w-md text-sm text-stone">{isAccount ? a.accountGreetingBody : a.greetingBody}</p>
-            <div className={`mt-6 grid w-full gap-2.5 ${variant === "page" ? "sm:grid-cols-3" : ""}`}>
-              {suggestions.map((s) => (
-                <button
-                  key={s.title}
-                  type="button"
-                  onClick={() => send(s.prompt)}
-                  className="rounded-2xl border border-panel-3 bg-panel-2 p-4 text-left transition hover:border-lime/40"
-                >
-                  <span className="block font-medium text-cream">{s.title}</span>
-                  <span className="mt-1 block text-sm text-stone">{s.body}</span>
-                </button>
-              ))}
+      <div className={`flex min-h-0 flex-1 flex-col overflow-y-auto ${page ? "px-4 sm:px-8" : "px-4"}`} aria-live="polite">
+        <div className={`mx-auto flex w-full flex-col gap-5 py-6 ${page ? "max-w-3xl" : ""}`}>
+          {messages.map((message) => (
+            <div key={message.id} className={`flex gap-3 ${message.role === "user" ? "justify-end" : ""}`}>
+              {message.role === "assistant" && <Mascot state={message.id === messages.at(-1)?.id ? mascot : "idle"} size={28} className="mt-0.5" />}
+              <div className={`flex min-w-0 flex-col gap-2 ${message.role === "user" ? "max-w-[85%] items-end" : "flex-1"}`}>
+                <MessageParts message={message} handlers={{ onRespond: respond, onChoose: send, renderTool, busy }} />
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className={`mx-auto flex w-full flex-col gap-5 py-4 ${variant === "page" ? "max-w-3xl" : ""}`}>
-            {messages.map((message) => (
-              <div key={message.id} className={`flex gap-3 ${message.role === "user" ? "justify-end" : ""}`}>
-                {message.role === "assistant" && <Mascot state={message.id === messages.at(-1)?.id ? mascot : "idle"} size={32} className="mt-0.5" />}
-                <div className={`flex min-w-0 flex-col gap-2 ${message.role === "user" ? "max-w-[85%] items-end" : "flex-1"}`}>
-                  <MessageParts message={message} handlers={{ onRespond: respond, onChoose: send, renderTool, busy }} />
-                </div>
-              </div>
-            ))}
-            {status === "submitted" && (
-              <div className="flex items-center gap-3 text-sm text-stone">
-                <Mascot state="thinking" size={32} /> {t.builder.thinking}…
-              </div>
-            )}
-            {error && (
-              <p role="alert" className="text-sm text-red-300">
-                {error.message.includes("daily_limit") ? a.dailyLimit : a.error}
-              </p>
-            )}
-            <div ref={endRef} />
-          </div>
-        )}
+          ))}
+          {status === "submitted" && (
+            <div className="flex items-center gap-3 text-sm text-stone">
+              <Mascot state="thinking" size={28} /> {t.builder.thinking}…
+            </div>
+          )}
+          {error && (
+            <p role="alert" className="text-sm text-red-300">
+              {error.message.includes("daily_limit") ? a.dailyLimit : a.error}
+            </p>
+          )}
+          <div ref={endRef} />
+        </div>
       </div>
 
-      <div className={`shrink-0 pb-3 ${variant === "page" ? "mx-auto w-full max-w-3xl px-4 sm:px-8" : "px-3"}`}>
-        {(voice.recording || voice.error) && (
-          <p role="status" className={`mb-2 rounded-lg px-3 py-2 text-sm ${voice.error ? "bg-red-500/15 text-red-200" : "bg-[#2b3118] text-lime"}`}>
-            {voice.error === "denied" ? t.builder.micDenied : voice.error === "unsupported" ? t.builder.micUnsupported : a.listening.replace("{seconds}", String(voice.seconds))}
-          </p>
-        )}
-        {media.state.status !== "idle" && (
-          <p
-            role="status"
-            data-media-status={media.state.status}
-            className={`mb-2 flex items-start justify-between gap-2 rounded-lg px-3 py-2 text-sm ${media.state.status === "error" ? "bg-red-500/15 text-red-200" : "bg-[#2b3118] text-lime"}`}
-          >
-            <span className="min-w-0 [overflow-wrap:anywhere]">
-              {media.state.status === "uploading" && a.attaching.replace("{name}", media.state.name)}
-              {media.state.status === "error" && media.state.message}
-              {media.state.status === "done" &&
-                a.attached.replace("{name}", media.state.item.name).replace("{tags}", media.state.item.tags.join(", ") || "—")}
-            </span>
-            {media.state.status !== "uploading" && (
-              <button type="button" onClick={media.reset} aria-label={a.dismiss} className="grid size-5 shrink-0 place-items-center rounded-full hover:bg-black/30">
-                <X className="size-3" aria-hidden="true" />
-              </button>
-            )}
-          </p>
-        )}
-        <div
-          onDragOver={(e) => {
-            if (!e.dataTransfer.types.includes("Files")) return;
-            e.preventDefault();
-            setDragging(true);
-          }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={onDrop}
-          className={`rounded-2xl border bg-panel-2 p-3 focus-within:border-cream/30 ${dragging ? "border-lime" : "border-panel-3"}`}
-        >
-          <div className="mb-2 flex flex-wrap items-center gap-1.5 text-xs" aria-label={a.sees}>
-            <span className="text-stone">{a.sees}:</span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-panel-3 px-2 py-0.5 text-cream">
-              <Store className="size-3" aria-hidden="true" /> {isAccount ? a.accountScope : storeName}
-            </span>
-            {!isAccount &&
-              chips.map((chip) => (
-                <span key={chipKey(chip)} className="inline-flex items-center gap-1 rounded-full bg-[#2b3118] py-0.5 pr-1 pl-2 text-lime">
-                  {chip.label}
-                  <button
-                    type="button"
-                    onClick={() => removeChip(chipKey(chip))}
-                    aria-label={a.removeChip.replace("{label}", chip.label)}
-                    className="grid size-4 place-items-center rounded-full hover:bg-black/30"
-                  >
-                    <X className="size-3" aria-hidden="true" />
-                  </button>
-                </span>
-              ))}
-          </div>
-          <label htmlFor={`axori-input-${variant}`} className="sr-only">
-            {a.placeholder}
-          </label>
-          <textarea
-            id={`axori-input-${variant}`}
-            ref={areaRef}
-            rows={1}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={onKey}
-            placeholder={a.placeholder}
-            autoFocus={variant === "panel"}
-            className="block max-h-40 w-full resize-none bg-transparent text-base text-cream placeholder:text-stone outline-none"
-          />
-          <div className="mt-2 flex items-center justify-end gap-2">
-            <input
-              ref={fileRef}
-              type="file"
-              accept={MEDIA_ACCEPT}
-              className="hidden"
-              data-axori-file
-              onChange={(e) => {
-                void attach(e.target.files?.[0]);
-                e.target.value = "";
-              }}
-            />
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              disabled={media.state.status === "uploading"}
-              aria-label={a.attach}
-              title={a.attach}
-              className="mr-auto grid size-9 place-items-center rounded-full text-cream/80 transition hover:bg-panel-3 hover:text-cream disabled:opacity-40"
-            >
-              <Paperclip className="size-4.5" aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              onClick={voice.recording ? voice.stop : voice.start}
-              disabled={busy && !voice.recording}
-              aria-label={voice.recording ? a.micStop : a.micStart}
-              aria-pressed={voice.recording}
-              className={`grid size-9 place-items-center rounded-full transition disabled:opacity-40 ${voice.recording ? "bg-red-600 text-white" : "text-cream/80 hover:bg-panel-3 hover:text-cream"}`}
-            >
-              {voice.recording ? <Square className="size-3.5" aria-hidden="true" /> : <Mic className="size-4.5" aria-hidden="true" />}
-            </button>
-            <button
-              type="button"
-              onClick={() => send(input)}
-              disabled={busy || !input.trim()}
-              aria-label={a.send}
-              className="grid size-9 place-items-center rounded-full bg-lime text-black transition hover:bg-lime/85 disabled:opacity-40"
-            >
-              <ArrowUp className="size-4.5" aria-hidden="true" />
-            </button>
-          </div>
-        </div>
-        <p className="mt-2 text-center text-xs text-stone">{a.disclaimer}</p>
+      <div className={`shrink-0 pb-3 ${page ? "mx-auto w-full max-w-3xl px-4 sm:px-8" : "px-3"}`}>
+        {notices}
+        {composer}
+        <p className="mt-2 text-center text-[11px] text-stone">{a.disclaimer}</p>
       </div>
     </div>
   );

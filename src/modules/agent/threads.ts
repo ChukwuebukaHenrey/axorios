@@ -93,3 +93,11 @@ export async function saveThread(threadId: string, ownerId: string, all: UIMessa
     .eq("owner_id", ownerId);
   if (error) throw new Error(`Thread save failed: ${error.code}`);
 }
+
+/** Seller rename from the history menu. Session client: RLS keeps it to the owner's own threads. */
+export async function renameThread(supabase: SupabaseClient<Database>, threadId: string, title: string): Promise<void> {
+  const clean = title.replace(/\s+/g, " ").trim().slice(0, 80);
+  if (!clean) return;
+  const { error } = await supabase.from("ai_threads").update({ title: clean }).eq("id", threadId);
+  if (error) throw new Error(`Thread rename failed: ${error.code}`);
+}

@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:is(.dark *));
+
 @theme inline {
   /* AxoriOS tokens. Dark surfaces run the signed-in app; paper/ivory run the signed-out marketing page.
      Store tokens below are separate on purpose: a seller's own storefront is themed from their brand kit, never from this palette. */
@@ -56,6 +58,50 @@
   --font-store-heading: var(--store-font-heading);
   --font-store-body: var(--store-font-body);
   --radius-store: var(--store-radius);
+  --color-brand: var(--brand, oklch(0.72 0.2 352.53));
+  --color-brand-light: var(--brand-light, oklch(0.78 0.15 352.53));
+  --color-brand-lighter: var(--brand-lighter, oklch(0.85 0.1 352.53));
+  --color-brand-secondary: var(--brand-secondary, oklch(0.66 0.21 354.31));
+  --color-btn-drop: var(--btn-drop, rgb(0 0 0 / 0.4));
+  --color-btn-sheen: var(--btn-sheen, rgb(255 255 255 / 0.2));
+  --color-destructive-edge: var(--destructive-edge, #f61418);
+  --color-destructive-hover: var(--destructive-hover, color-mix(in oklab, var(--color-destructive) 85%, black));
+  --color-destructive-top: var(--destructive-top, #fd4b4e);
+  --color-on-brand: var(--on-brand, #fff);
+  --color-amber: var(--amber);
+  --color-amber-fg: var(--amber-fg);
+  --color-amber-hover: var(--amber-hover);
+  --color-amber-ink: var(--amber-ink);
+  --color-blue: var(--blue);
+  --color-blue-fg: var(--blue-fg);
+  --color-blue-hover: var(--blue-hover);
+  --color-blue-ink: var(--blue-ink);
+  --color-brand-ink: var(--brand-ink);
+  --color-destructive-fg: var(--destructive-fg);
+  --color-destructive-ink: var(--destructive-ink);
+  --color-green: var(--green);
+  --color-green-fg: var(--green-fg);
+  --color-green-hover: var(--green-hover);
+  --color-green-ink: var(--green-ink);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-success-foreground: var(--success-foreground);
+  --color-thumb: var(--thumb);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-smooth-50: var(--smooth-50);
+  --color-smooth-100: var(--smooth-100);
+  --color-smooth-200: var(--smooth-200);
+  --color-smooth-300: var(--smooth-300);
+  --color-smooth-400: var(--smooth-400);
+  --color-smooth-500: var(--smooth-500);
+  --color-smooth-600: var(--smooth-600);
+  --color-smooth-700: var(--smooth-700);
+  --color-smooth-800: var(--smooth-800);
+  --color-smooth-900: var(--smooth-900);
+  --color-smooth-950: var(--smooth-950);
+  --color-smooth-1000: var(--smooth-1000);
+  --color-color-destructive-hover: var(--color-destructive-hover);
 }
 
 body {
@@ -100,4 +146,100 @@ body {
 .halftone {
   background-image: radial-gradient(circle, rgb(0 0 0 / 0.85) 1px, transparent 1.6px);
   background-size: 4px 4px;
+}
+
+:root {
+  --amber: oklch(0.77 0.16 75);
+  --amber-fg: oklch(0.16 0 0);
+  --amber-hover: oklch(0.71 0.17 70);
+  --amber-ink: oklch(0.5 0.12 75);
+  --blue: oklch(0.56 0.2 256);
+  --blue-fg: #fff;
+  --blue-hover: oklch(0.5 0.2 256);
+  --blue-ink: oklch(0.5 0.2 256);
+  --brand-ink: oklch(0.54 0.2 352.53);
+  --destructive-fg: #fff;
+  --destructive-ink: oklch(0.5 0.2 27);
+  --green: oklch(0.7 0.17 152);
+  --green-fg: oklch(0.16 0 0);
+  --green-hover: oklch(0.64 0.18 152);
+  --green-ink: oklch(0.5 0.14 152);
+  --info: oklch(0.56 0.2 256);
+  --info-foreground: #fff;
+  --success: oklch(0.7 0.17 152);
+  --success-foreground: oklch(0.16 0 0);
+  --thumb: #fff;
+  --warning: oklch(0.77 0.16 75);
+  --warning-foreground: oklch(0.16 0 0);
+  --smooth-50: oklch(0.985 0 0);
+  --smooth-100: oklch(0.972 0 0);
+  --smooth-200: oklch(0.955 0 0);
+  --smooth-300: oklch(0.91 0 0);
+  --smooth-400: oklch(0.865 0 0);
+  --smooth-500: oklch(0.81 0 0);
+  --smooth-600: oklch(0.74 0 0);
+  --smooth-700: oklch(0.66 0 0);
+  --smooth-800: oklch(0.56 0 0);
+  --smooth-900: oklch(0.47 0 0);
+  --smooth-950: oklch(0.34 0 0);
+  --smooth-1000: oklch(0.16 0 0);
+}
+
+.dark {
+  /* SmoothUI brand slots mapped onto AxoriOS lime. */
+  --brand: #e3ff48;
+  --brand-light: #ecff7a;
+  --brand-lighter: #f3ffb0;
+  --brand-secondary: #85d6a6;
+  --brand-ink: #e3ff48;
+  --on-brand: #09090b;
+  --amber: oklch(0.8 0.15 75);
+  --amber-fg: oklch(0.2 0 0);
+  --amber-hover: oklch(0.85 0.14 72);
+  --amber-ink: oklch(0.8 0.15 75);
+  --blue: oklch(0.56 0.2 256);
+  --blue-fg: #fff;
+  --blue-hover: oklch(0.5 0.2 256);
+  --blue-ink: oklch(0.7 0.15 256);
+  --destructive-fg: oklch(0.2 0 0);
+  --destructive-ink: oklch(0.704 0.191 22.216);
+  --green: oklch(0.73 0.16 152);
+  --green-fg: oklch(0.2 0 0);
+  --green-hover: oklch(0.79 0.15 152);
+  --green-ink: oklch(0.73 0.16 152);
+  --info: oklch(0.56 0.2 256);
+  --info-foreground: #fff;
+  --success: oklch(0.73 0.16 152);
+  --success-foreground: oklch(0.2 0 0);
+  --thumb: #fff;
+  --warning: oklch(0.8 0.15 75);
+  --warning-foreground: oklch(0.2 0 0);
+  --smooth-50: oklch(0.16 0 0);
+  --smooth-100: oklch(0.21 0 0);
+  --smooth-200: oklch(0.25 0 0);
+  --smooth-300: oklch(0.3 0 0);
+  --smooth-400: oklch(0.36 0 0);
+  --smooth-500: oklch(0.41 0 0);
+  --smooth-600: oklch(0.47 0 0);
+  --smooth-700: oklch(0.55 0 0);
+  --smooth-800: oklch(0.66 0 0);
+  --smooth-900: oklch(0.74 0 0);
+  --smooth-950: oklch(0.85 0 0);
+  --smooth-1000: oklch(0.96 0 0);
+}
+
+@utility focus-ring {
+  &:focus-visible {
+    @apply ring-[3px] ring-ring/80;
+  }
+}
+
+@utility focus-ring-within {
+  &:has(:focus-visible) {
+    @apply ring-[3px] ring-ring/80;
+  }
+}
+
+@utility state-transition {
+    @apply transition-[background-color,border-color,color,box-shadow] duration-150 ease-out motion-reduce:transition-none;
 }

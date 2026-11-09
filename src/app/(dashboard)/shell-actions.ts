@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { STORE_COOKIE } from "@/lib/store-cookie";
 import { createServerSupabase } from "@/lib/supabase/server";
-import { createThread, deleteThread, getThread, listThreads, type Thread, type ThreadSummary } from "@/modules/agent";
+import { createThread, deleteThread, getThread, listThreads, renameThread, type Thread, type ThreadSummary } from "@/modules/agent";
 import { createOwnerStore, getOrCreateStore, listOwnerStores } from "@/modules/brand";
 
 async function signedIn() {
@@ -67,4 +67,9 @@ export async function threadList(): Promise<ThreadSummary[]> {
 export async function removeThread(threadId: string): Promise<void> {
   const { supabase } = await signedIn();
   if (z.uuid().safeParse(threadId).success) await deleteThread(supabase, threadId);
+}
+
+export async function retitleThread(threadId: string, title: string): Promise<void> {
+  const { supabase } = await signedIn();
+  if (z.uuid().safeParse(threadId).success) await renameThread(supabase, threadId, z.string().max(200).parse(title));
 }

@@ -1,24 +1,29 @@
 "use client";
 
 import {
+  ArrowRight,
   BarChart3,
   Bell,
   Check,
   ChevronsUpDown,
+  CornerDownLeft,
   ExternalLink,
   Eye,
   Home,
   Inbox,
+  Loader2,
   LogOut,
   Megaphone,
   Menu,
+  MoreHorizontal,
   Package,
   Palette,
+  PanelLeftClose,
+  PanelLeftOpen,
   Plus,
   Search,
   Settings,
   ShieldCheck,
-  Sparkles,
   Store,
   Users,
   Wallet,
@@ -27,7 +32,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, useTransition, type ReactNode } from "react";
 import { Logo } from "@/components/logo";
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import {
@@ -38,14 +43,35 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { t } from "@/lib/messages";
+import { cn } from "@/lib/utils";
 import type { PageKey } from "@/modules/agent/pages";
 import { Mascot } from "./_axori/mascot";
 import { AxoriPanel } from "./_axori/panel";
 import { AxoriProvider, typingIn, useAxori } from "./_axori/provider";
+import { findDestinations } from "./search-index";
 import { newBusiness, signOut, switchStore } from "./shell-actions";
 
 const n = t.app.nav;
+const SIDEBAR_KEY = "axorios.sidebar.collapsed";
+
+/** Sidebar collapse is a per-browser preference, read from localStorage without a hydration mismatch. */
+function readSidebar() {
+  try {
+    return localStorage.getItem(SIDEBAR_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+function subscribeSidebar(onChange: () => void) {
+  window.addEventListener("storage", onChange);
+  window.addEventListener(SIDEBAR_KEY, onChange);
+  return () => {
+    window.removeEventListener("storage", onChange);
+    window.removeEventListener(SIDEBAR_KEY, onChange);
+  };
+}
 
 type StoreInfo = { id: string; name: string | null; slug: string; live: boolean; draftUrl: string | null };
 type Props = {
@@ -58,7 +84,7 @@ type Props = {
   children: ReactNode;
 };
 
-type NavItem = { href: string; label: string; icon: LucideIcon; count?: number; soon?: boolean; exact?: boolean };
+type NavItem = { href: string; label: string; icon: LucideIcon | "axori"; count?: number; exact?: boolean };
 
 function navGroups(counts: Props["counts"]): { label: string | null; items: NavItem[] }[] {
   return [
@@ -66,7 +92,7 @@ function navGroups(counts: Props["counts"]): { label: string | null; items: NavI
       label: null,
       items: [
         { href: "/dashboard", label: n.home, icon: Home, exact: true },
-        { href: "/dashboard/ai", label: n.ai, icon: Sparkles },
+        { href: "/dashboard/ai", label: n.ai, icon: "axori" },
       ],
     },
     {
@@ -89,87 +115,84 @@ function navGroups(counts: Props["counts"]): { label: string | null; items: NavI
     { label: n.groupWorkspace, items: [{ href: "/dashboard/design", label: n.design, icon: Palette }] },
   ];
 }
+const ALL_ITEMS = [...navGroups({ orders: 0, inbox: 0 }).flatMap((g) => g.items), { href: "/dashboard/settings", label: n.settings, icon: Settings }];
 
 function isActive(pathname: string, item: Pick<NavItem, "href" | "exact">) {
   return item.exact ? pathname === item.href : pathname.startsWith(item.href);
 }
 
-function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }) {
+function NavIcon({ icon, on }: { icon: NavItem["icon"]; on: boolean }) {
+  if (icon === "axori") return <Mascot state="idle" size={20} className="-m-px shrink-0" />;
+  const Icon = icon;
+  return <Icon className={cn("size-4 shrink-0", on ? "text-lime" : "text-stone group-hover:text-cream")} aria-hidden="true" />;
+}
+
+function NavLink({ item, collapsed, onNavigate }: { item: NavItem; collapsed: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
   const on = isActive(pathname, item);
-  const Icon = item.icon;
-  const base = "flex h-10 items-center gap-3 rounded-xl px-3 text-[15px] transition";
-  if (item.soon) {
-    return (
-      <span className={`${base} cursor-default text-cream/35`} aria-disabled="true">
-        <Icon className="size-[18px] shrink-0" aria-hidden="true" />
-        <span className="flex-1">{item.label}</span>
-        <span className="rounded-full border border-panel-3 px-1.5 text-[10px] tracking-wide uppercase">soon</span>
-      </span>
-    );
-  }
-  return (
+  const link = (
     <Link
       href={item.href}
       onClick={onNavigate}
       aria-current={on ? "page" : undefined}
-      className={`${base} ${on ? "border border-lime/25 bg-[#2b3118] text-cream" : "border border-transparent text-cream/75 hover:bg-panel-2 hover:text-cream"}`}
+      aria-label={collapsed ? item.label : undefined}
+      className={cn(
+        "group relative flex h-8 items-center gap-2.5 rounded-md text-sm transition-colors",
+        collapsed ? "w-8 justify-center" : "px-2.5",
+        on ? "bg-panel-2 text-cream" : "text-cream/70 hover:bg-panel-2/60 hover:text-cream",
+      )}
     >
-      <Icon className={`size-[18px] shrink-0 ${on ? "text-lime" : ""}`} aria-hidden="true" />
-      <span className="flex-1">{item.label}</span>
-      {item.count ? <span className="min-w-6 rounded-full bg-panel-3 px-1.5 py-0.5 text-center text-xs text-cream">{item.count}</span> : null}
+      {on && <span className="absolute top-1.5 bottom-1.5 -left-2 w-0.5 rounded-full bg-lime" aria-hidden="true" />}
+      <NavIcon icon={item.icon} on={on} />
+      {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
+      {!collapsed && item.count ? <span className="rounded bg-panel-3 px-1.5 text-[11px] text-cream tabular-nums">{item.count}</span> : null}
+      {collapsed && item.count ? <span className="absolute top-1 right-1 size-1.5 rounded-full bg-lime" aria-hidden="true" /> : null}
     </Link>
   );
-}
-
-function Sidebar({ counts, onNavigate }: { counts: Props["counts"]; onNavigate?: () => void }) {
+  if (!collapsed) return link;
   return (
-    <div className="flex h-full flex-col px-4 py-5">
-      <Link href="/dashboard" className="flex items-center gap-2.5 px-2 text-cream" onClick={onNavigate}>
-        <Logo className="size-9" />
-        <span className="text-[22px] font-medium tracking-tight">{t.marketing.brand}</span>
-      </Link>
-      <nav className="mt-6 flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto">
-        {navGroups(counts).map((group, i) => (
-          <div key={group.label ?? i}>
-            {group.label && <p className="mb-1.5 px-3 text-[11px] font-medium tracking-wider text-stone uppercase">{group.label}</p>}
-            <div className="flex flex-col gap-0.5">
-              {group.items.map((item) => (
-                <NavLink key={item.href} item={item} onNavigate={onNavigate} />
-              ))}
-            </div>
-          </div>
-        ))}
-      </nav>
-      <div className="border-t border-panel-3 pt-3">
-        <NavLink item={{ href: "/dashboard/settings", label: n.settings, icon: Settings }} onNavigate={onNavigate} />
-      </div>
-    </div>
+    <Tooltip>
+      <TooltipTrigger asChild>{link}</TooltipTrigger>
+      <TooltipContent side="right">
+        {item.label}
+        {item.count ? ` · ${item.count}` : ""}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
-function StoreSwitcher({ store, stores }: Pick<Props, "store" | "stores">) {
+function StoreSwitcher({ store, stores, collapsed }: Pick<Props, "store" | "stores"> & { collapsed: boolean }) {
   const router = useRouter();
   const { openThread } = useAxori();
   const [pending, start] = useTransition();
   const current = stores.find((s) => s.id === store.id);
+  const initial = (store.name ?? n.unnamed).slice(0, 1).toUpperCase();
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
         disabled={pending}
-        className="flex h-11 max-w-[230px] min-w-0 items-center gap-2.5 rounded-xl border border-panel-3 bg-panel-2 px-2.5 text-left text-cream transition hover:border-cream/25 disabled:opacity-60"
+        aria-label={`${n.stores}: ${store.name ?? n.unnamed}`}
+        className={cn(
+          "flex min-w-0 items-center gap-2.5 rounded-md text-left text-cream transition-colors hover:bg-panel-2 disabled:opacity-60 data-[state=open]:bg-panel-2",
+          collapsed ? "size-9 justify-center" : "h-11 w-full px-2",
+        )}
       >
-        <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-lime text-sm font-semibold text-black">
-          {(store.name ?? n.unnamed).slice(0, 1).toUpperCase()}
+        <span className="grid size-7 shrink-0 place-items-center rounded-md bg-lime text-sm font-semibold text-black">
+          {pending ? <Loader2 className="size-3.5 animate-spin" aria-hidden="true" /> : initial}
         </span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-medium">{store.name ?? n.unnamed}</span>
-          <span className="block text-[11px] text-stone">
-            {store.live ? n.live : n.draft} · {current?.currency}
-          </span>
-        </span>
-        <ChevronsUpDown className="size-4 shrink-0 text-stone" aria-hidden="true" />
+        {!collapsed && (
+          <>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-medium">{store.name ?? n.unnamed}</span>
+              <span className="flex items-center gap-1.5 text-[11px] text-stone">
+                <span className={cn("size-1.5 rounded-full", store.live ? "bg-success" : "bg-stone/60")} aria-hidden="true" />
+                {store.live ? n.live : n.draft} · {current?.currency}
+              </span>
+            </span>
+            <ChevronsUpDown className="size-3.5 shrink-0 text-stone" aria-hidden="true" />
+          </>
+        )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-64">
         <DropdownMenuLabel className="text-xs text-stone">{n.stores}</DropdownMenuLabel>
@@ -184,6 +207,7 @@ function StoreSwitcher({ store, stores }: Pick<Props, "store" | "stores">) {
               })
             }
           >
+            <span className="grid size-5 shrink-0 place-items-center rounded bg-panel-3 text-[11px] font-semibold">{s.name.slice(0, 1).toUpperCase()}</span>
             <span className="min-w-0 flex-1 truncate">{s.name}</span>
             <span className="text-xs text-stone">{s.currency}</span>
             {s.id === store.id && <Check className="size-4 text-lime" aria-hidden="true" />}
@@ -220,116 +244,253 @@ function StoreSwitcher({ store, stores }: Pick<Props, "store" | "stores">) {
   );
 }
 
-function SearchPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+/** Log out from any page: the menu item runs the server action in a transition and shows it working. */
+function AccountMenu({ account, collapsed }: { account: Props["account"]; collapsed: boolean }) {
   const router = useRouter();
-  const { ask, setOpen } = useAxori();
-  const [q, setQ] = useState("");
-  const pages: { href: string; label: string; icon: LucideIcon }[] = navGroups({ orders: 0, inbox: 0 })
-    .flatMap((g) => g.items)
-    .filter((i) => !i.soon)
-    .map(({ href, label, icon }) => ({ href, label, icon }));
-  const go = (href: string) => {
-    onOpenChange(false);
-    setQ("");
-    router.push(href);
-  };
-  const query = q.trim();
+  const [leaving, start] = useTransition();
+  const initials = (account.name ?? account.email).slice(0, 2).toUpperCase();
+  const logOut = () =>
+    start(async () => {
+      try {
+        await signOut();
+      } finally {
+        // signOut redirects; this covers a stale action or a session that was already gone.
+        router.replace("/sign-in");
+        router.refresh();
+      }
+    });
 
   return (
-    <CommandDialog open={open} onOpenChange={onOpenChange} title={n.searchOpen} description={n.searchPlaceholder} className="border-panel-3 bg-panel-2 text-cream sm:max-w-xl">
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        aria-label={n.account}
+        className={cn(
+          "flex min-w-0 items-center gap-2.5 rounded-md text-left transition-colors hover:bg-panel-2 data-[state=open]:bg-panel-2",
+          collapsed ? "size-9 justify-center" : "h-10 w-full px-2",
+        )}
+      >
+        <span className="grid size-7 shrink-0 place-items-center rounded-full bg-panel-3 text-[11px] font-medium text-cream">{initials}</span>
+        {!collapsed && (
+          <>
+            <span className="min-w-0 flex-1 truncate text-[13px] text-cream/80">{account.name ?? account.email}</span>
+            {leaving ? <Loader2 className="size-4 animate-spin text-stone" aria-hidden="true" /> : <MoreHorizontal className="size-4 text-stone" aria-hidden="true" />}
+          </>
+        )}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align={collapsed ? "start" : "end"} side="top" className="w-60">
+        <DropdownMenuLabel className="truncate font-normal text-stone">{account.email}</DropdownMenuLabel>
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard/settings">
+            <Settings aria-hidden="true" /> {n.settings}
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          disabled={leaving}
+          onSelect={(e) => {
+            e.preventDefault();
+            logOut();
+          }}
+        >
+          {leaving ? <Loader2 className="animate-spin" aria-hidden="true" /> : <LogOut aria-hidden="true" />} {n.signOut}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function Sidebar({
+  store,
+  stores,
+  account,
+  counts,
+  collapsed,
+  onToggle,
+  onSearch,
+  onNavigate,
+}: Pick<Props, "store" | "stores" | "account" | "counts"> & { collapsed: boolean; onToggle?: () => void; onSearch: () => void; onNavigate?: () => void }) {
+  return (
+    <div className={cn("flex h-full flex-col", collapsed ? "items-center px-2" : "px-3")}>
+      <div className={cn("flex h-14 shrink-0 items-center", collapsed ? "justify-center" : "justify-between gap-2 pl-1")}>
+        <Link href="/dashboard/ai" onClick={onNavigate} title={t.app.axori.newChatHint} aria-label={`${t.marketing.brand} · ${t.app.axori.newChatHint}`} className="flex items-center gap-2 rounded-md text-cream">
+          <Logo className="size-7" />
+          {!collapsed && <span className="text-[17px] font-medium tracking-tight">{t.marketing.brand}</span>}
+        </Link>
+        {onToggle && !collapsed && (
+          <button type="button" onClick={onToggle} aria-label={n.collapse} title={n.collapse} className="grid size-7 place-items-center rounded-md text-stone transition-colors hover:bg-panel-2 hover:text-cream">
+            <PanelLeftClose className="size-4" aria-hidden="true" />
+          </button>
+        )}
+      </div>
+
+      <div className={cn("flex flex-col gap-1.5 border-y border-panel-3 py-2.5", collapsed ? "items-center" : "")}>
+        <StoreSwitcher store={store} stores={stores} collapsed={collapsed} />
+        <button
+          type="button"
+          onClick={onSearch}
+          aria-label={n.searchOpen}
+          className={cn(
+            "flex items-center gap-2 rounded-md border border-panel-3 bg-panel text-sm text-stone transition-colors hover:border-cream/20 hover:text-cream",
+            collapsed ? "size-8 justify-center" : "h-8 px-2.5",
+          )}
+        >
+          <Search className="size-3.5" aria-hidden="true" />
+          {!collapsed && (
+            <>
+              <span className="flex-1 text-left">{n.find}</span>
+              <kbd className="rounded border border-panel-3 px-1 font-mono text-[10px]">Ctrl K</kbd>
+            </>
+          )}
+        </button>
+      </div>
+
+      <nav className={cn("flex min-h-0 flex-1 flex-col overflow-y-auto py-2 [scrollbar-width:thin]", collapsed ? "items-center" : "")}>
+        {navGroups(counts).map((group, i) => (
+          <div key={group.label ?? i} className={cn("flex flex-col gap-px py-1.5", i > 0 && "border-t border-panel-3/70")}>
+            {group.label && !collapsed && <p className="px-2.5 pt-1 pb-1 text-[11px] font-medium text-stone/80">{group.label}</p>}
+            {group.items.map((item) => (
+              <NavLink key={item.href} item={item} collapsed={collapsed} onNavigate={onNavigate} />
+            ))}
+          </div>
+        ))}
+      </nav>
+
+      <div className={cn("flex shrink-0 flex-col gap-1 border-t border-panel-3 py-2.5", collapsed ? "items-center" : "")}>
+        <NavLink item={{ href: "/dashboard/settings", label: n.settings, icon: Settings }} collapsed={collapsed} onNavigate={onNavigate} />
+        <AccountMenu account={account} collapsed={collapsed} />
+        {onToggle && collapsed && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button type="button" onClick={onToggle} aria-label={n.expand} className="grid size-8 place-items-center rounded-md text-stone transition-colors hover:bg-panel-2 hover:text-cream">
+                <PanelLeftOpen className="size-4" aria-hidden="true" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">{n.expand}</TooltipContent>
+          </Tooltip>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Ctrl/⌘+K. Finds views buried inside sections (Store › Context, Money › Withdrawals…), then offers
+ * to search orders and customers for the text, or hand it to Axori AI. Closes on every choice.
+ */
+function SearchPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const router = useRouter();
+  const { ask } = useAxori();
+  const [q, setQ] = useState("");
+  const query = q.trim();
+  const found = findDestinations(query);
+  const close = () => {
+    onOpenChange(false);
+    setQ("");
+  };
+  const go = (href: string) => {
+    close();
+    router.push(href);
+  };
+
+  return (
+    <CommandDialog
+      open={open}
+      onOpenChange={(v) => (v ? onOpenChange(true) : close())}
+      title={n.searchOpen}
+      description={n.searchPlaceholder}
+      shouldFilter={false}
+      className="border-panel-3 bg-panel-2 text-cream sm:max-w-xl"
+    >
       <CommandInput value={q} onValueChange={setQ} placeholder={n.searchPlaceholder} />
-      <CommandList>
-        <CommandEmpty>{n.noResults}</CommandEmpty>
-        <CommandGroup>
-          <CommandItem
-            forceMount
-            value="__ask"
-            onSelect={() => {
-              onOpenChange(false);
-              setQ("");
-              if (query) ask(query);
-              else setOpen(true);
-            }}
-          >
-            <Mascot state="idle" size={22} />
-            {query ? n.askAiAbout.replace("{q}", query) : n.askAi}
-          </CommandItem>
-          {query && (
-            <CommandItem forceMount value="__orders" onSelect={() => go(`/dashboard/orders?q=${encodeURIComponent(query)}`)}>
+      <CommandList className="max-h-[min(420px,60vh)]">
+        {query && found.length === 0 && <CommandEmpty>{n.noResults}</CommandEmpty>}
+        {found.length > 0 && (
+          <CommandGroup heading={n.goTo}>
+            {found.map((d) => (
+              <CommandItem key={d.href} value={d.href} onSelect={() => go(d.href)}>
+                <ArrowRight className="text-stone" aria-hidden="true" />
+                <span className="flex-1 truncate">{d.label}</span>
+                {d.section !== d.label && <span className="text-xs text-stone">{d.section}</span>}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
+        {query && (
+          <CommandGroup heading={n.searchData}>
+            <CommandItem value="__orders" onSelect={() => go(`/dashboard/orders?q=${encodeURIComponent(query)}`)}>
               <Package aria-hidden="true" /> {n.searchIn.replace("{where}", n.orders.toLowerCase()).replace("{q}", query)}
             </CommandItem>
-          )}
-        </CommandGroup>
-        <CommandGroup heading={n.pagesGroup}>
-          {pages.map(({ href, label, icon: Icon }) => (
-            <CommandItem key={href} value={label} onSelect={() => go(href)}>
-              <Icon aria-hidden="true" /> {label}
+            <CommandItem value="__customers" onSelect={() => go(`/dashboard/customers?q=${encodeURIComponent(query)}`)}>
+              <Users aria-hidden="true" /> {n.searchIn.replace("{where}", n.customers.toLowerCase()).replace("{q}", query)}
             </CommandItem>
-          ))}
-        </CommandGroup>
+            <CommandItem
+              value="__ask"
+              onSelect={() => {
+                close();
+                ask(query);
+              }}
+            >
+              <Mascot state="idle" size={18} />
+              <span className="flex-1">{n.askAiAbout.replace("{q}", query)}</span>
+              <CornerDownLeft className="text-stone" aria-hidden="true" />
+            </CommandItem>
+          </CommandGroup>
+        )}
+        {!query && (
+          <CommandGroup heading={n.quickLinks}>
+            {ALL_ITEMS.map((item) => (
+              <CommandItem key={item.href} value={item.href} onSelect={() => go(item.href)}>
+                {item.icon === "axori" ? <Mascot state="idle" size={18} /> : <item.icon aria-hidden="true" />}
+                {item.label}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
       </CommandList>
     </CommandDialog>
   );
 }
 
-function TopBar({ store, stores, account, counts, approvals, onMenu }: Omit<Props, "children" | "pageLabels"> & { onMenu: () => void }) {
+function TopBar({ counts, approvals, onMenu, onSearch }: Pick<Props, "counts" | "approvals"> & { onMenu: () => void; onSearch: () => void }) {
+  const pathname = usePathname();
   const { setOpen, open, openThread, mascot } = useAxori();
-  const [search, setSearch] = useState(false);
-  const initials = (account.name ?? account.email).slice(0, 2).toUpperCase();
   const waiting = approvals.reduce((sum, a) => sum + a.count, 0);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k" && !typingIn(e.target)) {
-        e.preventDefault();
-        setSearch((v) => !v);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
-
-  const iconButton = "relative grid size-11 place-items-center rounded-xl border border-panel-3 bg-panel-2 text-cream transition hover:border-cream/25";
+  const here = [...ALL_ITEMS].sort((a, b) => b.href.length - a.href.length).find((item) => isActive(pathname, item));
+  const iconButton =
+    "relative grid size-8 place-items-center rounded-md border border-panel-3 text-stone transition-colors hover:border-cream/20 hover:bg-panel-2 hover:text-cream data-[state=open]:bg-panel-2 data-[state=open]:text-cream";
 
   return (
-    <header className="flex h-[72px] shrink-0 items-center gap-2 px-4 sm:gap-3 sm:px-6 lg:px-8">
-      <button type="button" onClick={onMenu} aria-label={n.menu} className="grid size-11 place-items-center rounded-xl bg-panel-2 text-cream lg:hidden">
+    <header className="flex h-14 shrink-0 items-center gap-2 border-b border-panel-3 bg-black/80 px-3 backdrop-blur sm:px-5">
+      <button type="button" onClick={onMenu} aria-label={n.menu} className="grid size-8 place-items-center rounded-md text-cream hover:bg-panel-2 lg:hidden">
         <Menu className="size-5" aria-hidden="true" />
       </button>
-      <StoreSwitcher store={store} stores={stores} />
-      <button
-        type="button"
-        onClick={() => setSearch(true)}
-        className="hidden h-11 w-full max-w-[380px] items-center gap-3 rounded-xl border border-panel-3 bg-panel-2 px-3.5 text-left text-sm text-stone transition hover:border-cream/25 md:flex"
-      >
-        <Search className="size-4.5" aria-hidden="true" />
-        <span className="flex-1">{n.searchOpen}</span>
-        <kbd className="rounded-md border border-panel-3 px-1.5 py-0.5 font-mono text-[11px]">Ctrl K</kbd>
-      </button>
-      <SearchPalette open={search} onOpenChange={setSearch} />
+      <Link href="/dashboard/ai" aria-label={t.app.axori.newChatHint} className="lg:hidden">
+        <Logo className="size-6" />
+      </Link>
+      <h1 className="truncate text-sm font-medium text-cream">{here?.label ?? n.home}</h1>
 
-      <div className="ml-auto flex items-center gap-2">
-        <button type="button" onClick={() => setSearch(true)} aria-label={n.searchOpen} className={`${iconButton} md:hidden`}>
-          <Search className="size-5" aria-hidden="true" />
+      <div className="ml-auto flex items-center gap-1.5">
+        <button type="button" onClick={onSearch} aria-label={n.searchOpen} className={cn(iconButton, "lg:hidden")}>
+          <Search className="size-4" aria-hidden="true" />
         </button>
         <button
           type="button"
           onClick={() => setOpen(!open)}
           aria-label={t.app.axori.open}
           aria-expanded={open}
-          className="hidden h-11 items-center gap-2 rounded-xl border border-lime/30 bg-[#1c2112] pr-3 pl-1.5 text-sm font-medium text-cream transition hover:border-lime/60 sm:flex"
+          className="hidden h-8 items-center gap-1.5 rounded-md border border-lime/25 bg-[#1c2112] pr-2 pl-1 text-[13px] font-medium text-cream transition-colors hover:border-lime/50 sm:flex"
         >
-          <Mascot state={mascot} size={32} />
+          <Mascot state={mascot} size={24} />
           {t.app.axori.title}
-          <kbd className="rounded-md border border-lime/20 px-1.5 py-0.5 font-mono text-[11px] text-lime/80">{t.app.axori.shortcut}</kbd>
+          <kbd className="rounded border border-lime/20 px-1 font-mono text-[10px] text-lime/80">{t.app.axori.shortcut}</kbd>
         </button>
+
+        <span className="mx-1 hidden h-5 w-px bg-panel-3 sm:block" aria-hidden="true" />
 
         <DropdownMenu>
           <DropdownMenuTrigger aria-label={`${n.approvals}: ${waiting}`} className={iconButton}>
-            <ShieldCheck className="size-5" aria-hidden="true" />
-            {waiting > 0 && (
-              <span className="absolute -top-1 -right-1 grid min-w-5 place-items-center rounded-full bg-lime px-1 text-[11px] font-bold text-black">{waiting}</span>
-            )}
+            <ShieldCheck className="size-4" aria-hidden="true" />
+            {waiting > 0 && <span className="absolute -top-1.5 -right-1.5 grid min-w-4 place-items-center rounded bg-lime px-1 text-[10px] font-bold text-black">{waiting}</span>}
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-72">
             <DropdownMenuLabel>{n.approvals}</DropdownMenuLabel>
@@ -343,9 +504,9 @@ function TopBar({ store, stores, account, counts, approvals, onMenu }: Omit<Prop
         </DropdownMenu>
 
         <DropdownMenu>
-          <DropdownMenuTrigger aria-label={n.notifications} className={`${iconButton} hidden sm:grid`}>
-            <Bell className="size-5" aria-hidden="true" />
-            {counts.inbox > 0 && <span className="absolute top-2.5 right-2.5 size-2 rounded-full bg-lime" />}
+          <DropdownMenuTrigger aria-label={n.notifications} className={iconButton}>
+            <Bell className="size-4" aria-hidden="true" />
+            {counts.inbox > 0 && <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-lime" aria-hidden="true" />}
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-72 p-3">
             <p className="text-sm text-cream">{counts.inbox > 0 ? n.waiting.replace("{count}", String(counts.inbox)) : n.caughtUp}</p>
@@ -356,26 +517,6 @@ function TopBar({ store, stores, account, counts, approvals, onMenu }: Omit<Prop
             )}
           </DropdownMenuContent>
         </DropdownMenu>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger aria-label={n.account} className="grid size-11 place-items-center rounded-full bg-panel-3 text-sm font-medium text-cream">
-            {initials}
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-64">
-            <DropdownMenuLabel className="truncate font-normal text-stone">{account.email}</DropdownMenuLabel>
-            <DropdownMenuItem asChild>
-              <Link href="/dashboard/settings">
-                <Settings aria-hidden="true" /> {n.settings}
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <form action={signOut}>
-              <button type="submit" className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-cream hover:bg-panel-3">
-                <LogOut className="size-4 text-stone" aria-hidden="true" /> {n.signOut}
-              </button>
-            </form>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
     </header>
   );
@@ -384,7 +525,7 @@ function TopBar({ store, stores, account, counts, approvals, onMenu }: Omit<Prop
 /** Phones: Home, Orders, Inbox, Marketing, More. */
 function BottomBar({ counts, onMore }: { counts: Props["counts"]; onMore: () => void }) {
   const pathname = usePathname();
-  const items: NavItem[] = [
+  const items: (NavItem & { icon: LucideIcon })[] = [
     { href: "/dashboard", label: n.home, icon: Home, exact: true },
     { href: "/dashboard/orders", label: n.orders, icon: Package, count: counts.orders },
     { href: "/dashboard/inbox", label: n.inbox, icon: Inbox, count: counts.inbox },
@@ -446,36 +587,73 @@ function FloatingAxori() {
   );
 }
 
-/** The seller workspace frame: grouped sidebar, global top bar, Axori AI panel, and the phone bottom bar. */
+/** The seller workspace frame: collapsible sidebar, bordered top bar, Axori AI panel, and the phone bottom bar. */
 export function AppShell({ pageLabels, children, ...props }: Props) {
   const [drawer, setDrawer] = useState(false);
+  const [search, setSearch] = useState(false);
+  const collapsed = useSyncExternalStore(subscribeSidebar, readSidebar, () => false);
+  const toggle = useCallback(() => {
+    try {
+      localStorage.setItem(SIDEBAR_KEY, readSidebar() ? "0" : "1");
+    } catch {}
+    window.dispatchEvent(new Event(SIDEBAR_KEY));
+  }, []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k" && !typingIn(e.target)) {
+        e.preventDefault();
+        setSearch((v) => !v);
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b" && !typingIn(e.target)) {
+        e.preventDefault();
+        toggle();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [toggle]);
+
+  const sidebarProps = { store: props.store, stores: props.stores, account: props.account, counts: props.counts, onSearch: () => setSearch(true) };
+
   return (
     <AxoriProvider pageLabels={pageLabels}>
-      <div className="flex h-dvh overflow-hidden bg-black font-display text-cream">
-        <aside className="hidden w-[248px] shrink-0 border-r border-panel-3 bg-[#0d0d0d] lg:block">
-          <Sidebar counts={props.counts} />
-        </aside>
+      <TooltipProvider delayDuration={150}>
+        <div className="flex h-dvh overflow-hidden bg-black font-display text-cream">
+          <aside className={cn("hidden shrink-0 border-r border-panel-3 bg-[#0a0a0a] transition-[width] duration-200 ease-out motion-reduce:transition-none lg:block", collapsed ? "w-[60px]" : "w-[240px]")}>
+            <Sidebar {...sidebarProps} collapsed={collapsed} onToggle={toggle} />
+          </aside>
 
-        {drawer && (
-          <div className="fixed inset-0 z-50 lg:hidden">
-            <button type="button" aria-label={n.close} onClick={() => setDrawer(false)} className="absolute inset-0 bg-black/70" />
-            <aside className="absolute inset-y-0 left-0 w-[272px] border-r border-panel-3 bg-[#0d0d0d]">
-              <button type="button" onClick={() => setDrawer(false)} aria-label={n.close} className="absolute top-5 right-3 grid size-10 place-items-center rounded-lg text-stone hover:text-cream">
-                <X className="size-5" aria-hidden="true" />
-              </button>
-              <Sidebar counts={props.counts} onNavigate={() => setDrawer(false)} />
-            </aside>
+          {drawer && (
+            <div className="fixed inset-0 z-50 lg:hidden">
+              <button type="button" aria-label={n.close} onClick={() => setDrawer(false)} className="absolute inset-0 bg-black/70" />
+              <aside className="absolute inset-y-0 left-0 w-[272px] border-r border-panel-3 bg-[#0a0a0a]">
+                <button type="button" onClick={() => setDrawer(false)} aria-label={n.close} className="absolute top-3.5 right-3 z-10 grid size-8 place-items-center rounded-md text-stone hover:text-cream">
+                  <X className="size-4" aria-hidden="true" />
+                </button>
+                <Sidebar
+                  {...sidebarProps}
+                  collapsed={false}
+                  onSearch={() => {
+                    setDrawer(false);
+                    setSearch(true);
+                  }}
+                  onNavigate={() => setDrawer(false)}
+                />
+              </aside>
+            </div>
+          )}
+
+          <div className="flex min-w-0 flex-1 flex-col">
+            <TopBar counts={props.counts} approvals={props.approvals} onMenu={() => setDrawer(true)} onSearch={() => setSearch(true)} />
+            <div className="flex min-h-0 flex-1 flex-col pb-16 lg:pb-0">{children}</div>
           </div>
-        )}
-
-        <div className="flex min-w-0 flex-1 flex-col">
-          <TopBar {...props} onMenu={() => setDrawer(true)} />
-          <div className="flex min-h-0 flex-1 flex-col pb-16 lg:pb-0">{children}</div>
         </div>
-      </div>
-      <AxoriPanel storeName={props.store.name ?? props.store.slug} greetingName={props.account.name ?? ""} />
-      <FloatingAxori />
-      <BottomBar counts={props.counts} onMore={() => setDrawer(true)} />
+        <SearchPalette open={search} onOpenChange={setSearch} />
+        <AxoriPanel storeName={props.store.name ?? props.store.slug} greetingName={props.account.name ?? ""} />
+        <FloatingAxori />
+        <BottomBar counts={props.counts} onMore={() => setDrawer(true)} />
+      </TooltipProvider>
     </AxoriProvider>
   );
 }

@@ -1,48 +1,30 @@
+import { DayBarsChart, type DayPoint } from "./day-bars-chart";
+
 /**
  * Small server-rendered charts for the numbers pages. Single series only (one hue: lime), thin marks with rounded
  * data ends on the baseline, a native tooltip per mark, recessive axis. Pages show the same numbers in a table.
  */
 
-/** Daily bars, e.g. Money in per day. `format` renders the tooltip value. */
+/** Daily bars, e.g. Money in per day. `format` renders the values; the chart itself is interactive (client). */
 export function DayBars({ data, format, label }: { data: { day: string; value: number }[]; format: (v: number) => string; label: string }) {
-  const max = Math.max(1, ...data.map((d) => d.value));
-  const w = 100 / Math.max(1, data.length);
-  const gap = data.length > 60 ? 0.15 : 0.3;
-  const first = data[0]?.day;
-  const last = data[data.length - 1]?.day;
   const short = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
+  const total = data.reduce((s, d) => s + d.value, 0);
+  const top = data.reduce<{ day: string; value: number } | null>((best, d) => (d.value > (best?.value ?? 0) ? d : best), null);
+  const points: DayPoint[] = data.map((d) => ({
+    day: d.day,
+    value: d.value,
+    date: short(d.day),
+    text: format(d.value),
+    share: total > 0 ? `${((d.value / total) * 100).toFixed(1)}%` : "—",
+  }));
   return (
-    <figure className="w-full">
-      <svg viewBox="0 0 100 40" preserveAspectRatio="none" role="img" aria-label={label} className="h-40 w-full overflow-visible">
-        <line x1="0" x2="100" y1="40" y2="40" className="stroke-panel-3" strokeWidth="0.3" vectorEffect="non-scaling-stroke" />
-        {data.map((d, i) => {
-          const h = (d.value / max) * 38;
-          return (
-            <g key={d.day} className="group">
-              <rect x={i * w} y="0" width={w} height="40" fill="transparent">
-                <title>{`${short(d.day)}: ${format(d.value)}`}</title>
-              </rect>
-              {h > 0 && (
-                <rect
-                  x={i * w + gap}
-                  y={40 - h}
-                  width={Math.max(0.2, w - gap * 2)}
-                  height={h}
-                  rx={Math.min(0.6, (w - gap * 2) / 2)}
-                  className="pointer-events-none fill-lime/80 group-hover:fill-lime"
-                />
-              )}
-            </g>
-          );
-        })}
-      </svg>
-      {first && last && (
-        <figcaption className="mt-1 flex justify-between text-xs text-stone">
-          <span>{short(first)}</span>
-          <span>{short(last)}</span>
-        </figcaption>
-      )}
-    </figure>
+    <DayBarsChart
+      points={points}
+      label={label}
+      total={format(total)}
+      average={format(data.length ? Math.round(total / data.length) : 0)}
+      peak={top ? `${short(top.day)} · ${format(top.value)}` : null}
+    />
   );
 }
 

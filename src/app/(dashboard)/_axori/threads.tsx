@@ -1,19 +1,20 @@
 "use client";
 
-import { Lightbulb, MessageSquare, Plus, Trash2 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { MoreHorizontal, Pencil, SquarePen, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { t } from "@/lib/messages";
 import type { ThreadSummary } from "@/modules/agent/threads";
-import { openThread as readThread, removeThread, startThread, threadList } from "../shell-actions";
-import type { ChatThread } from "./chat";
+import { openThread as readThread, removeThread, retitleThread, startThread, threadList } from "../shell-actions";
+import { DRAFT, handOff, type ChatThread, type Handoff } from "./chat";
 
 const a = t.app.axori;
 
 /**
- * Loads the thread list and the open thread. With no thread chosen it opens the store's latest chat,
- * or starts one, so Ctrl/⌘+J always lands somewhere to type.
+ * Loads the thread list and the open thread. With no thread chosen it shows an empty draft;
+ * the thread row is only created when the seller first sends, speaks or attaches something.
  */
-export function useThreads(wanted: string | null, onPick: (id: string) => void, enabled = true) {
+export function useThreads(wanted: string | null, onPick: (id: string | null) => void, enabled = true) {
   const [threads, setThreads] = useState<ThreadSummary[] | null>(null);
   const [thread, setThread] = useState<ChatThread | null>(null);
   const [storeId, setStoreId] = useState<string | null>(null);
@@ -33,110 +34,166 @@ export function useThreads(wanted: string | null, onPick: (id: string) => void, 
       setThreads(list);
       const store = list.find((x) => x.storeId !== null);
       if (store) setStoreId(store.storeId);
-      if (wanted) {
-        const next = await readThread(wanted);
-        if (live && next) setThread({ id: next.id, storeId: next.storeId, messages: next.messages });
-        return;
-      }
-      const latest = list.find((x) => x.storeId !== null);
-      const id = latest?.id ?? (await startThread("store")).id;
-      if (live) onPick(id);
+      if (!wanted) return;
+      const next = await readThread(wanted);
+      if (live && next) setThread({ id: next.id, storeId: next.storeId, messages: next.messages });
     })();
     return () => {
       live = false;
     };
-  }, [wanted, enabled, onPick]);
+  }, [wanted, enabled]);
 
-  const create = useCallback(
-    async (scope: "store" | "account") => {
-      const { id } = await startThread(scope);
-      await refresh();
+  /** The draft's first message: create the thread, hand the message over, then switch to it. */
+  const start = useCallback(
+    async (first: Handoff) => {
+      const { id } = await startThread("store");
+      handOff(id, first);
       onPick(id);
+      void refresh();
     },
-    [refresh, onPick],
+    [onPick, refresh],
   );
   const remove = useCallback(
     async (id: string) => {
       await removeThread(id);
-      const list = await refresh();
-      if (id === wanted) onPick(list.find((x) => x.storeId !== null)?.id ?? (await startThread("store")).id);
+      await refresh();
+      if (id === wanted) onPick(null);
     },
     [refresh, wanted, onPick],
   );
+  const rename = useCallback(
+    async (id: string, title: string) => {
+      setThreads((list) => list?.map((x) => (x.id === id ? { ...x, title } : x)) ?? list);
+      await retitleThread(id, title);
+      void refresh();
+    },
+    [refresh],
+  );
 
-  return { threads, thread: thread && thread.id === wanted ? thread : null, storeId, refresh, create, remove };
+  const draft: ChatThread = { id: DRAFT, storeId: storeId ?? "", messages: [] };
+  const current = wanted ? (thread && thread.id === wanted ? thread : null) : draft;
+  return { threads, thread: current, storeId, refresh, start, remove, rename };
+}
+
+function ThreadRow({
+  thread,
+  on,
+  onPick,
+  onRemove,
+  onRename,
+}: {
+  thread: ThreadSummary;
+  on: boolean;
+  onPick: (id: string) => void;
+  onRemove: (id: string) => void;
+  onRename: (id: string, title: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(thread.title);
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (editing) inputRef.current?.select();
+  }, [editing]);
+
+  const save = () => {
+    setEditing(false);
+    const clean = value.trim();
+    if (clean && clean !== thread.title) onRename(thread.id, clean);
+    else setValue(thread.title);
+  };
+
+  if (editing) {
+    return (
+      <li>
+        <input
+          ref={inputRef}
+          value={value}
+          aria-label={a.renameThread}
+          onChange={(e) => setValue(e.target.value)}
+          onBlur={save}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") save();
+            if (e.key === "Escape") {
+              setValue(thread.title);
+              setEditing(false);
+            }
+          }}
+          className="h-8 w-full rounded-md border border-lime/40 bg-panel-2 px-2.5 text-sm text-cream outline-none"
+        />
+      </li>
+    );
+  }
+
+  return (
+    <li className="group relative">
+      <button
+        type="button"
+        onClick={() => onPick(thread.id)}
+        aria-current={on ? "true" : undefined}
+        className={`flex h-8 w-full items-center gap-2 rounded-md px-2.5 pr-8 text-left text-[13px] transition-colors ${
+          on ? "bg-panel-3 text-cream" : "text-cream/70 hover:bg-panel-2 hover:text-cream"
+        }`}
+      >
+        <span className="min-w-0 flex-1 truncate">{thread.title}</span>
+        {thread.waiting > 0 && <span className="rounded bg-lime px-1 text-[11px] font-semibold text-black">{thread.waiting}</span>}
+      </button>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          aria-label={a.chatActions.replace("{title}", thread.title)}
+          className="absolute top-1/2 right-1 grid size-6 -translate-y-1/2 place-items-center rounded text-stone opacity-0 transition group-hover:opacity-100 hover:bg-panel-3 hover:text-cream focus-visible:opacity-100 data-[state=open]:opacity-100"
+        >
+          <MoreHorizontal className="size-4" aria-hidden="true" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-40">
+          <DropdownMenuItem onSelect={() => setEditing(true)}>
+            <Pencil aria-hidden="true" /> {a.renameThread}
+          </DropdownMenuItem>
+          <DropdownMenuItem variant="destructive" onSelect={() => onRemove(thread.id)}>
+            <Trash2 aria-hidden="true" /> {a.deleteThread}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </li>
+  );
 }
 
 export function ThreadList({
   threads,
   current,
   onPick,
-  onCreate,
+  onNew,
   onRemove,
+  onRename,
 }: {
   threads: ThreadSummary[] | null;
   current: string | null;
   onPick: (id: string) => void;
-  onCreate: (scope: "store" | "account") => void;
+  onNew: () => void;
   onRemove: (id: string) => void;
+  onRename: (id: string, title: string) => void;
 }) {
-  const groups = [
-    { label: a.storeThreads, items: (threads ?? []).filter((x) => x.storeId !== null), icon: MessageSquare },
-    { label: a.accountThreads, items: (threads ?? []).filter((x) => x.storeId === null), icon: Lightbulb },
-  ];
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4">
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={() => onCreate("store")}
-          className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-lime text-sm font-semibold text-black transition hover:bg-lime/85"
-        >
-          <Plus className="size-4" aria-hidden="true" /> {a.newChat}
-        </button>
-        <button
-          type="button"
-          onClick={() => onCreate("account")}
-          title={a.newIdea}
-          className="flex h-10 items-center justify-center gap-1.5 rounded-xl border border-panel-3 px-3 text-sm text-cream transition hover:border-cream/30"
-        >
-          <Lightbulb className="size-4" aria-hidden="true" /> {a.newIdea}
-        </button>
-      </div>
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
-        {threads === null && <p className="text-sm text-stone">{a.loading}</p>}
-        {groups.map(({ label, items, icon: Icon }) => (
-          <section key={label}>
-            <h3 className="px-1 text-xs font-medium tracking-wider text-stone uppercase">{label}</h3>
-            {items.length === 0 && threads !== null && <p className="px-1 pt-1.5 text-sm text-stone/70">{a.noThreads}</p>}
-            <ul className="mt-1.5 flex flex-col gap-0.5">
-              {items.map((thread) => (
-                <li key={thread.id} className="group relative">
-                  <button
-                    type="button"
-                    onClick={() => onPick(thread.id)}
-                    aria-current={thread.id === current ? "true" : undefined}
-                    className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-2 pr-9 text-left text-sm transition ${
-                      thread.id === current ? "bg-panel-3 text-cream" : "text-cream/75 hover:bg-panel-2 hover:text-cream"
-                    }`}
-                  >
-                    <Icon className="size-4 shrink-0 text-stone" aria-hidden="true" />
-                    <span className="min-w-0 flex-1 truncate">{thread.title}</span>
-                    {thread.waiting > 0 && <span className="rounded-full bg-lime px-1.5 text-xs font-semibold text-black">{thread.waiting}</span>}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onRemove(thread.id)}
-                    aria-label={`${a.deleteThread}: ${thread.title}`}
-                    className="absolute top-1/2 right-1.5 grid size-7 -translate-y-1/2 place-items-center rounded-md text-stone opacity-0 transition group-hover:opacity-100 hover:text-red-300 focus:opacity-100"
-                  >
-                    <Trash2 className="size-3.5" aria-hidden="true" />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
+      <button
+        type="button"
+        onClick={onNew}
+        aria-current={current === null ? "true" : undefined}
+        className="flex h-9 items-center gap-2 rounded-md px-2.5 text-sm font-medium text-cream transition-colors hover:bg-panel-2 aria-[current]:bg-panel-2"
+      >
+        <span className="grid size-6 place-items-center rounded-md bg-lime text-black">
+          <SquarePen className="size-3.5" aria-hidden="true" />
+        </span>
+        {a.newChat}
+      </button>
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <h3 className="px-2.5 pb-1.5 text-[11px] font-medium tracking-wider text-stone uppercase">{a.recents}</h3>
+        {threads === null && <p className="px-2.5 text-sm text-stone">{a.loading}</p>}
+        {threads?.length === 0 && <p className="px-2.5 text-sm text-stone/70">{a.noThreads}</p>}
+        <ul className="flex flex-col gap-px">
+          {threads?.map((thread) => (
+            <ThreadRow key={thread.id} thread={thread} on={thread.id === current} onPick={onPick} onRemove={onRemove} onRename={onRename} />
+          ))}
+        </ul>
       </div>
     </div>
   );

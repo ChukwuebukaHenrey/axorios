@@ -10,6 +10,6 @@ export { runSellerAgent } from "./seller";
 export { loadSellerSession } from "./session";
 export { getAccountSettings, listActivity, logActivity, setDisplayName, setToolPermission, toolPermissionsFor, toolUsage } from "./settings";
 export type { ActivityRow } from "./settings";
-export { createThread, deleteThread, getThread, listThreads, saveThread, waitingApprovals } from "./threads";
+export { createThread, deleteThread, getThread, listThreads, renameThread, saveThread, waitingApprovals } from "./threads";
 export type { Thread, ThreadSummary } from "./threads";
 export { voiceNotesFit } from "./voice";

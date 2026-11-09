@@ -2,6 +2,7 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   ExternalLink,
+  Tag,
   Pencil,
 } from "lucide-react";
 import Link from "next/link";
@@ -30,13 +31,14 @@ import {
 import { DayBars } from "../../charts";
 import { PageHeader } from "../../page-header";
 import { requireSeller } from "../../session";
-import { AskButton } from "../money/ask-button";
+import { Segmented } from "@/components/ui/segmented";
+import { ContextEdit } from "./context-edit";
 
 export const metadata = { title: "Store | AxoriOS" };
 
 const s = t.app.store;
 const periods = t.app.money.periods;
-const TABS = ["overview", "products", "promotions", "details"] as const;
+const TABS = ["overview", "products", "promotions", "context"] as const;
 type Tab = (typeof TABS)[number];
 const pct = (v: number) => `${v > 0 ? "+" : ""}${(v * 100).toFixed(0)}%`;
 const day = (iso: string) =>
@@ -59,15 +61,15 @@ function Panel({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-panel-3 bg-panel p-5">
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+    <section className="flex flex-col rounded-xl border border-panel-3 bg-panel">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-panel-3 px-5 py-3.5">
         <div>
-          <h2 className="text-base font-semibold text-cream">{title}</h2>
-          {note && <p className="mt-0.5 text-sm text-stone">{note}</p>}
+          <h2 className="text-sm font-semibold text-cream">{title}</h2>
+          {note && <p className="mt-0.5 text-xs text-stone">{note}</p>}
         </div>
         {action}
       </div>
-      {children}
+      <div className="flex min-h-0 flex-1 flex-col p-5">{children}</div>
     </section>
   );
 }
@@ -82,11 +84,11 @@ function Stat({
   detail?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-panel-3 bg-panel p-5">
+    <div className="rounded-xl border border-panel-3 bg-panel px-5 py-4">
       <p className="text-sm text-stone">{label}</p>
       <p
         data-stat={label}
-        className="mt-2 text-3xl font-semibold tracking-tight text-cream tabular-nums"
+        className="mt-1.5 text-2xl font-semibold tracking-tight text-cream tabular-nums"
       >
         {value}
       </p>
@@ -120,8 +122,9 @@ export default async function StorePage({
   await connection();
   const { supabase, store } = await requireSeller();
   const sp = await searchParams;
-  const tab: Tab = (TABS as readonly string[]).includes(sp.tab ?? "")
-    ? (sp.tab as Tab)
+  const wantedTab = sp.tab === "details" ? "context" : sp.tab; // old links
+  const tab: Tab = (TABS as readonly string[]).includes(wantedTab ?? "")
+    ? (wantedTab as Tab)
     : "overview";
   const period: Period = (PERIODS as readonly string[]).includes(
     sp.period ?? "",
@@ -175,7 +178,7 @@ export default async function StorePage({
     const qs = q.toString();
     return `/dashboard/store${qs ? `?${qs}` : ""}`;
   };
-  const periodless = tab === "promotions" || tab === "details";
+  const periodless = tab === "promotions" || tab === "context";
   const profile = (details.data?.business_profile ?? {}) as {
     audience?: string;
     niche?: string;
@@ -185,7 +188,7 @@ export default async function StorePage({
   const now = range.to.getTime();
 
   return (
-    <main className="flex-1 overflow-y-auto px-4 pb-10 sm:px-6 lg:px-8">
+    <main className="flex-1 overflow-y-auto px-4 pt-6 pb-10 sm:px-6 lg:px-8">
       <PageHeader title={s.title} subtitle={s.subtitle}>
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline">
@@ -201,38 +204,10 @@ export default async function StorePage({
         </div>
       </PageHeader>
 
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-        <nav
-          aria-label={s.title}
-          className="-mx-1 flex max-w-full gap-1 overflow-x-auto px-1"
-        >
-          {TABS.map((tb) => (
-            <Link
-              key={tb}
-              href={link({ tab: tb })}
-              aria-current={tab === tb ? "page" : undefined}
-              className={`shrink-0 rounded-lg px-3 py-1.5 text-sm transition ${tab === tb ? "bg-panel-3 font-medium text-cream" : "text-stone hover:text-cream"}`}
-            >
-              {s.tabs[tb]}
-            </Link>
-          ))}
-        </nav>
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-b border-panel-3 pb-4">
+        <Segmented label={s.title} value={tab} items={TABS.map((tb) => ({ value: tb, label: s.tabs[tb], href: link({ tab: tb }) }))} />
         {!periodless && (
-          <nav
-            aria-label={t.app.money.periodLabel}
-            className="flex rounded-lg border border-panel-3 p-0.5"
-          >
-            {PERIODS.map((p) => (
-              <Link
-                key={p}
-                href={link({ period: p })}
-                aria-current={period === p ? "true" : undefined}
-                className={`rounded-md px-2.5 py-1 text-xs transition ${period === p ? "bg-lime font-semibold text-ink" : "text-stone hover:text-cream"}`}
-              >
-                {periods[p]}
-              </Link>
-            ))}
-          </nav>
+          <Segmented size="sm" label={t.app.money.periodLabel} value={period} items={PERIODS.map((p) => ({ value: p, label: periods[p], href: link({ period: p }) }))} />
         )}
       </div>
 
@@ -242,110 +217,72 @@ export default async function StorePage({
             <Stat label={s.sales} value={money(sum.sales)} />
             <Stat label={s.orders} value={sum.orders.toLocaleString("en")} />
             <Stat label={s.visits} value={v.toLocaleString("en")} />
-            <Stat
-              label={s.conversion}
-              value={`${(conv * 100).toFixed(1)}%`}
-              detail={s.conversionDetail}
-            />
+            <Stat label={s.conversion} value={`${(conv * 100).toFixed(1)}%`} detail={s.conversionDetail} />
           </section>
-          <div className="grid gap-4 lg:grid-cols-5">
+          <div className="grid items-stretch gap-4 lg:grid-cols-3">
             <div className="lg:col-span-2">
-              <Panel title={s.preview}>
-                <div className="relative aspect-[3/4] overflow-hidden rounded-xl border border-panel-3 bg-ink">
-                  <iframe
-                    src={`/s/${store.slug}`}
-                    title={s.preview}
-                    loading="lazy"
-                    tabIndex={-1}
-                    className="pointer-events-none absolute top-0 left-0 h-[200%] w-[200%] origin-top-left scale-50 border-0"
-                  />
-                </div>
-              </Panel>
-            </div>
-            <div className="space-y-4 lg:col-span-3">
               <Panel title={s.visitsChart}>
-                <DayBars
-                  data={visitDays}
-                  format={(x) => x.toLocaleString("en")}
-                  label={s.visitsChartLabel}
-                />
-              </Panel>
-              <Panel title={s.top} note={s.topNote}>
-                {ranking.length === 0 ? (
-                  <p className="text-sm text-stone">{s.noSales}</p>
-                ) : (
-                  <ol className="divide-y divide-panel-3">
-                    {ranking.slice(0, 6).map((r, i) => (
-                      <li
-                        key={r.productId || r.name}
-                        className="flex items-center justify-between gap-3 py-2.5 text-sm"
-                      >
-                        <span className="flex min-w-0 items-center gap-3">
-                          <span className="w-5 shrink-0 text-right font-mono text-stone tabular-nums">
-                            {i + 1}
-                          </span>
-                          <span className="truncate text-cream">
-                            {productName.get(r.productId) ?? r.name}
-                          </span>
-                        </span>
-                        <span className="flex shrink-0 items-center gap-4">
-                          <span className="hidden text-stone sm:inline">
-                            {r.units} {s.colUnits.toLowerCase()}
-                          </span>
-                          <span
-                            data-rank-sales={r.productId}
-                            className="font-mono text-cream/90 tabular-nums"
-                          >
-                            {money(r.sales)}
-                          </span>
-                          <span className="w-12 text-right">
-                            <Trend change={r.change} />
-                          </span>
-                        </span>
-                      </li>
-                    ))}
-                  </ol>
-                )}
+                <DayBars data={visitDays} format={(x) => x.toLocaleString("en")} label={s.visitsChartLabel} />
               </Panel>
             </div>
+            <Panel
+              title={s.preview}
+              action={
+                <a href={`/s/${store.slug}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-stone transition-colors hover:text-cream">
+                  {s.viewLive} <ExternalLink className="size-3" aria-hidden="true" />
+                </a>
+              }
+            >
+              <div className="relative min-h-[240px] flex-1 overflow-hidden rounded-md border border-panel-3 bg-ink">
+                <iframe
+                  src={`/s/${store.slug}`}
+                  title={s.preview}
+                  loading="lazy"
+                  tabIndex={-1}
+                  className="pointer-events-none absolute top-0 left-0 h-[250%] w-[250%] origin-top-left scale-[0.4] border-0"
+                />
+              </div>
+            </Panel>
           </div>
+          <Panel title={s.top} note={s.topNote}>
+            {ranking.length === 0 ? (
+              <p className="text-sm text-stone">{s.noSales}</p>
+            ) : (
+              <ol className="-my-2.5 divide-y divide-panel-3">
+                {ranking.slice(0, 6).map((r, i) => (
+                  <li key={r.productId || r.name} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+                    <span className="flex min-w-0 items-center gap-3">
+                      <span className="w-5 shrink-0 text-right font-mono text-stone tabular-nums">{i + 1}</span>
+                      <span className="truncate text-cream">{productName.get(r.productId) ?? r.name}</span>
+                    </span>
+                    <span className="flex shrink-0 items-center gap-4">
+                      <span className="hidden text-stone sm:inline">
+                        {r.units} {s.colUnits.toLowerCase()}
+                      </span>
+                      <span data-rank-sales={r.productId} className="font-mono text-cream/90 tabular-nums">
+                        {money(r.sales)}
+                      </span>
+                      <span className="w-12 text-right">
+                        <Trend change={r.change} />
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </Panel>
         </div>
       )}
 
       {tab === "products" && (
         <div className="mt-5">
-          <Panel
-            title={s.tabs.products}
-            note={s.lowCount.replace(
-              "{count}",
-              String(lowStockCount(products)),
-            )}
-            action={
-              <AskButton
-                label={s.askEdit}
-                prompt="I want to change a product: "
-              />
-            }
-          >
-            <div className="-mx-5 overflow-x-auto">
+          <Panel title={s.tabs.products} note={s.lowCount.replace("{count}", String(lowStockCount(products)))}>
+            <div className="-mx-5 -my-5 overflow-x-auto">
               <table className="w-full min-w-[44rem] text-sm">
                 <thead>
-                  <tr className="border-b border-panel-3 text-xs tracking-wide text-stone uppercase">
-                    {[
-                      s.colRank,
-                      s.colProduct,
-                      s.colMode,
-                      s.colStock,
-                      s.colPrice,
-                      s.colSales,
-                      s.colUnits,
-                      s.colTrend,
-                    ].map((x, i) => (
-                      <th
-                        key={x}
-                        scope="col"
-                        className={`px-5 py-2 font-medium ${i >= 3 ? "text-right" : "text-left"}`}
-                      >
+                  <tr className="border-b border-panel-3 bg-panel-2/40 text-xs text-stone">
+                    {[s.colRank, s.colProduct, s.colMode, s.colStock, s.colPrice, s.colSales, s.colUnits, s.colTrend].map((x, i) => (
+                      <th key={x} scope="col" className={`px-5 py-2.5 font-medium ${i >= 3 ? "text-right" : "text-left"}`}>
                         {x}
                       </th>
                     ))}
@@ -353,72 +290,33 @@ export default async function StorePage({
                 </thead>
                 <tbody className="divide-y divide-panel-3">
                   {[...products]
-                    .sort(
-                      (a, b) =>
-                        (rankOf.get(a.id)?.rank ?? 999) -
-                        (rankOf.get(b.id)?.rank ?? 999),
-                    )
+                    .sort((a, b) => (rankOf.get(a.id)?.rank ?? 999) - (rankOf.get(b.id)?.rank ?? 999))
                     .map((p) => {
                       const r = rankOf.get(p.id);
                       const low = isLowStock(p);
                       return (
-                        <tr
-                          key={p.id}
-                          data-product={p.id}
-                          data-low={low ? "1" : undefined}
-                          className={p.active ? "" : "opacity-60"}
-                        >
-                          <td className="px-5 py-2.5 font-mono text-stone tabular-nums">
-                            {r?.rank ?? "—"}
-                          </td>
+                        <tr key={p.id} data-product={p.id} data-low={low ? "1" : undefined} className={`transition-colors hover:bg-panel-2/50 ${p.active ? "" : "opacity-60"}`}>
+                          <td className="px-5 py-2.5 font-mono text-stone tabular-nums">{r?.rank ?? "—"}</td>
                           <td className="px-5 py-2.5 text-cream">
                             {p.name}
-                            {!p.active && (
-                              <span className="ml-2 rounded bg-panel-3 px-1.5 py-0.5 text-xs text-stone">
-                                {s.inactive}
-                              </span>
-                            )}
+                            {!p.active && <span className="ml-2 rounded bg-panel-3 px-1.5 py-0.5 text-xs text-stone">{s.inactive}</span>}
                           </td>
-                          <td className="px-5 py-2.5 text-cream/80">
-                            {s.modes[
-                              p.inventory_mode as keyof typeof s.modes
-                            ] ?? p.inventory_mode}
-                          </td>
+                          <td className="px-5 py-2.5 text-cream/80">{s.modes[p.inventory_mode as keyof typeof s.modes] ?? p.inventory_mode}</td>
                           <td className="px-5 py-2.5 text-right font-mono tabular-nums">
                             {p.inventory_mode === "tracked" ? (
-                              <span
-                                className={
-                                  low ? "text-amber-200" : "text-cream/90"
-                                }
-                              >
+                              <span className={low ? "text-amber-200" : "text-cream/90"}>
                                 {p.stock}
-                                {low && (
-                                  <span className="ml-2 rounded bg-amber-400/15 px-1.5 py-0.5 font-sans text-xs">
-                                    {s.low}
-                                  </span>
-                                )}
+                                {low && <span className="ml-2 rounded bg-amber-400/15 px-1.5 py-0.5 font-sans text-xs">{s.low}</span>}
                               </span>
-                            ) : p.inventory_mode === "made_to_order" &&
-                              p.daily_capacity ? (
-                              <span className="text-cream/80">
-                                {s.perDay.replace(
-                                  "{count}",
-                                  String(p.daily_capacity),
-                                )}
-                              </span>
+                            ) : p.inventory_mode === "made_to_order" && p.daily_capacity ? (
+                              <span className="text-cream/80">{s.perDay.replace("{count}", String(p.daily_capacity))}</span>
                             ) : (
                               <span className="text-stone">{s.notTracked}</span>
                             )}
                           </td>
-                          <td className="px-5 py-2.5 text-right font-mono text-cream/90 tabular-nums">
-                            {formatMinor(p.price_minor, p.currency)}
-                          </td>
-                          <td className="px-5 py-2.5 text-right font-mono text-cream/90 tabular-nums">
-                            {r ? money(r.sales) : "—"}
-                          </td>
-                          <td className="px-5 py-2.5 text-right font-mono text-cream/90 tabular-nums">
-                            {r?.units ?? 0}
-                          </td>
+                          <td className="px-5 py-2.5 text-right font-mono text-cream/90 tabular-nums">{formatMinor(p.price_minor, p.currency)}</td>
+                          <td className="px-5 py-2.5 text-right font-mono text-cream/90 tabular-nums">{r ? money(r.sales) : "—"}</td>
+                          <td className="px-5 py-2.5 text-right font-mono text-cream/90 tabular-nums">{r?.units ?? 0}</td>
                           <td className="px-5 py-2.5 text-right">
                             <Trend change={r?.change ?? null} />
                           </td>
@@ -434,114 +332,137 @@ export default async function StorePage({
 
       {tab === "promotions" && (
         <div className="mt-5">
-          <Panel
-            title={s.tabs.promotions}
-            action={
-              <AskButton label={s.askEdit} prompt="Set up a promotion: " />
-            }
-          >
-            {(promos.data ?? []).length === 0 ? (
-              <p className="text-sm text-stone">{s.noPromos}</p>
-            ) : (
-              <ul className="divide-y divide-panel-3">
+          {(promos.data ?? []).length === 0 ? (
+            <div className="flex flex-col items-center rounded-xl border border-dashed border-panel-3 px-6 py-14 text-center">
+              <span className="grid size-10 place-items-center rounded-lg border border-panel-3 bg-panel text-stone">
+                <Tag className="size-4" aria-hidden="true" />
+              </span>
+              <h2 className="mt-4 text-sm font-semibold text-cream">{s.noPromos}</h2>
+              <p className="mt-1 max-w-sm text-sm text-stone">{s.noPromosBody}</p>
+            </div>
+          ) : (
+            <>
+              <p className="mb-3 text-xs text-stone">{s.promoCodes.replace("{count}", String((promos.data ?? []).length))}</p>
+              <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {(promos.data ?? []).map((p) => {
-                  const state =
-                    Date.parse(p.ends_at) < now
-                      ? s.promoEnded
-                      : Date.parse(p.starts_at) > now
-                        ? s.promoUpcoming
-                        : s.promoActive;
+                  const state = Date.parse(p.ends_at) < now ? "ended" : Date.parse(p.starts_at) > now ? "upcoming" : "active";
+                  const stateLabel = state === "ended" ? s.promoEnded : state === "upcoming" ? s.promoUpcoming : s.promoActive;
                   return (
-                    <li
-                      key={p.id}
-                      className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
-                    >
-                      <span className="flex items-center gap-3">
-                        <span className="rounded-md bg-panel-3 px-2 py-0.5 font-mono text-cream">
-                          {p.code}
-                        </span>
-                        <span className="text-cream">
-                          {p.kind === "percent"
-                            ? `${p.value}%`
-                            : money(p.value)}
-                        </span>
-                        <span className="text-stone">
-                          {p.product_ids.length
-                            ? p.product_ids
-                                .map((id) => productName.get(id) ?? "?")
-                                .join(", ")
-                            : s.promoAll}
-                        </span>
-                      </span>
-                      <span className="flex items-center gap-3 text-stone">
-                        <span>
-                          {day(p.starts_at)} – {day(p.ends_at)}
-                        </span>
+                    <li key={p.id} className={`rounded-xl border border-panel-3 bg-panel ${state === "ended" ? "opacity-70" : ""}`}>
+                      <div className="flex items-center justify-between gap-3 border-b border-panel-3 px-4 py-3">
+                        <span className="rounded-md border border-dashed border-cream/25 px-2 py-0.5 font-mono text-sm tracking-wide text-cream">{p.code}</span>
                         <span
-                          className={`rounded-full px-2 py-0.5 text-xs ${state === s.promoActive ? "bg-lime/15 text-lime" : "bg-panel-3 text-cream/80"}`}
+                          className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs ${state === "active" ? "bg-lime/10 text-lime" : state === "upcoming" ? "bg-sky-400/10 text-sky-300" : "bg-panel-3 text-stone"}`}
                         >
-                          {state}
+                          <span className={`size-1.5 rounded-full ${state === "active" ? "bg-lime" : state === "upcoming" ? "bg-sky-300" : "bg-stone"}`} aria-hidden="true" />
+                          {stateLabel}
                         </span>
-                      </span>
+                      </div>
+                      <dl className="grid gap-2.5 px-4 py-3 text-sm">
+                        <div className="flex justify-between gap-3">
+                          <dt className="text-stone">{s.promoValue}</dt>
+                          <dd className="font-mono text-cream tabular-nums">{p.kind === "percent" ? `${p.value}%` : money(p.value)}</dd>
+                        </div>
+                        <div className="flex justify-between gap-3">
+                          <dt className="shrink-0 text-stone">{s.promoScope}</dt>
+                          <dd className="truncate text-right text-cream/90">{p.product_ids.length ? p.product_ids.map((id) => productName.get(id) ?? "?").join(", ") : s.promoAll}</dd>
+                        </div>
+                        <div className="flex justify-between gap-3">
+                          <dt className="text-stone">{s.promoDates}</dt>
+                          <dd className="text-cream/90">
+                            {day(p.starts_at)} – {day(p.ends_at)}
+                          </dd>
+                        </div>
+                      </dl>
                     </li>
                   );
                 })}
               </ul>
-            )}
-          </Panel>
+            </>
+          )}
         </div>
       )}
 
-      {tab === "details" && (
-        <div className="mt-5">
-          <Panel
-            title={s.tabs.details}
-            note={s.detailsNote}
-            action={
-              <AskButton label={s.askEdit} prompt="Update my store details: " />
-            }
-          >
-            <dl className="grid gap-x-8 gap-y-4 text-sm sm:grid-cols-2">
-              {(
-                [
-                  [s.d.name, kit?.name ?? "—"],
-                  [s.d.slug, `/s/${details.data?.slug ?? store.slug}`],
-                  [s.d.currency, details.data?.currency ?? cur],
-                  [s.d.settlement, details.data?.settlement_currency ?? "—"],
-                  [s.d.language, details.data?.store_language ?? "—"],
-                  [s.d.country, details.data?.country ?? "—"],
-                  [
-                    s.d.vat,
-                    details.data?.vat_registered
-                      ? (details.data.prices_include_tax
-                          ? s.d.vatOn
-                          : s.d.vatOnExcl
-                        ).replace(
-                          "{rate}",
-                          `${(details.data.vat_rate_bp / 100).toFixed(1)}%`,
-                        )
-                      : s.d.vatOff,
+      {tab === "context" && (
+        <div className="mt-5 max-w-4xl">
+          <p className="mb-4 text-sm text-stone">{s.detailsNote}</p>
+          <div className="divide-y divide-panel-3 overflow-hidden rounded-xl border border-panel-3 bg-panel">
+            {(
+              [
+                {
+                  title: s.ctxBusiness,
+                  note: s.ctxBusinessNote,
+                  prompt: "Update my store's business context (name, niche or audience): ",
+                  rows: [
+                    [s.d.name, kit?.name],
+                    [s.d.slug, `/s/${details.data?.slug ?? store.slug}`],
+                    [s.d.niche, profile.niche],
+                    [s.d.audience, profile.audience],
                   ],
-                  [s.d.niche, profile.niche ?? "—"],
-                  [s.d.audience, profile.audience ?? "—"],
-                  [s.d.delivery, profile.deliveryZones?.join(", ") || "—"],
-                  [
-                    s.d.policies,
-                    profile.policies
-                      ? Object.values(profile.policies).join(" ")
-                      : "—",
+                },
+                {
+                  title: s.ctxSelling,
+                  note: s.ctxSellingNote,
+                  prompt: "Update my store's currency, language or tax settings: ",
+                  rows: [
+                    [s.d.currency, details.data?.currency ?? cur],
+                    [s.d.settlement, details.data?.settlement_currency],
+                    [s.d.language, details.data?.store_language],
+                    [s.d.country, details.data?.country],
+                    [
+                      s.d.vat,
+                      details.data?.vat_registered
+                        ? (details.data.prices_include_tax ? s.d.vatOn : s.d.vatOnExcl).replace("{rate}", `${(details.data.vat_rate_bp / 100).toFixed(1)}%`)
+                        : s.d.vatOff,
+                    ],
                   ],
-                ] as [string, string][]
-              ).map(([k, val]) => (
-                <div key={k}>
-                  <dt className="text-xs tracking-wide text-stone uppercase">
-                    {k}
-                  </dt>
-                  <dd className="mt-1 text-cream">{val}</dd>
+                },
+                {
+                  title: s.ctxDelivery,
+                  note: s.ctxDeliveryNote,
+                  prompt: "Update my delivery areas or store policies: ",
+                  rows: [
+                    [s.d.delivery, profile.deliveryZones?.length ? profile.deliveryZones : undefined],
+                    ...Object.entries(profile.policies ?? {}).map(([k, val]) => [`${s.d.policies} · ${k.replace(/_/g, " ")}`, val]),
+                  ],
+                },
+              ] as { title: string; note: string; prompt: string; rows: [string, string | string[] | null | undefined][] }[]
+            ).map((group) => (
+              <section key={group.title} className="grid gap-4 p-5 md:grid-cols-[220px_1fr]">
+                <div className="flex items-start justify-between gap-3 md:block">
+                  <div>
+                    <h2 className="text-sm font-semibold text-cream">{group.title}</h2>
+                    <p className="mt-1 text-xs leading-relaxed text-stone">{group.note}</p>
+                  </div>
+                  <div className="md:mt-3">
+                    <ContextEdit label={s.ctxEdit} prompt={group.prompt} />
+                  </div>
                 </div>
-              ))}
-            </dl>
-          </Panel>
+                <dl className="divide-y divide-panel-3/70 rounded-lg border border-panel-3 bg-black/20">
+                  {group.rows.map(([k, val]) => (
+                    <div key={k} className="grid gap-1 px-4 py-2.5 text-sm sm:grid-cols-[160px_1fr] sm:gap-4">
+                      <dt className="text-stone first-letter:uppercase">{k}</dt>
+                      <dd className="min-w-0 text-cream [overflow-wrap:anywhere]">
+                        {Array.isArray(val) ? (
+                          <span className="flex flex-wrap gap-1.5">
+                            {val.map((z) => (
+                              <span key={z} className="rounded-md bg-panel-3 px-2 py-0.5 text-xs text-cream/90">
+                                {z}
+                              </span>
+                            ))}
+                          </span>
+                        ) : val ? (
+                          val
+                        ) : (
+                          <span className="text-stone/70 italic">{s.ctxEmpty}</span>
+                        )}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </section>
+            ))}
+          </div>
         </div>
       )}
     </main>

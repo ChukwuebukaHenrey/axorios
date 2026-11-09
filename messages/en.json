@@ -1102,6 +1102,13 @@
     "paymentLink": "Pay here: {url}"
   },
   "app": {
+    "charts": {
+      "total": "Total",
+      "average": "Daily average",
+      "peak": "Best day",
+      "share": "Share of period",
+      "keys": "Use the left and right arrow keys to read each day."
+    },
     "nav": {
       "workspace": "Workspace",
       "operations": "Operations",
@@ -1144,13 +1151,18 @@
       "approvalsWaiting": "{count} waiting in {thread}",
       "more": "More",
       "searchOpen": "Search or ask Axori AI",
-      "searchPlaceholder": "Search orders, products, customers, posts…",
+      "searchPlaceholder": "Find a page or view, or search orders and customers…",
       "askAi": "Ask Axori AI",
       "askAiAbout": "Ask Axori AI: “{q}”",
       "goTo": "Go to",
       "searchIn": "Search {where} for “{q}”",
       "noResults": "Nothing found.",
-      "pagesGroup": "Pages"
+      "pagesGroup": "Pages",
+      "quickLinks": "Quick links",
+      "searchData": "Search your data",
+      "find": "Find…",
+      "collapse": "Collapse sidebar (Ctrl B)",
+      "expand": "Expand sidebar (Ctrl B)"
     },
     "build": {
       "title": "Build your storefront",
@@ -1390,8 +1402,13 @@
       "accountThreads": "Ideas (account)",
       "noThreads": "No chats yet.",
       "deleteThread": "Delete chat",
+      "renameThread": "Rename",
+      "chatActions": "Chat actions for {title}",
+      "recents": "Recents",
+      "newChatHint": "Start a new chat",
       "loading": "Opening chat…",
       "greeting": "Hi {name}, what shall we work on?",
+      "greetingAnon": "What shall we work on?",
       "greetingBody": "Ask in your own words, by text or voice. Anything that changes your store waits for your approval.",
       "accountGreeting": "Got an idea for a new business?",
       "accountGreetingBody": "Think it through here before any store exists. When it's clear, I'll offer to create the store.",
@@ -1711,7 +1728,7 @@
         "overview": "Overview",
         "products": "Products & inventory",
         "promotions": "Promotions",
-        "details": "Details"
+        "context": "Context"
       },
       "edit": "Edit storefront",
       "viewLive": "View live store",
@@ -1754,8 +1771,21 @@
       "promoEnded": "Ended",
       "promoUpcoming": "Upcoming",
       "promoAll": "All products",
-      "noPromos": "No promotions yet. Ask Axori AI to set one up.",
-      "detailsNote": "This is the context Axori AI uses. Change it by asking Axori AI.",
+      "noPromos": "No promotions yet",
+      "noPromosBody": "Discount codes show here with their dates and whether they are running. Ask Axori AI (Ctrl J) to create one.",
+      "promoCodes": "{count} codes",
+      "promoValue": "Discount",
+      "promoScope": "Applies to",
+      "promoDates": "Runs",
+      "detailsNote": "What Axori AI knows about this store. It uses this to answer customers, write posts and build your storefront.",
+      "ctxEdit": "Edit",
+      "ctxBusiness": "Business",
+      "ctxBusinessNote": "Who you are and who you sell to.",
+      "ctxSelling": "Selling and money",
+      "ctxSellingNote": "Prices, payouts, language and tax.",
+      "ctxDelivery": "Delivery and policies",
+      "ctxDeliveryNote": "Where you deliver and the rules customers are told.",
+      "ctxEmpty": "Not set yet",
       "d": {
         "name": "Name",
         "slug": "Web address",

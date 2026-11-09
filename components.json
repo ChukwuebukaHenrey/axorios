@@ -21,6 +21,7 @@
   "registries": {
     "@aceternity": "https://ui.aceternity.com/registry/{name}.json",
     "@magicui": "https://magicui.design/r/{name}.json",
-    "@originui": "https://originui.com/r/{name}.json"
+    "@originui": "https://originui.com/r/{name}.json",
+    "@smoothui": "https://smoothui.dev/r/radix-nova/{name}.json"
   }
 }

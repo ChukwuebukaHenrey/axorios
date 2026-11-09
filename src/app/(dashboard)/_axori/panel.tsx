@@ -20,9 +20,9 @@ export function AxoriPanel({ storeName, greetingName }: { storeName: string; gre
   const router = useRouter();
   const onPage = pathname.startsWith("/dashboard/ai");
   const show = open && !onPage;
-  const { threads, thread, refresh, create, remove } = useThreads(threadId, openThread, show);
+  const { threads, thread, refresh, start, remove, rename } = useThreads(threadId, openThread, show);
   const [menu, setMenu] = useState(false);
-  const title = threads?.find((x) => x.id === threadId)?.title ?? a.title;
+  const title = threads?.find((x) => x.id === threadId)?.title ?? a.newChat;
 
   return (
     <AnimatePresence>
@@ -55,11 +55,12 @@ export function AxoriPanel({ storeName, greetingName }: { storeName: string; gre
                     openThread(id);
                     setMenu(false);
                   }}
-                  onCreate={(scope) => {
-                    void create(scope);
+                  onNew={() => {
+                    openThread(null);
                     setMenu(false);
                   }}
                   onRemove={(id) => void remove(id)}
+                  onRename={(id, next) => void rename(id, next)}
                 />
               </DropdownMenuContent>
             </DropdownMenu>
@@ -86,7 +87,7 @@ export function AxoriPanel({ storeName, greetingName }: { storeName: string; gre
             </button>
           </header>
           {thread ? (
-            <AxoriChat key={thread.id} thread={thread} storeName={storeName} greetingName={greetingName} variant="panel" onTitle={refresh} />
+            <AxoriChat key={thread.id} thread={thread} storeName={storeName} greetingName={greetingName} variant="panel" onTitle={refresh} onDraft={(first) => void start(first)} />
           ) : (
             <div className="grid flex-1 place-items-center">
               <Mascot state="thinking" size={72} />

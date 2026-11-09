@@ -1,5 +1,6 @@
 "use server";
 
+import { storeChoice } from "@/lib/store-cookie";
 import { z } from "zod";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { getOrCreateStore } from "@/modules/brand";
@@ -21,7 +22,7 @@ async function sessionStoreId(): Promise<string> {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Not signed in");
-  return (await getOrCreateStore(supabase, user.id)).id;
+  return (await getOrCreateStore(supabase, user.id, await storeChoice())).id;
 }
 
 export async function shopifySyncResult(): Promise<SyncResult | null> {

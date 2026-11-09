@@ -1,3 +1,4 @@
+import { storeChoice } from "@/lib/store-cookie";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { getOrCreateStore } from "@/modules/brand";
 import { listPosts } from "@/modules/creative";
@@ -14,7 +15,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
   const { id } = await params;
   const only = new URL(req.url).searchParams.get("post");
-  const store = await getOrCreateStore(supabase, user.id);
+  const store = await getOrCreateStore(supabase, user.id, await storeChoice());
   const posts = (await listPosts(supabase, store.id)).filter(
     (p) => p.campaign_id === id && p.status !== "generating" && (!only || p.id === only),
   );

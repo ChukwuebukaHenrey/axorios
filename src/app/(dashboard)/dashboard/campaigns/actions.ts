@@ -1,5 +1,6 @@
 "use server";
 
+import { storeChoice } from "@/lib/store-cookie";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createServerSupabase } from "@/lib/supabase/server";
@@ -14,7 +15,7 @@ async function sessionStore() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Not signed in");
-  return { supabase, store: await getOrCreateStore(supabase, user.id) };
+  return { supabase, store: await getOrCreateStore(supabase, user.id, await storeChoice()) };
 }
 
 const PostId = z.uuid();

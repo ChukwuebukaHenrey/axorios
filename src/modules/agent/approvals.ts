@@ -16,6 +16,7 @@ export const APPROVAL_TOOLS = [
   "apply_template_to_stores",
   "zapier_action",
   "log_expense",
+  "create_store",
 ] as const;
 
 export type ApprovalTool = (typeof APPROVAL_TOOLS)[number];

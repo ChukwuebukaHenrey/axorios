@@ -207,3 +207,16 @@ export async function settleOrder(order: Order): Promise<Order> {
   }
   return markPaid(order, result);
 }
+
+/** Paid orders not yet fulfilled, excluding test orders. A count only: the top bar and Home show it. */
+export async function countToFulfil(storeId: string): Promise<number> {
+  const { count, error } = await serviceRoleClient()
+    .from("orders")
+    .select("id", { count: "exact", head: true })
+    .eq("store_id", storeId)
+    .eq("status", "paid")
+    .is("fulfilled_at", null)
+    .neq("source", "test");
+  if (error) throw new Error(`Order count failed: ${error.code}`);
+  return count ?? 0;
+}

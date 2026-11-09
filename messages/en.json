@@ -1119,7 +1119,33 @@
       "draft": "Draft",
       "unnamed": "Your store",
       "menu": "Open menu",
-      "close": "Close menu"
+      "close": "Close menu",
+      "home": "Home",
+      "ai": "Axori AI",
+      "store": "Store",
+      "customers": "Customers",
+      "marketing": "Marketing",
+      "money": "Money",
+      "analytics": "Analytics",
+      "design": "Design",
+      "settings": "Settings",
+      "groupBusiness": "Business",
+      "groupGrow": "Grow",
+      "groupWorkspace": "Workspace",
+      "newBusiness": "New business",
+      "stores": "Your stores",
+      "approvals": "Approvals",
+      "approvalsEmpty": "Nothing is waiting for your approval.",
+      "approvalsWaiting": "{count} waiting in {thread}",
+      "more": "More",
+      "searchOpen": "Search or ask Axori AI",
+      "searchPlaceholder": "Search orders, products, customers, posts…",
+      "askAi": "Ask Axori AI",
+      "askAiAbout": "Ask Axori AI: “{q}”",
+      "goTo": "Go to",
+      "searchIn": "Search {where} for “{q}”",
+      "noResults": "Nothing found.",
+      "pagesGroup": "Pages"
     },
     "build": {
       "title": "Build your storefront",
@@ -1280,6 +1306,102 @@
       "whatsappBody": "Built and switched off until it's tested end to end with a real account.",
       "needsPublish": "Publish your store to get a chat link."
     },
-    "campaignsSubtitle": "On-brand posts the agent made for your store. Edit captions, schedule them or download the pack."
+    "campaignsSubtitle": "On-brand posts the agent made for your store. Edit captions, schedule them or download the pack.",
+    "axori": {
+      "title": "Axori AI",
+      "open": "Open Axori AI",
+      "shortcut": "Ctrl J",
+      "close": "Close Axori AI",
+      "expand": "Open full page",
+      "collapse": "Open as side panel",
+      "newChat": "New chat",
+      "newIdea": "New idea",
+      "threads": "Chats",
+      "storeThreads": "This store",
+      "accountThreads": "Ideas (account)",
+      "noThreads": "No chats yet.",
+      "deleteThread": "Delete chat",
+      "loading": "Opening chat…",
+      "greeting": "Hi {name}, what shall we work on?",
+      "greetingBody": "Ask in your own words, by text or voice. Anything that changes your store waits for your approval.",
+      "accountGreeting": "Got an idea for a new business?",
+      "accountGreetingBody": "Think it through here before any store exists. When it's clear, I'll offer to create the store.",
+      "suggestions": [
+        {
+          "title": "How is the shop doing?",
+          "body": "Sales, best sellers and what changed this month.",
+          "prompt": "How is my shop doing this month compared with last month?"
+        },
+        {
+          "title": "Plan a weekend promo",
+          "body": "Posts and a campaign for your best product.",
+          "prompt": "Plan a weekend promo for my best-selling cake."
+        },
+        {
+          "title": "Change my storefront",
+          "body": "Colours, photos, sections and wording.",
+          "prompt": "Make my storefront feel warmer and more festive."
+        }
+      ],
+      "accountSuggestions": [
+        {
+          "title": "Test a new idea",
+          "body": "Who buys, what to sell first, rough prices.",
+          "prompt": "I want to start selling small chops for parties in Abuja. Help me think it through."
+        },
+        {
+          "title": "Second business",
+          "body": "Something next to what you already run.",
+          "prompt": "What could I sell next to my cake shop without much extra work?"
+        }
+      ],
+      "placeholder": "Ask Axori AI anything…",
+      "send": "Send",
+      "micStart": "Record a voice note",
+      "micStop": "Stop and send",
+      "holdToTalk": "Tap to type, hold to talk",
+      "listening": "Listening… release to send ({seconds} s)",
+      "sees": "Axori AI can see",
+      "removeChip": "Remove {label}",
+      "accountScope": "Your account (no store)",
+      "disclaimer": "Axori AI can make mistakes. Nothing changes until you approve a card.",
+      "error": "Something went wrong. Try again.",
+      "dailyLimit": "Today's Axori AI limit for this store is used up. It resets at midnight UTC.",
+      "pages": {
+        "home": "Home",
+        "ai": "Axori AI",
+        "store": "Store",
+        "orders": "Orders",
+        "customers": "Customers",
+        "inbox": "Inbox",
+        "marketing": "Marketing",
+        "money": "Money",
+        "analytics": "Analytics",
+        "design": "Design",
+        "settings": "Settings"
+      },
+      "approval": {
+        "title": "Needs your approval",
+        "approve": "Approve",
+        "cancel": "Cancel",
+        "approved": "Approved ✓",
+        "cancelled": "Cancelled. Nothing was changed.",
+        "running": "Working on it…",
+        "failed": "That didn't work: {error}",
+        "tools": {
+          "create_store": "Create a new store",
+          "refund_order": "Refund an order",
+          "send_campaign": "Send a campaign",
+          "create_payment_link": "Send a payment link",
+          "import_products": "Import products",
+          "apply_template_to_stores": "Apply a template",
+          "zapier_action": "Run a Zapier action",
+          "log_expense": "Log an expense"
+        }
+      },
+      "storeCreated": "New store created.",
+      "switchToStore": "Switch to it",
+      "choose": "Pick one:"
+    }
   }
 }

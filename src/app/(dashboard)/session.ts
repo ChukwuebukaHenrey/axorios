@@ -1,3 +1,4 @@
+import { storeChoice } from "@/lib/store-cookie";
 import "server-only";
 import { redirect } from "next/navigation";
 import { cache } from "react";
@@ -11,6 +12,6 @@ export const requireSeller = cache(async () => {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/sign-in");
-  const store = await getOrCreateStore(supabase, user.id);
+  const store = await getOrCreateStore(supabase, user.id, await storeChoice());
   return { supabase, user, store };
 });

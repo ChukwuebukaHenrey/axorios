@@ -1,235 +1,481 @@
 "use client";
 
-import { Bell, ChevronDown, ExternalLink, Eye, Inbox, LogOut, Megaphone, Menu, Package, Plug, Search, Sparkles, Store, X } from "lucide-react";
+import {
+  BarChart3,
+  Bell,
+  Check,
+  ChevronsUpDown,
+  ExternalLink,
+  Eye,
+  Home,
+  Inbox,
+  LogOut,
+  Megaphone,
+  Menu,
+  Package,
+  Palette,
+  Plus,
+  Search,
+  Settings,
+  ShieldCheck,
+  Sparkles,
+  Store,
+  Users,
+  Wallet,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { Logo } from "@/components/logo";
+import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { t } from "@/lib/messages";
-import { signOut } from "./shell-actions";
+import type { PageKey } from "@/modules/agent/pages";
+import { Mascot } from "./_axori/mascot";
+import { AxoriPanel } from "./_axori/panel";
+import { AxoriProvider, typingIn, useAxori } from "./_axori/provider";
+import { newBusiness, signOut, switchStore } from "./shell-actions";
 
 const n = t.app.nav;
 
+type StoreInfo = { id: string; name: string | null; slug: string; live: boolean; draftUrl: string | null };
 type Props = {
-  store: { name: string | null; slug: string; live: boolean; draftUrl: string | null };
+  store: StoreInfo;
+  stores: { id: string; name: string; live: boolean; currency: string }[];
   account: { email: string; name: string | null };
-  counts: { orders: number; inbox: number; campaigns: number };
+  counts: { orders: number; inbox: number };
+  approvals: { threadId: string; title: string; count: number }[];
+  pageLabels: Record<PageKey, string>;
   children: ReactNode;
 };
 
-function useClickOutside(open: boolean, close: () => void) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && close();
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open, close]);
-  return ref;
+type NavItem = { href: string; label: string; icon: LucideIcon; count?: number; soon?: boolean; exact?: boolean };
+
+function navGroups(counts: Props["counts"]): { label: string | null; items: NavItem[] }[] {
+  return [
+    {
+      label: null,
+      items: [
+        { href: "/dashboard", label: n.home, icon: Home, exact: true },
+        { href: "/dashboard/ai", label: n.ai, icon: Sparkles },
+      ],
+    },
+    {
+      label: n.groupBusiness,
+      items: [
+        { href: "/build", label: n.store, icon: Store },
+        { href: "/dashboard/orders", label: n.orders, icon: Package, count: counts.orders },
+        { href: "/dashboard/customers", label: n.customers, icon: Users, soon: true },
+        { href: "/dashboard/inbox", label: n.inbox, icon: Inbox, count: counts.inbox },
+      ],
+    },
+    {
+      label: n.groupGrow,
+      items: [
+        { href: "/dashboard/campaigns", label: n.marketing, icon: Megaphone },
+        { href: "/dashboard/money", label: n.money, icon: Wallet, soon: true },
+        { href: "/dashboard/analytics", label: n.analytics, icon: BarChart3, soon: true },
+      ],
+    },
+    { label: n.groupWorkspace, items: [{ href: "/dashboard/design", label: n.design, icon: Palette, soon: true }] },
+  ];
 }
 
-function Sidebar({ store, counts, onNavigate }: Pick<Props, "store" | "counts"> & { onNavigate?: () => void }) {
+function isActive(pathname: string, item: Pick<NavItem, "href" | "exact">) {
+  return item.exact ? pathname === item.href : pathname.startsWith(item.href);
+}
+
+function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }) {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
-  const ref = useClickOutside(open, () => setOpen(false));
-  const items = [
-    { href: "/build", label: n.build, icon: Sparkles, count: 0 },
-    { href: "/dashboard", label: n.orders, icon: Package, count: counts.orders },
-    { href: "/dashboard/inbox", label: n.inbox, icon: Inbox, count: counts.inbox },
-    { href: "/dashboard/campaigns", label: n.campaigns, icon: Megaphone, count: counts.campaigns },
-    { href: "/dashboard/integrations", label: n.integrations, icon: Plug, count: 0 },
-  ];
-  const active = (href: string) => (href === "/dashboard" ? pathname === href : pathname.startsWith(href));
-
+  const on = isActive(pathname, item);
+  const Icon = item.icon;
+  const base = "flex h-10 items-center gap-3 rounded-xl px-3 text-[15px] transition";
+  if (item.soon) {
+    return (
+      <span className={`${base} cursor-default text-cream/35`} aria-disabled="true">
+        <Icon className="size-[18px] shrink-0" aria-hidden="true" />
+        <span className="flex-1">{item.label}</span>
+        <span className="rounded-full border border-panel-3 px-1.5 text-[10px] tracking-wide uppercase">soon</span>
+      </span>
+    );
+  }
   return (
-    <div className="flex h-full flex-col px-5 py-7">
-      <Link href="/" className="flex items-center gap-3 px-1 text-cream" onClick={onNavigate}>
-        <Logo className="size-10" />
-        <span className="text-[26px] font-medium tracking-tight">{t.marketing.brand}</span>
+    <Link
+      href={item.href}
+      onClick={onNavigate}
+      aria-current={on ? "page" : undefined}
+      className={`${base} ${on ? "border border-lime/25 bg-[#2b3118] text-cream" : "border border-transparent text-cream/75 hover:bg-panel-2 hover:text-cream"}`}
+    >
+      <Icon className={`size-[18px] shrink-0 ${on ? "text-lime" : ""}`} aria-hidden="true" />
+      <span className="flex-1">{item.label}</span>
+      {item.count ? <span className="min-w-6 rounded-full bg-panel-3 px-1.5 py-0.5 text-center text-xs text-cream">{item.count}</span> : null}
+    </Link>
+  );
+}
+
+function Sidebar({ counts, onNavigate }: { counts: Props["counts"]; onNavigate?: () => void }) {
+  return (
+    <div className="flex h-full flex-col px-4 py-5">
+      <Link href="/dashboard" className="flex items-center gap-2.5 px-2 text-cream" onClick={onNavigate}>
+        <Logo className="size-9" />
+        <span className="text-[22px] font-medium tracking-tight">{t.marketing.brand}</span>
       </Link>
-
-      <p className="mt-10 px-1 text-xs font-medium tracking-wider text-stone uppercase">{n.workspace}</p>
-      <div ref={ref} className="relative mt-2.5">
-        <button
-          type="button"
-          onClick={() => setOpen(!open)}
-          aria-expanded={open}
-          className="flex h-12 w-full items-center gap-3 rounded-xl border border-panel-3 bg-panel-2 px-3 text-left text-cream transition hover:border-cream/25"
-        >
-          <Store className="size-5 shrink-0 text-stone" aria-hidden="true" />
-          <span className="min-w-0 flex-1 truncate text-base">{store.name ?? n.unnamed}</span>
-          <ChevronDown className={`size-4 shrink-0 text-stone transition ${open ? "rotate-180" : ""}`} aria-hidden="true" />
-        </button>
-        {open && (
-          <div className="absolute inset-x-0 top-14 z-30 rounded-xl border border-panel-3 bg-panel-2 p-1.5 shadow-2xl">
-            <p className="flex items-center justify-between px-3 py-2 text-xs text-stone">
-              /s/{store.slug}
-              <span className={`rounded-full px-2 py-0.5 ${store.live ? "bg-lime/15 text-lime" : "bg-panel-3 text-stone"}`}>
-                {store.live ? n.live : n.draft}
-              </span>
-            </p>
-            {store.live && (
-              <a href={`/s/${store.slug}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-cream hover:bg-panel-3">
-                <ExternalLink className="size-4" aria-hidden="true" /> {n.viewLive}
-              </a>
-            )}
-            {store.draftUrl && (
-              <a href={store.draftUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-cream hover:bg-panel-3">
-                <Eye className="size-4" aria-hidden="true" /> {n.viewDraft}
-              </a>
-            )}
+      <nav className="mt-6 flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto">
+        {navGroups(counts).map((group, i) => (
+          <div key={group.label ?? i}>
+            {group.label && <p className="mb-1.5 px-3 text-[11px] font-medium tracking-wider text-stone uppercase">{group.label}</p>}
+            <div className="flex flex-col gap-0.5">
+              {group.items.map((item) => (
+                <NavLink key={item.href} item={item} onNavigate={onNavigate} />
+              ))}
+            </div>
           </div>
-        )}
-      </div>
-
-      <p className="mt-9 px-1 text-xs font-medium tracking-wider text-stone uppercase">{n.operations}</p>
-      <nav className="mt-2.5 flex flex-col gap-1">
-        {items.map(({ href, label, icon: Icon, count }) => {
-          const on = active(href);
-          return (
-            <Link
-              key={href}
-              href={href}
-              onClick={onNavigate}
-              aria-current={on ? "page" : undefined}
-              className={`flex h-12 items-center gap-3 rounded-xl px-3 text-base transition ${
-                on ? "border border-lime/25 bg-[#2b3118] text-cream" : "border border-transparent text-cream/75 hover:bg-panel-2 hover:text-cream"
-              }`}
-            >
-              <Icon className={`size-5 shrink-0 ${on ? "text-lime" : ""}`} aria-hidden="true" />
-              <span className="flex-1">{label}</span>
-              {count > 0 && <span className="min-w-7 rounded-full bg-panel-3 px-2 py-0.5 text-center text-xs text-cream">{count}</span>}
-            </Link>
-          );
-        })}
+        ))}
       </nav>
+      <div className="border-t border-panel-3 pt-3">
+        <NavLink item={{ href: "/dashboard/integrations", label: n.settings, icon: Settings }} onNavigate={onNavigate} />
+      </div>
     </div>
   );
 }
 
-function SearchBox() {
+function StoreSwitcher({ store, stores }: Pick<Props, "store" | "stores">) {
   const router = useRouter();
-  const params = useSearchParams();
-  const [q, setQ] = useState(params.get("q") ?? "");
-
-  function submit(e: FormEvent) {
-    e.preventDefault();
-    const query = q.trim();
-    router.push(query ? `/dashboard?q=${encodeURIComponent(query)}` : "/dashboard");
-  }
+  const { openThread } = useAxori();
+  const [pending, start] = useTransition();
+  const current = stores.find((s) => s.id === store.id);
 
   return (
-    <form onSubmit={submit} role="search" className="relative hidden w-full max-w-[430px] sm:block">
-      <Search className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-stone" aria-hidden="true" />
-      <input
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder={n.search}
-        aria-label={n.searchLabel}
-        className="h-12 w-full rounded-xl border border-panel-3 bg-panel-2 pr-4 pl-12 text-base text-cream placeholder:text-stone outline-none focus:border-cream/40"
-      />
-    </form>
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        disabled={pending}
+        className="flex h-11 max-w-[230px] min-w-0 items-center gap-2.5 rounded-xl border border-panel-3 bg-panel-2 px-2.5 text-left text-cream transition hover:border-cream/25 disabled:opacity-60"
+      >
+        <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-lime text-sm font-semibold text-black">
+          {(store.name ?? n.unnamed).slice(0, 1).toUpperCase()}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-medium">{store.name ?? n.unnamed}</span>
+          <span className="block text-[11px] text-stone">
+            {store.live ? n.live : n.draft} · {current?.currency}
+          </span>
+        </span>
+        <ChevronsUpDown className="size-4 shrink-0 text-stone" aria-hidden="true" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-64">
+        <DropdownMenuLabel className="text-xs text-stone">{n.stores}</DropdownMenuLabel>
+        {stores.map((s) => (
+          <DropdownMenuItem
+            key={s.id}
+            onSelect={() =>
+              s.id !== store.id &&
+              start(async () => {
+                await switchStore(s.id);
+                router.refresh();
+              })
+            }
+          >
+            <span className="min-w-0 flex-1 truncate">{s.name}</span>
+            <span className="text-xs text-stone">{s.currency}</span>
+            {s.id === store.id && <Check className="size-4 text-lime" aria-hidden="true" />}
+          </DropdownMenuItem>
+        ))}
+        <DropdownMenuSeparator />
+        {store.live && (
+          <DropdownMenuItem asChild>
+            <a href={`/s/${store.slug}`} target="_blank" rel="noreferrer">
+              <ExternalLink aria-hidden="true" /> {n.viewLive}
+            </a>
+          </DropdownMenuItem>
+        )}
+        {store.draftUrl && (
+          <DropdownMenuItem asChild>
+            <a href={store.draftUrl} target="_blank" rel="noreferrer">
+              <Eye aria-hidden="true" /> {n.viewDraft}
+            </a>
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem
+          onSelect={() =>
+            start(async () => {
+              await newBusiness();
+              router.refresh();
+              openThread(null);
+            })
+          }
+        >
+          <Plus aria-hidden="true" /> {n.newBusiness}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
-function TopBar({ account, counts, onMenu }: Pick<Props, "account" | "counts"> & { onMenu: () => void }) {
-  const [bell, setBell] = useState(false);
-  const [menu, setMenu] = useState(false);
-  const bellRef = useClickOutside(bell, () => setBell(false));
-  const menuRef = useClickOutside(menu, () => setMenu(false));
-  const initials = (account.name ?? account.email).slice(0, 2).toUpperCase();
+function SearchPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const router = useRouter();
+  const { ask, setOpen } = useAxori();
+  const [q, setQ] = useState("");
+  const pages: { href: string; label: string; icon: LucideIcon }[] = navGroups({ orders: 0, inbox: 0 })
+    .flatMap((g) => g.items)
+    .filter((i) => !i.soon)
+    .map(({ href, label, icon }) => ({ href, label, icon }));
+  const go = (href: string) => {
+    onOpenChange(false);
+    setQ("");
+    router.push(href);
+  };
+  const query = q.trim();
 
   return (
-    <header className="flex h-20 shrink-0 items-center gap-3 px-4 sm:px-6 lg:px-8">
+    <CommandDialog open={open} onOpenChange={onOpenChange} title={n.searchOpen} description={n.searchPlaceholder} className="border-panel-3 bg-panel-2 text-cream sm:max-w-xl">
+      <CommandInput value={q} onValueChange={setQ} placeholder={n.searchPlaceholder} />
+      <CommandList>
+        <CommandEmpty>{n.noResults}</CommandEmpty>
+        <CommandGroup>
+          <CommandItem
+            forceMount
+            value="__ask"
+            onSelect={() => {
+              onOpenChange(false);
+              setQ("");
+              if (query) ask(query);
+              else setOpen(true);
+            }}
+          >
+            <Mascot state="idle" size={22} />
+            {query ? n.askAiAbout.replace("{q}", query) : n.askAi}
+          </CommandItem>
+          {query && (
+            <CommandItem forceMount value="__orders" onSelect={() => go(`/dashboard/orders?q=${encodeURIComponent(query)}`)}>
+              <Package aria-hidden="true" /> {n.searchIn.replace("{where}", n.orders.toLowerCase()).replace("{q}", query)}
+            </CommandItem>
+          )}
+        </CommandGroup>
+        <CommandGroup heading={n.pagesGroup}>
+          {pages.map(({ href, label, icon: Icon }) => (
+            <CommandItem key={href} value={label} onSelect={() => go(href)}>
+              <Icon aria-hidden="true" /> {label}
+            </CommandItem>
+          ))}
+        </CommandGroup>
+      </CommandList>
+    </CommandDialog>
+  );
+}
+
+function TopBar({ store, stores, account, counts, approvals, onMenu }: Omit<Props, "children" | "pageLabels"> & { onMenu: () => void }) {
+  const { setOpen, open, openThread, mascot } = useAxori();
+  const [search, setSearch] = useState(false);
+  const initials = (account.name ?? account.email).slice(0, 2).toUpperCase();
+  const waiting = approvals.reduce((sum, a) => sum + a.count, 0);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k" && !typingIn(e.target)) {
+        e.preventDefault();
+        setSearch((v) => !v);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const iconButton = "relative grid size-11 place-items-center rounded-xl border border-panel-3 bg-panel-2 text-cream transition hover:border-cream/25";
+
+  return (
+    <header className="flex h-[72px] shrink-0 items-center gap-2 px-4 sm:gap-3 sm:px-6 lg:px-8">
       <button type="button" onClick={onMenu} aria-label={n.menu} className="grid size-11 place-items-center rounded-xl bg-panel-2 text-cream lg:hidden">
         <Menu className="size-5" aria-hidden="true" />
       </button>
-      <div className="ml-auto flex items-center gap-3">
-        <Suspense>
-          <SearchBox />
-        </Suspense>
+      <StoreSwitcher store={store} stores={stores} />
+      <button
+        type="button"
+        onClick={() => setSearch(true)}
+        className="hidden h-11 w-full max-w-[380px] items-center gap-3 rounded-xl border border-panel-3 bg-panel-2 px-3.5 text-left text-sm text-stone transition hover:border-cream/25 md:flex"
+      >
+        <Search className="size-4.5" aria-hidden="true" />
+        <span className="flex-1">{n.searchOpen}</span>
+        <kbd className="rounded-md border border-panel-3 px-1.5 py-0.5 font-mono text-[11px]">Ctrl K</kbd>
+      </button>
+      <SearchPalette open={search} onOpenChange={setSearch} />
 
-        <div ref={bellRef} className="relative">
-          <button
-            type="button"
-            onClick={() => setBell(!bell)}
-            aria-label={n.notifications}
-            aria-expanded={bell}
-            className="relative grid size-12 place-items-center rounded-xl border border-panel-3 bg-panel-2 text-cream transition hover:border-cream/25"
-          >
+      <div className="ml-auto flex items-center gap-2">
+        <button type="button" onClick={() => setSearch(true)} aria-label={n.searchOpen} className={`${iconButton} md:hidden`}>
+          <Search className="size-5" aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          aria-label={t.app.axori.open}
+          aria-expanded={open}
+          className="hidden h-11 items-center gap-2 rounded-xl border border-lime/30 bg-[#1c2112] pr-3 pl-1.5 text-sm font-medium text-cream transition hover:border-lime/60 sm:flex"
+        >
+          <Mascot state={mascot} size={32} />
+          {t.app.axori.title}
+          <kbd className="rounded-md border border-lime/20 px-1.5 py-0.5 font-mono text-[11px] text-lime/80">{t.app.axori.shortcut}</kbd>
+        </button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger aria-label={`${n.approvals}: ${waiting}`} className={iconButton}>
+            <ShieldCheck className="size-5" aria-hidden="true" />
+            {waiting > 0 && (
+              <span className="absolute -top-1 -right-1 grid min-w-5 place-items-center rounded-full bg-lime px-1 text-[11px] font-bold text-black">{waiting}</span>
+            )}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-72">
+            <DropdownMenuLabel>{n.approvals}</DropdownMenuLabel>
+            {approvals.length === 0 && <p className="px-2 py-2 text-sm text-stone">{n.approvalsEmpty}</p>}
+            {approvals.map((a) => (
+              <DropdownMenuItem key={a.threadId} onSelect={() => openThread(a.threadId)}>
+                <span className="min-w-0 flex-1 truncate">{n.approvalsWaiting.replace("{count}", String(a.count)).replace("{thread}", a.title)}</span>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger aria-label={n.notifications} className={`${iconButton} hidden sm:grid`}>
             <Bell className="size-5" aria-hidden="true" />
-            {counts.inbox > 0 && <span className="absolute top-3 right-3 size-2 rounded-full bg-lime" />}
-          </button>
-          {bell && (
-            <div className="absolute top-14 right-0 z-30 w-72 rounded-xl border border-panel-3 bg-panel-2 p-4 text-sm shadow-2xl">
-              <p className="text-cream">{counts.inbox > 0 ? n.waiting.replace("{count}", String(counts.inbox)) : n.caughtUp}</p>
-              {counts.inbox > 0 && (
-                <Link href="/dashboard/inbox" onClick={() => setBell(false)} className="mt-3 inline-block text-lime underline underline-offset-4">
-                  {n.openInbox}
-                </Link>
-              )}
-            </div>
-          )}
-        </div>
+            {counts.inbox > 0 && <span className="absolute top-2.5 right-2.5 size-2 rounded-full bg-lime" />}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-72 p-3">
+            <p className="text-sm text-cream">{counts.inbox > 0 ? n.waiting.replace("{count}", String(counts.inbox)) : n.caughtUp}</p>
+            {counts.inbox > 0 && (
+              <Link href="/dashboard/inbox" className="mt-2 inline-block text-sm text-lime underline underline-offset-4">
+                {n.openInbox}
+              </Link>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-        <div ref={menuRef} className="relative">
-          <button
-            type="button"
-            onClick={() => setMenu(!menu)}
-            aria-label={n.account}
-            aria-expanded={menu}
-            className="flex items-center gap-1.5 rounded-xl text-cream"
-          >
-            <span className="grid size-12 place-items-center rounded-full bg-panel-3 text-base font-medium">{initials}</span>
-            <ChevronDown className="size-4 text-stone" aria-hidden="true" />
-          </button>
-          {menu && (
-            <div className="absolute top-14 right-0 z-30 w-64 rounded-xl border border-panel-3 bg-panel-2 p-1.5 shadow-2xl">
-              <p className="truncate px-3 py-2 text-sm text-stone">{account.email}</p>
-              <form action={signOut}>
-                <button type="submit" className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-cream hover:bg-panel-3">
-                  <LogOut className="size-4" aria-hidden="true" /> {n.signOut}
-                </button>
-              </form>
-            </div>
-          )}
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger aria-label={n.account} className="grid size-11 place-items-center rounded-full bg-panel-3 text-sm font-medium text-cream">
+            {initials}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-64">
+            <DropdownMenuLabel className="truncate font-normal text-stone">{account.email}</DropdownMenuLabel>
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/integrations">
+                <Settings aria-hidden="true" /> {n.settings}
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <form action={signOut}>
+              <button type="submit" className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-cream hover:bg-panel-3">
+                <LogOut className="size-4 text-stone" aria-hidden="true" /> {n.signOut}
+              </button>
+            </form>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );
 }
 
-/** The seller app frame from the dashboard reference: sidebar, top bar, and the page in between. */
-export function AppShell({ store, account, counts, children }: Props) {
-  const [drawer, setDrawer] = useState(false);
-
+/** Phones: Home, Orders, Inbox, Marketing, More. */
+function BottomBar({ counts, onMore }: { counts: Props["counts"]; onMore: () => void }) {
+  const pathname = usePathname();
+  const items: NavItem[] = [
+    { href: "/dashboard", label: n.home, icon: Home, exact: true },
+    { href: "/dashboard/orders", label: n.orders, icon: Package, count: counts.orders },
+    { href: "/dashboard/inbox", label: n.inbox, icon: Inbox, count: counts.inbox },
+    { href: "/dashboard/campaigns", label: n.marketing, icon: Megaphone },
+  ];
   return (
-    <div className="flex h-dvh overflow-hidden bg-black font-display text-cream">
-      <aside className="hidden w-[260px] shrink-0 border-r border-panel-3 bg-[#0d0d0d] lg:block">
-        <Sidebar store={store} counts={counts} />
-      </aside>
+    <nav className="fixed inset-x-0 bottom-0 z-40 grid h-16 grid-cols-5 border-t border-panel-3 bg-[#0d0d0d]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
+      {items.map((item) => {
+        const on = isActive(pathname, item);
+        const Icon = item.icon;
+        return (
+          <Link key={item.href} href={item.href} aria-current={on ? "page" : undefined} className={`relative flex flex-col items-center justify-center gap-0.5 text-[11px] ${on ? "text-lime" : "text-stone"}`}>
+            <Icon className="size-5" aria-hidden="true" />
+            {item.label}
+            {item.count ? <span className="absolute top-2 left-[calc(50%+6px)] size-2 rounded-full bg-lime" /> : null}
+          </Link>
+        );
+      })}
+      <button type="button" onClick={onMore} className="flex flex-col items-center justify-center gap-0.5 text-[11px] text-stone">
+        <Menu className="size-5" aria-hidden="true" />
+        {n.more}
+      </button>
+    </nav>
+  );
+}
 
-      {drawer && (
-        <div className="fixed inset-0 z-40 lg:hidden">
-          <button type="button" aria-label={n.close} onClick={() => setDrawer(false)} className="absolute inset-0 bg-black/70" />
-          <aside className="absolute inset-y-0 left-0 w-[280px] border-r border-panel-3 bg-[#0d0d0d]">
-            <button type="button" onClick={() => setDrawer(false)} aria-label={n.close} className="absolute top-6 right-4 grid size-10 place-items-center rounded-lg text-stone hover:text-cream">
-              <X className="size-5" aria-hidden="true" />
-            </button>
-            <Sidebar store={store} counts={counts} onNavigate={() => setDrawer(false)} />
-          </aside>
+/** Phones: tap to type, hold to talk (spec v2, "Opening it"). */
+function FloatingAxori() {
+  const { setOpen, setHolding, holding, mascot, open } = useAxori();
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const held = useRef(false);
+  if (open && !holding) return null;
+
+  const down = () => {
+    held.current = false;
+    timer.current = setTimeout(() => {
+      held.current = true;
+      setOpen(true);
+      setHolding(true);
+    }, 350);
+  };
+  const up = () => {
+    if (timer.current) clearTimeout(timer.current);
+    if (held.current) setHolding(false);
+    else setOpen(true);
+  };
+  return (
+    <button
+      type="button"
+      onPointerDown={down}
+      onPointerUp={up}
+      onPointerLeave={() => held.current && setHolding(false)}
+      onContextMenu={(e) => e.preventDefault()}
+      aria-label={t.app.axori.holdToTalk}
+      className="fixed right-4 bottom-20 z-[60] grid size-16 touch-none place-items-center rounded-full border border-lime/40 bg-[#1c2112] shadow-xl shadow-black/50 select-none lg:hidden"
+    >
+      <Mascot state={holding ? "listening" : mascot} size={52} />
+    </button>
+  );
+}
+
+/** The seller workspace frame: grouped sidebar, global top bar, Axori AI panel, and the phone bottom bar. */
+export function AppShell({ pageLabels, children, ...props }: Props) {
+  const [drawer, setDrawer] = useState(false);
+  return (
+    <AxoriProvider pageLabels={pageLabels}>
+      <div className="flex h-dvh overflow-hidden bg-black font-display text-cream">
+        <aside className="hidden w-[248px] shrink-0 border-r border-panel-3 bg-[#0d0d0d] lg:block">
+          <Sidebar counts={props.counts} />
+        </aside>
+
+        {drawer && (
+          <div className="fixed inset-0 z-50 lg:hidden">
+            <button type="button" aria-label={n.close} onClick={() => setDrawer(false)} className="absolute inset-0 bg-black/70" />
+            <aside className="absolute inset-y-0 left-0 w-[272px] border-r border-panel-3 bg-[#0d0d0d]">
+              <button type="button" onClick={() => setDrawer(false)} aria-label={n.close} className="absolute top-5 right-3 grid size-10 place-items-center rounded-lg text-stone hover:text-cream">
+                <X className="size-5" aria-hidden="true" />
+              </button>
+              <Sidebar counts={props.counts} onNavigate={() => setDrawer(false)} />
+            </aside>
+          </div>
+        )}
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          <TopBar {...props} onMenu={() => setDrawer(true)} />
+          <div className="flex min-h-0 flex-1 flex-col pb-16 lg:pb-0">{children}</div>
         </div>
-      )}
-
-      <div className="flex min-w-0 flex-1 flex-col">
-        <TopBar account={account} counts={counts} onMenu={() => setDrawer(true)} />
-        <div className="flex min-h-0 flex-1 flex-col">{children}</div>
       </div>
-    </div>
+      <AxoriPanel storeName={props.store.name ?? props.store.slug} greetingName={props.account.name ?? ""} />
+      <FloatingAxori />
+      <BottomBar counts={props.counts} onMore={() => setDrawer(true)} />
+    </AxoriProvider>
   );
 }

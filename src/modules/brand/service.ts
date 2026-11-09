@@ -7,8 +7,45 @@ import { applyBrandPatch, BrandKitSchema, slugify, type BrandDraft, type BrandKi
 
 const PLACEHOLDER_SLUG_PREFIX = "store-";
 
-/** Uses the caller's session client, so row-level security limits it to the signed-in owner. */
-export async function getOrCreateStore(supabase: SupabaseClient<Database>, ownerId: string) {
+/** Every store the signed-in owner has, for the store switcher. Session client, so RLS limits it to them. */
+export async function listOwnerStores(supabase: SupabaseClient<Database>, ownerId: string) {
+  const { data, error } = await supabase
+    .from("stores")
+    .select("id, slug, status, currency, brand_kit, is_demo")
+    .eq("owner_id", ownerId)
+    .order("created_at");
+  if (error) throw new Error(`Store list failed: ${error.code}`);
+  return data.map((s) => {
+    const kit = BrandKitSchema.safeParse(s.brand_kit);
+    return { id: s.id, slug: s.slug, status: s.status, currency: s.currency, name: kit.success ? kit.data.name : null };
+  });
+}
+
+/** A new, empty draft store for the owner ("New business"). */
+export async function createOwnerStore(supabase: SupabaseClient<Database>, ownerId: string) {
+  const { data, error } = await supabase
+    .from("stores")
+    .insert({ owner_id: ownerId, slug: `${PLACEHOLDER_SLUG_PREFIX}${randomBytes(4).toString("hex")}` })
+    .select("id, slug, status")
+    .single();
+  if (error) throw new Error(`Store create failed: ${error.code}`);
+  return data;
+}
+
+/**
+ * Uses the caller's session client, so row-level security limits it to the signed-in owner.
+ * `preferredId` is the store switcher's choice; it only selects among the owner's own stores.
+ */
+export async function getOrCreateStore(supabase: SupabaseClient<Database>, ownerId: string, preferredId?: string | null) {
+  if (preferredId && /^[0-9a-f-]{36}$/i.test(preferredId)) {
+    const { data: chosen } = await supabase
+      .from("stores")
+      .select("id, slug, status")
+      .eq("owner_id", ownerId)
+      .eq("id", preferredId)
+      .maybeSingle();
+    if (chosen) return chosen;
+  }
   const { data: existing, error } = await supabase
     .from("stores")
     .select("id, slug, status")

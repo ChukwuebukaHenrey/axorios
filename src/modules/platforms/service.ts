@@ -38,6 +38,12 @@ export type SyncResult = {
   theme?: ThemeHandoff;
 };
 
+async function ownerOf(storeId: string): Promise<string> {
+  const { data, error } = await serviceRoleClient().from("stores").select("owner_id").eq("id", storeId).single();
+  if (error) throw new Error(`Store read failed: ${error.code}`);
+  return data.owner_id;
+}
+
 async function storeSlug(storeId: string): Promise<string> {
   const { data, error } = await serviceRoleClient().from("stores").select("slug").eq("id", storeId).single();
   if (error) throw new Error(`Store read failed: ${error.code}`);
@@ -60,7 +66,7 @@ export async function connectShop(storeId: string, shopDomain: string): Promise<
   const { error } = await serviceRoleClient()
     .from("platform_connections")
     .upsert(
-      { store_id: storeId, platform: PLATFORM, shop_domain: domain, access_token: encryptSecret(grant.token), token_expires_at: grant.expiresAt },
+      { store_id: storeId, owner_id: await ownerOf(storeId), platform: PLATFORM, shop_domain: domain, access_token: encryptSecret(grant.token), token_expires_at: grant.expiresAt },
       { onConflict: "store_id,platform" },
     );
   if (error?.code === "23505") throw new PlatformError("shop_taken");
@@ -76,7 +82,8 @@ export async function shopConnection(storeId: string): Promise<{ shopDomain: str
     .eq("platform", PLATFORM)
     .maybeSingle();
   if (error) throw new Error(`Connection read failed: ${error.code}`);
-  return data && { shopDomain: data.shop_domain, lastSyncedAt: data.last_synced_at, lastResult: data.last_sync_result as SyncResult | null };
+  if (!data?.shop_domain) return null;
+  return { shopDomain: data.shop_domain, lastSyncedAt: data.last_synced_at, lastResult: data.last_sync_result as SyncResult | null };
 }
 
 /** Queues the sync after the seller has approved. */
@@ -95,19 +102,20 @@ async function shopAccess(storeId: string): Promise<ShopAccess> {
     .eq("platform", PLATFORM)
     .maybeSingle();
   if (error) throw new Error(`Connection read failed: ${error.code}`);
-  if (!data) throw new PlatformError("not_connected");
+  if (!data?.shop_domain || !data.access_token) throw new PlatformError("not_connected");
+  const shopDomain = data.shop_domain;
 
   const expires = data.token_expires_at ? new Date(data.token_expires_at).getTime() : 0;
-  if (expires - Date.now() > TOKEN_MARGIN_MS) return { token: decryptSecret(data.access_token), shopDomain: data.shop_domain };
+  if (expires - Date.now() > TOKEN_MARGIN_MS) return { token: decryptSecret(data.access_token), shopDomain };
 
-  const grant = await platform().connect(data.shop_domain);
+  const grant = await platform().connect(shopDomain);
   const { error: updateError } = await db
     .from("platform_connections")
     .update({ access_token: encryptSecret(grant.token), token_expires_at: grant.expiresAt })
     .eq("store_id", storeId)
     .eq("platform", PLATFORM);
   if (updateError) throw new Error(`Connection save failed: ${updateError.code}`);
-  return { token: grant.token, shopDomain: data.shop_domain };
+  return { token: grant.token, shopDomain };
 }
 
 async function knownIds(storeId: string): Promise<ExternalIds> {

@@ -63,3 +63,16 @@ export function priceCart(products: PricedProduct[], items: CartItem[]) {
   if (totalMinor === 0) throw new CheckoutError("empty_total");
   return { lines, totalMinor, currency };
 }
+
+/**
+ * VAT on an order, in the order's minor units (spec v2, "VAT"). Inclusive: tax = total × rate / (1 + rate).
+ * Exclusive: tax = total × rate, added on top. Rate is in basis points (750 = 7.5%). Not registered = 0.
+ */
+export function vatFor(totalMinor: number, store: { vatRegistered: boolean; vatRateBp: number; pricesIncludeTax: boolean }) {
+  if (!store.vatRegistered || store.vatRateBp <= 0) return { taxMinor: 0, rateBp: 0, inclusive: store.pricesIncludeTax, grossMinor: totalMinor };
+  if (store.pricesIncludeTax) {
+    return { taxMinor: Math.round((totalMinor * store.vatRateBp) / (10_000 + store.vatRateBp)), rateBp: store.vatRateBp, inclusive: true, grossMinor: totalMinor };
+  }
+  const taxMinor = Math.round((totalMinor * store.vatRateBp) / 10_000);
+  return { taxMinor, rateBp: store.vatRateBp, inclusive: false, grossMinor: totalMinor + taxMinor };
+}

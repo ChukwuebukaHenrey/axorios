@@ -6,7 +6,7 @@ import { serviceRoleClient } from "@/lib/supabase/service-role";
 import { BrandKitSchema } from "@/modules/brand";
 import { decrementStock, listProducts } from "@/modules/catalog";
 import { isChargeable, paymentProvider, quote } from "@/modules/payments";
-import { CheckoutError, OrderLineSchema, priceCart, type CartItem, type OrderLine } from "./schema";
+import { CheckoutError, OrderLineSchema, priceCart, vatFor, type CartItem, type OrderLine } from "./schema";
 
 type OrderRow = Database["public"]["Tables"]["orders"]["Row"];
 
@@ -39,12 +39,19 @@ export async function createOrder({ storeId, slug, items, channel, customerRef, 
   const db = serviceRoleClient();
   const { data: store, error: storeError } = await db
     .from("stores")
-    .select("brand_kit, settlement_currency")
+    .select("brand_kit, settlement_currency, country, vat_registered, vat_rate_bp, prices_include_tax")
     .eq("id", storeId)
     .single();
   if (storeError) throw new Error(`Store read failed: ${storeError.code}`);
 
-  const { lines, totalMinor, currency } = priceCart(await listProducts(storeId), items);
+  const { lines, totalMinor: subtotal, currency } = priceCart(await listProducts(storeId), items);
+  // VAT is worked out here, never by the model, and stored on the order (spec v2). Delivery stays in the seller's country.
+  const vat = vatFor(subtotal, {
+    vatRegistered: store.vat_registered,
+    vatRateBp: store.vat_rate_bp,
+    pricesIncludeTax: store.prices_include_tax,
+  });
+  const totalMinor = vat.grossMinor;
   const charge = await chargeFor(totalMinor, currency, store.settlement_currency);
 
   const { data: row, error } = await db
@@ -61,6 +68,10 @@ export async function createOrder({ storeId, slug, items, channel, customerRef, 
       channel,
       customer_ref: customerRef ?? null,
       delivery_note: deliveryNote || null,
+      tax_minor: vat.taxMinor,
+      tax_rate_bp: vat.rateBp,
+      tax_inclusive: vat.inclusive,
+      delivery_country: store.country,
     })
     .select("*")
     .single();
@@ -142,7 +153,9 @@ export async function settleByProviderOrder(providerOrderId: string): Promise<Or
 }
 
 /** Only the first call for an order changes anything, so stock moves once however often this runs. */
-async function markPaid(order: Order, captureId: string, payerEmail?: string): Promise<Order> {
+type Captured = { captureId: string; payerEmail?: string; payerCountry?: string; feeMinor?: number; netMinor?: number };
+
+async function markPaid(order: Order, { captureId, payerEmail, payerCountry, feeMinor, netMinor }: Captured): Promise<Order> {
   const { data, error } = await serviceRoleClient()
     .from("orders")
     .update({
@@ -150,6 +163,10 @@ async function markPaid(order: Order, captureId: string, payerEmail?: string): P
       paypal_capture_id: captureId,
       paid_at: new Date().toISOString(),
       customer_ref: order.customer_ref ?? payerEmail ?? null,
+      // Exact PayPal fee and net from the capture, in the captured currency (spec v2, Money).
+      paypal_fee_minor: feeMinor ?? null,
+      paypal_net_minor: netMinor ?? null,
+      buyer_country: payerCountry && /^[A-Z]{2}$/.test(payerCountry) ? payerCountry : null,
     })
     .eq("id", order.id)
     .eq("store_id", order.store_id)
@@ -188,5 +205,5 @@ export async function settleOrder(order: Order): Promise<Order> {
     console.error(`Capture amount mismatch on order ${order.id}`);
     return setStatus(order, "failed", result.captureId);
   }
-  return markPaid(order, result.captureId, result.payerEmail);
+  return markPaid(order, result);
 }

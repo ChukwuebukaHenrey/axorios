@@ -65,3 +65,31 @@ Handoff for the next session. Everything below is **committed and pushed** (`70b
 - Commit as the user, with **no Co-Authored-By line** (user's request, 9 Nov).
 - Port 3100 for `next start`. Stop it afterwards with PowerShell `Get-NetTCPConnection -LocalPort 3100`.
 - The editor's old `agent_sessions` became the demo store's "Store setup" thread, which includes the 8 Nov "I have scheduled…" regression text (history only).
+
+---
+
+# Session 4 (9 Nov 2026): 6.7 done
+
+`a361625` is pushed: **6.7 Money tab, Refund card and paginated Orders**. 149/149 tests, lint, `tsc` and build pass. `scripts/e2e-money.mts` passes against `next start -p 3100`, including a real $5.00 partial refund through the card. That order is a real `source = 'app'` sandbox order, kept on purpose: it counts toward 6.15.
+
+## What exists now (to build on)
+
+- **Loaders:** `src/modules/analytics/data.ts` is server-only, cached per request with React `cache`, and takes a `storeId` from the session. It has `loadMetricOrders` (paid at some point, test orders excluded, paged by id), `loadRefunds`, `loadExpenses`, `loadWithdrawals`, `loadVisits` (summed by day) and `logExpense`. The module's `index.ts` now exports these, so **`@/modules/analytics` is server-only**. Client code gets numbers from the server.
+- **Money sums:** `analytics/money.ts` holds `moneyIn`, `dailyMoneyIn`, `expensesIn`, `fxDifference`, `moneyOverview`, `vatByMonth`, `monthStatement`, `statementCsv` and `toCsv` (formula-safe). All are built on `metrics.ts`. Use `moneyOverview` and `summary` for the Home tiles in 6.8, so the numbers match by construction.
+- **Charts:** `src/app/(dashboard)/charts.tsx` has `DayBars`, `RankBars` and `Sparkline`. They are server-rendered SVG, lime single-series, with a tooltip on each mark. Reuse them for the Home and Store tiles.
+- **Session store:** the store `requireSeller()` returns now includes `currency`.
+- **Orders:** `listOrdersPage` paginates on the server. Search uses `items.cs` for product names and a uuid range for id prefixes. There's a detail page at `/dashboard/orders/[id]` (with an `AxoriSees` order chip). Labels live in `orders/labels.ts`. `RefundButton`, `RefundSummary` and `RefundToolSummary` are in `orders/refund-card.tsx`. The server actions are in `orders/actions.ts`.
+- **Agent:** the `log_expense` tool is implemented (approval-gated, store currency).
+- **e2e harness:** `scripts/edge.ts` has `openEdge(base)` and returns `go`, `waitFor`, `evaluate`, `shot`, `phone` and `consoleErrors`. The demo seller is signed in. Reuse it for 6.6 and 6.8 to 6.10.
+- The sidebar's `soon` flag is now off for Money. Customers, Analytics and Design still have it on.
+
+## Gotchas
+
+- Files written by the Write tool use CRLF. When editing them from a Python script, open with `newline=""` and match `\r\n`, or use the Edit tool.
+- A Python heredoc turns `"\r\n"` into real line breaks. Write escaped strings with the Edit tool.
+
+## Next, in order
+
+1. **6.6 Analytics (AG Studio)** at `dashboard/analytics`: read the boilerplate for its pattern only. Packages are already pinned. Load rows on the server with the loaders above. Verification: Studio's Sales equals the metrics module for 4 periods. Flip `soon` off for Analytics.
+2. **6.8 Home tiles + Store overview** (`/dashboard` placeholder; Store still points at `/build`).
+3. **6.9 Customers** (flip `soon` off), **6.10 Marketing performance**.

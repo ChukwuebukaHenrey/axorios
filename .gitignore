@@ -57,3 +57,5 @@ supabase/.temp
 # raw design references and third-party moodboard screenshots: not for the public repo.
 # curated assets actually used by the app are copied into public/ instead.
 /Images/
+# generated demo CSVs (scripts/seed-v2.mts)
+/data/

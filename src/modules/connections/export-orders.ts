@@ -10,7 +10,7 @@ export type ZapierActionId = (typeof ZAPIER_ACTIONS)[number];
 
 /** Zapier counts 2 tasks per call and the free plan has 100 a month, so one approval sends at most this many rows. */
 export const MAX_ORDERS_PER_EXPORT = 10;
-export const DEFAULT_ORDERS_PER_EXPORT = 5;
+export const DEFAULT_ORDERS_PER_EXPORT = 2;
 
 /**
  * Column headers, in sheet order. These are exactly the fields sent; no email, phone or address.

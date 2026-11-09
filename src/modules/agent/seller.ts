@@ -9,10 +9,11 @@ import {
   type UIMessage,
 } from "ai";
 import { z } from "zod";
-import { formatMinor, isIsoCurrency } from "@/lib/money";
+import { formatMinor, isIsoCurrency, parseToMinor } from "@/lib/money";
 import { BrandDraftSchema, BrandPatchSchema, createBrandKit, getBrandKit, updateBrandKit } from "@/modules/brand";
 import { addProducts, AddProductsSchema, listProducts, setStoreCurrency } from "@/modules/catalog";
 import { draftPosts, MAX_POSTS_PER_CAMPAIGN, queueCampaign, ScheduleError, schedulePosts } from "@/modules/creative";
+import { executeRefund, getOrder } from "@/modules/orders";
 import { isChargeable } from "@/modules/payments";
 import { connectShop, PlatformError, queueSync, shopConnection } from "@/modules/platforms";
 import { publishTargets } from "@/modules/publishers";
@@ -180,6 +181,24 @@ function sellerTools(storeId: string) {
           if (error instanceof PlatformError) return { error: error.code };
           throw error;
         }
+      },
+    }),
+    refund_order: tool({
+      description:
+        "Refund a paid order, fully or partly, when the owner asks. They get a card showing the exact amounts to approve, and nothing is refunded until they do. For a partial refund use the amount the owner said, in the currency the buyer paid. Results: exceeds_remaining, window_closed, insufficient_funds (they must add money to PayPal first), not_in_paypal (imported history can't be refunded here).",
+      inputSchema: z.object({
+        orderId: z.uuid().describe("The order's id from the orders you were given"),
+        amount: z.string().regex(/^\d+(\.\d{1,2})?$/).optional().describe("Partial amount in the charged currency, e.g. 10.00. Leave out for a full refund"),
+        reason: z.string().trim().max(200).optional(),
+      }),
+      execute: async ({ orderId, amount, reason }, { toolCallId }) => {
+        const order = await getOrder(storeId, orderId);
+        if (!order) return { error: "not_found" };
+        return executeRefund(storeId, orderId, toolCallId, {
+          amountMinor: amount ? parseToMinor(amount, order.charge_currency) : undefined,
+          reason,
+          actor: "axori_ai",
+        });
       },
     }),
     publish_store: tool({

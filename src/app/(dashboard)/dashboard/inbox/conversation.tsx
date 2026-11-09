@@ -1,25 +1,51 @@
 "use client";
 
-import { Bot, Hand, Loader2, SendHorizontal } from "lucide-react";
+import { Bot, Clock, Hand, Loader2, SendHorizontal } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition, type FormEvent } from "react";
 import { t } from "@/lib/messages";
-import type { InboxConversation, InboxMessage } from "@/modules/channels";
-import { sendReply, setTakeover } from "./actions";
+import type { InboxConversation, InboxMessage, ReplyResult } from "@/modules/channels";
+import { sendReply, sendTemplate, setTakeover } from "./actions";
 
 const i = t.app.inbox;
 const ROLE_LABEL = { customer: i.customer, agent: i.agent, seller: i.seller } as const;
+const FAILURE = { credits: i.paused, window: i.windowFailed, failed: i.sendFailed } as const;
+
+/** "23 h 05 m" until the window closes. */
+function formatLeft(ms: number): string {
+  const minutes = Math.max(0, Math.floor(ms / 60000));
+  const h = Math.floor(minutes / 60);
+  return h > 0 ? `${h} h ${String(minutes % 60).padStart(2, "0")} m` : `${minutes} m`;
+}
+
+/** Milliseconds left in WhatsApp's reply window, ticking every 30 s. Null off WhatsApp. */
+function useWindowLeft(endsAt: string | null, isWhatsApp: boolean): number | null {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!isWhatsApp) return;
+    const timer = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(timer);
+  }, [isWhatsApp]);
+  if (!isWhatsApp) return null;
+  return endsAt ? new Date(endsAt).getTime() - now : 0;
+}
 
 export function Conversation({
   conversation,
   messages,
+  templates,
 }: {
   conversation: InboxConversation & { channelLabel: string };
   messages: InboxMessage[];
+  templates: { name: string; label: string }[];
 }) {
   const router = useRouter();
   const [text, setText] = useState("");
-  const [failed, setFailed] = useState(false);
+  const [template, setTemplate] = useState(templates[0]?.name ?? "");
+  const [failure, setFailure] = useState<keyof typeof FAILURE | null>(null);
+  const isWhatsApp = conversation.channel === "whatsapp";
+  const left = useWindowLeft(conversation.windowEndsAt, isWhatsApp);
+  const windowClosed = left !== null && left <= 0;
   const [pending, start] = useTransition();
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -42,10 +68,20 @@ export function Conversation({
     const body = text.trim();
     if (!body) return;
     start(async () => {
-      const { ok } = await sendReply(conversation.id, body);
-      setFailed(!ok);
-      if (ok) setText("");
+      const result = await sendReply(conversation.id, body);
+      settle(result);
+      if (result.ok) setText("");
     });
+  }
+
+  function settle(result: ReplyResult) {
+    setFailure(result.ok ? null : result.reason);
+  }
+
+  function submitTemplate(e: FormEvent) {
+    e.preventDefault();
+    if (!template) return;
+    start(async () => settle(await sendTemplate(conversation.id, template)));
   }
 
   const paused = conversation.agentPaused;
@@ -56,6 +92,11 @@ export function Conversation({
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium text-cream">{conversation.customerRef}</p>
           <p className="text-sm text-stone">{conversation.channelLabel}</p>
+          {left !== null && left > 0 && (
+            <p data-window-countdown className="mt-0.5 inline-flex items-center gap-1 text-xs text-stone">
+              <Clock className="size-3" aria-hidden="true" /> {i.windowLeft.replace("{time}", formatLeft(left))}
+            </p>
+          )}
         </div>
         <button
           type="button"
@@ -96,6 +137,37 @@ export function Conversation({
           <p className="px-2 py-2 text-sm text-stone">{i.hint}</p>
         ) : !conversation.canReply ? (
           <p className="px-2 py-2 text-sm text-stone">{i.channelOff}</p>
+        ) : windowClosed ? (
+          <form onSubmit={submitTemplate} data-template-picker className="flex flex-col gap-2">
+            <p className="px-2 pt-1 text-sm text-stone">{i.windowClosed}</p>
+            <div className="flex gap-2">
+              <label className="sr-only" htmlFor="template">
+                {i.templateLabel}
+              </label>
+              <select
+                id="template"
+                value={template}
+                onChange={(e) => setTemplate(e.target.value)}
+                className="h-12 min-w-0 flex-1 rounded-lg border border-panel-3 bg-panel-2 px-3 text-cream outline-none focus:border-cream/40"
+              >
+                {templates.map((x) => (
+                  <option key={x.name} value={x.name}>
+                    {x.label}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="submit"
+                disabled={pending || !template}
+                className="inline-flex h-12 shrink-0 items-center gap-2 rounded-lg bg-lime px-4 text-sm font-semibold text-black transition hover:bg-lime/85 disabled:opacity-40"
+              >
+                {pending ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <SendHorizontal className="size-4" aria-hidden="true" />}
+                <span className="hidden sm:inline">{i.sendTemplate}</span>
+                <span className="sr-only sm:hidden">{i.sendTemplate}</span>
+              </button>
+            </div>
+            <p className="px-2 text-xs text-stone">{i.templateNote}</p>
+          </form>
         ) : (
           <form onSubmit={submit} className="flex gap-2">
             <label className="sr-only" htmlFor="seller-reply">
@@ -119,7 +191,11 @@ export function Conversation({
             </button>
           </form>
         )}
-        {failed && <p className="px-2 pt-2 text-sm text-red-300">{i.sendFailed}</p>}
+        {failure && (
+          <p role="alert" className="px-2 pt-2 text-sm text-red-300">
+            {FAILURE[failure]}
+          </p>
+        )}
       </div>
     </section>
   );

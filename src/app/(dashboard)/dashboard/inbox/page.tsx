@@ -1,7 +1,7 @@
-import { ArrowLeft, MessageCircle } from "lucide-react";
+import { AlertTriangle, ArrowLeft, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { t } from "@/lib/messages";
-import { conversationMessages, listConversations } from "@/modules/channels";
+import { conversationMessages, listConversations, WHATSAPP_TEMPLATES, whatsappPausedAt } from "@/modules/channels";
 import { labelsForContacts } from "@/modules/customers";
 import { PageHeader } from "../../page-header";
 import { requireSeller } from "../../session";
@@ -19,7 +19,8 @@ const CHANNEL_LABEL: Record<string, string> = {
 
 export default async function InboxPage({ searchParams }: { searchParams: Promise<{ c?: string }> }) {
   const { store } = await requireSeller();
-  const [{ c }, conversations] = await Promise.all([searchParams, listConversations(store.id)]);
+  const [{ c }, conversations, pausedAt] = await Promise.all([searchParams, listConversations(store.id), whatsappPausedAt(store.id)]);
+  const templates = WHATSAPP_TEMPLATES.map((x) => ({ name: x.name, label: i.templates[x.previewKey] }));
   const selected = conversations.find((conv) => conv.id === c) ?? null;
   const [messages, chips] = await Promise.all([
     selected ? conversationMessages(store.id, selected.id) : Promise.resolve([]),
@@ -29,6 +30,16 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
   return (
     <main className="flex min-h-0 flex-1 flex-col px-4 pb-4 sm:px-6 lg:px-8">
       <PageHeader title={i.title} subtitle={i.subtitle} />
+
+      {pausedAt && (
+        <div role="alert" data-whatsapp-paused className="mt-4 flex gap-3 rounded-2xl border border-accent/40 bg-accent/10 p-4 text-sm">
+          <AlertTriangle className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden="true" />
+          <p>
+            <span className="font-semibold text-cream">{i.paused}</span>
+            <span className="mt-1 block text-stone">{i.pausedBody}</span>
+          </p>
+        </div>
+      )}
 
       {conversations.length === 0 ? (
         <p className="mt-6 flex items-center gap-3 rounded-2xl border border-panel-3 bg-panel p-6 text-stone">
@@ -85,6 +96,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
                 key={selected.id}
                 conversation={{ ...selected, channelLabel: CHANNEL_LABEL[selected.channel] ?? selected.channel }}
                 messages={messages}
+                templates={templates}
               />
             </div>
           ) : (

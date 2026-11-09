@@ -1092,7 +1092,7 @@
   },
   "chat": {
     "welcome": "Welcome to {store}! Tell me what you're looking for, in any language, and I'll help you order.",
-    "noStore": "Hello! I answer for the shops on AxoriOS. Please open this chat from a shop's page, using its Telegram button.",
+    "noStore": "Hello! I answer for the shops on AxoriOS. Please open this chat from a shop's page, using its chat button.",
     "storeClosed": "Sorry, that shop isn't open right now. Please check the link with the shop.",
     "textOnly": "Sorry, I can only read text messages for now. Please type what you need.",
     "busy": "We're getting a lot of messages today. Please try again tomorrow, or order on the shop's page.",
@@ -1338,7 +1338,20 @@
       "seller": "You",
       "back": "All chats",
       "needsReply": "Needs a reply",
-      "labelsLabel": "Labels"
+      "labelsLabel": "Labels",
+      "windowLeft": "Reply window: {time} left",
+      "windowClosed": "WhatsApp's 24-hour reply window has closed. You can only send an approved template until the customer writes again.",
+      "templateLabel": "Template",
+      "sendTemplate": "Send template",
+      "templateNote": "Templates must be approved on your WhatsApp Business account. Kapso's sandbox doesn't send them.",
+      "templates": {
+        "helloWorld": "hello_world: Meta's default greeting",
+        "orderUpdate": "order_update: there's news about your order",
+        "followUp": "follow_up: checking in after your last message"
+      },
+      "paused": "WhatsApp paused: add Kapso credits",
+      "pausedBody": "Kapso couldn't pay Meta's fee for the last message, so nothing more goes out on WhatsApp. Top up your Kapso project and send again.",
+      "windowFailed": "The 24-hour window has closed. Pick a template instead."
     },
     "integrations": {
       "title": "Integrations",
@@ -1359,6 +1372,7 @@
       "askSync": "Ask the agent to copy",
       "whatsapp": "WhatsApp",
       "whatsappBody": "Built and switched off until it's tested end to end with a real account.",
+      "whatsappKapsoBody": "Replies go out through Kapso. A customer starts the chat by sending \"start {slug}\" to your WhatsApp business number. Messages sent to your personal WhatsApp never reach AxoriOS.",
       "needsPublish": "Publish your store to get a chat link."
     },
     "campaignsSubtitle": "On-brand posts the agent made for your store. Edit captions, schedule them or download the pack.",

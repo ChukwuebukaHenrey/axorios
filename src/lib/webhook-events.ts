@@ -2,7 +2,7 @@ import "server-only";
 import type { Json } from "@/lib/database.types";
 import { serviceRoleClient } from "@/lib/supabase/service-role";
 
-export type WebhookProvider = "paypal" | "twilio" | "telegram";
+export type WebhookProvider = "paypal" | "twilio" | "telegram" | "kapso";
 
 export async function markWebhookProcessed(provider: WebhookProvider, eventId: string): Promise<void> {
   const { error } = await serviceRoleClient()

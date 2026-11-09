@@ -28,6 +28,7 @@ async function callApi(method: string, body: Record<string, unknown>): Promise<v
 
 export const telegram: Channel = {
   name: "telegram",
+  webhookProvider: "telegram",
 
   async verify(req) {
     const header = req.headers.get("x-telegram-bot-api-secret-token");

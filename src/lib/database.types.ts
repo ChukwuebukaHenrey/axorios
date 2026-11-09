@@ -1352,6 +1352,7 @@ export type Database = {
           updated_at: string
           vat_rate_bp: number
           vat_registered: boolean
+          whatsapp_paused_at: string | null
         }
         Insert: {
           agent_requests_date?: string
@@ -1375,6 +1376,7 @@ export type Database = {
           updated_at?: string
           vat_rate_bp?: number
           vat_registered?: boolean
+          whatsapp_paused_at?: string | null
         }
         Update: {
           agent_requests_date?: string
@@ -1398,6 +1400,7 @@ export type Database = {
           updated_at?: string
           vat_rate_bp?: number
           vat_registered?: boolean
+          whatsapp_paused_at?: string | null
         }
         Relationships: []
       }

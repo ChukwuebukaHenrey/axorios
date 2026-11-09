@@ -61,11 +61,18 @@ export async function boundStore(channel: ChannelName, customerRef: string): Pro
   return store && toBound(store);
 }
 
-export async function openConversation(storeId: string, channel: ChannelName, customerRef: string) {
+/** `windowEndsAt` (WhatsApp) moves the 24 h reply window forward with each customer message. */
+export async function openConversation(storeId: string, channel: ChannelName, customerRef: string, windowEndsAt?: string) {
   const { data, error } = await serviceRoleClient()
     .from("conversations")
     .upsert(
-      { store_id: storeId, channel, customer_ref: customerRef, last_message_at: new Date().toISOString() },
+      {
+        store_id: storeId,
+        channel,
+        customer_ref: customerRef,
+        last_message_at: new Date().toISOString(),
+        ...(windowEndsAt ? { whatsapp_window_ends_at: windowEndsAt } : {}),
+      },
       { onConflict: "store_id,channel,customer_ref" },
     )
     .select("id, agent_paused")

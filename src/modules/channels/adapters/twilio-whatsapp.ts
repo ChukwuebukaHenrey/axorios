@@ -20,6 +20,7 @@ function twilioEnv() {
 /** Dormant behind WHATSAPP_ENABLED: never run end to end, so nothing may claim WhatsApp works yet. */
 export const twilioWhatsApp: Channel = {
   name: "whatsapp",
+  webhookProvider: "twilio",
 
   async verify(req) {
     const signature = req.headers.get("x-twilio-signature");

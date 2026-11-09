@@ -2,6 +2,7 @@ import { ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { env } from "@/lib/env";
 import { t } from "@/lib/messages";
 import { customerChatUrl, isChannelEnabled } from "@/modules/channels";
 import { shopConnection } from "@/modules/platforms";
@@ -67,7 +68,7 @@ export default async function IntegrationsPage() {
             {shop ? g.askSync : g.askConnect}
           </Link>
         </Row>
-        <Row icon={icon("/images/icons/whatsapp.png")} title={g.whatsapp} status={whatsapp ? g.connected : g.off} tone={whatsapp ? "on" : "off"} body={g.whatsappBody} />
+        <Row icon={icon("/images/icons/whatsapp.png")} title={g.whatsapp} status={whatsapp ? g.connected : g.off} tone={whatsapp ? "on" : "off"} body={whatsapp && env().WHATSAPP_PROVIDER === "kapso" ? g.whatsappKapsoBody.replace("{slug}", store.slug) : g.whatsappBody} />
       </ul>
     </main>
   );

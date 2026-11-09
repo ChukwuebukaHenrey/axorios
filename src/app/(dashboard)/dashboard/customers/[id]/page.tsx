@@ -39,7 +39,7 @@ function Panel({
   action?: ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-panel-3 bg-panel p-5">
+    <section className="rounded-xl border border-panel-3 bg-panel p-5">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-base font-semibold text-cream">{title}</h2>
         {action}
@@ -86,7 +86,7 @@ export default async function CustomerPage({
   const phoneDigits = contact.phone?.replace(/\D/g, "");
 
   return (
-    <main className="flex-1 overflow-y-auto px-4 pb-10 sm:px-6 lg:px-8">
+    <main className="flex-1 overflow-y-auto px-4 pt-6 pb-10 sm:px-6 lg:px-8">
       <Link
         href="/dashboard/customers"
         className="mt-2 inline-flex items-center gap-1 text-sm text-stone hover:text-cream"

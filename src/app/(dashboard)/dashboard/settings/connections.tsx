@@ -43,7 +43,7 @@ function Card(props: {
   const live = status === "connected" || status === "sandbox";
   const list = connection ? toolsFor(connection) : [];
   return (
-    <li id={`conn-${props.id}`} className="rounded-2xl border border-panel-3 bg-panel p-5">
+    <li id={`conn-${props.id}`} className="rounded-xl border border-panel-3 bg-panel p-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
         <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-panel-2">{props.icon}</span>
         <div className="min-w-0 flex-1">

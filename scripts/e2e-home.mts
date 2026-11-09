@@ -71,9 +71,7 @@ try {
       `/dashboard/money?tab=in&period=${p}`,
       `document.body.textContent.includes('Sales per day')`,
     );
-    const money = await b.evaluate<string>(
-      `[...document.querySelectorAll('main p')].find(p => p.textContent === 'Sales').parentElement.parentElement.querySelector('p.text-3xl').textContent`,
-    );
+    const money = await text('[data-stat="Sales"]');
     check(money === home, `Money Sales ${p} = Home (${money})`);
     await b.go(
       `/dashboard/store?period=${p}`,
@@ -153,7 +151,7 @@ try {
   await b.go("/dashboard/store?tab=details", `!!document.querySelector('dl')`);
   check(
     await b.evaluate<boolean>(
-      `document.querySelector('dl').textContent.includes('NGN') && document.querySelector('dl').textContent.includes('Lekki')`,
+      `(t => t.includes('NGN') && t.includes('Lekki'))([...document.querySelectorAll('main dl')].map(d => d.textContent).join(' '))`,
     ),
     "details: currency and delivery zones",
   );

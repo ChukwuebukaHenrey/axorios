@@ -9,6 +9,8 @@ import {
   loadMetricOrders,
 } from "@/modules/analytics";
 import { duplicateGroups, marketingOptIns } from "@/modules/customers";
+import { NativeSelect } from "@/components/ui/native-select";
+import { Segmented } from "@/components/ui/segmented";
 import { PageHeader } from "../../page-header";
 import { requireSeller } from "../../session";
 import { LabelRow, MergeButton, NewLabel } from "./controls";
@@ -111,30 +113,18 @@ export default async function CustomersPage({
   const groups = tab === "duplicates" ? duplicateGroups(contacts) : [];
 
   return (
-    <main className="flex-1 overflow-y-auto px-4 pb-10 sm:px-6 lg:px-8">
+    <main className="flex-1 overflow-y-auto px-4 pt-6 pb-10 sm:px-6 lg:px-8">
       <PageHeader title={c.title} subtitle={c.subtitle} />
-      <nav
-        aria-label={c.title}
-        className="-mx-1 mt-6 flex max-w-full gap-1 overflow-x-auto px-1"
-      >
-        {TABS.map((tb) => (
-          <Link
-            key={tb}
-            href={
-              tb === "contacts"
-                ? "/dashboard/customers"
-                : `/dashboard/customers?tab=${tb}`
-            }
-            aria-current={tab === tb ? "page" : undefined}
-            className={`shrink-0 rounded-lg px-3 py-1.5 text-sm transition ${tab === tb ? "bg-panel-3 font-medium text-cream" : "text-stone hover:text-cream"}`}
-          >
-            {c.tabs[tb]}
-          </Link>
-        ))}
-      </nav>
+      <div className="mt-6 border-b border-panel-3 pb-4">
+        <Segmented
+          label={c.title}
+          value={tab}
+          items={TABS.map((tb) => ({ value: tb, label: c.tabs[tb], href: tb === "contacts" ? "/dashboard/customers" : `/dashboard/customers?tab=${tb}` }))}
+        />
+      </div>
 
       {tab === "contacts" && (
-        <section className="mt-5 rounded-2xl border border-panel-3 bg-panel p-5">
+        <section className="mt-5 rounded-xl border border-panel-3 bg-panel p-5">
           <form
             className="flex flex-wrap items-center gap-2"
             action="/dashboard/customers"
@@ -147,13 +137,12 @@ export default async function CustomersPage({
               name="q"
               defaultValue={sp.q}
               placeholder={c.search}
-              className="h-9 w-full max-w-xs rounded-md border border-input bg-input/30 px-3 text-sm text-cream placeholder:text-stone focus-visible:ring-2 focus-visible:ring-lime focus-visible:outline-none"
+              className="h-8 w-full max-w-xs rounded-md border border-panel-3 bg-panel px-3 text-sm text-cream outline-none placeholder:text-stone/80 focus-visible:border-lime/50 focus-visible:ring-2 focus-visible:ring-lime/20"
             />
-            <select
+            <NativeSelect
               name="label"
               defaultValue={sp.label ?? ""}
               aria-label={c.allLabels}
-              className="h-9 rounded-md border border-input bg-panel-2 px-2 text-sm text-cream"
             >
               <option value="">{c.allLabels}</option>
               {userLabels.map((l) => (
@@ -161,20 +150,19 @@ export default async function CustomersPage({
                   {l.name}
                 </option>
               ))}
-            </select>
-            <select
+            </NativeSelect>
+            <NativeSelect
               name="type"
               defaultValue={sp.type ?? ""}
               aria-label={c.allTypes}
-              className="h-9 rounded-md border border-input bg-panel-2 px-2 text-sm text-cream"
             >
               <option value="">{c.allTypes}</option>
               <option value="customer">{c.type.customer}</option>
               <option value="lead">{c.type.lead}</option>
-            </select>
+            </NativeSelect>
             <button
               type="submit"
-              className="h-9 rounded-md bg-lime px-3 text-sm font-medium text-ink"
+              className="h-8 rounded-md border border-panel-3 bg-panel-2 px-3 text-sm text-cream transition-colors hover:bg-panel-3"
             >
               {c.filter}
             </button>
@@ -187,9 +175,9 @@ export default async function CustomersPage({
             <p className="mt-6 text-sm text-stone">{c.none}</p>
           ) : (
             <div className="-mx-5 mt-4 overflow-x-auto">
-              <table className="w-full min-w-[46rem] text-sm">
+              <table className="w-full min-w-[52rem] text-sm">
                 <thead>
-                  <tr className="border-b border-panel-3 text-xs tracking-wide text-stone uppercase">
+                  <tr className="border-b border-t border-panel-3 bg-panel-2/40 text-xs text-stone">
                     {[
                       c.colName,
                       c.colLabels,
@@ -202,7 +190,7 @@ export default async function CustomersPage({
                       <th
                         key={h}
                         scope="col"
-                        className={`px-5 py-2 font-medium ${i >= 4 ? "text-right" : "text-left"}`}
+                        className={`px-5 py-2 font-medium whitespace-nowrap ${i >= 4 ? "text-right" : "text-left"}`}
                       >
                         {h}
                       </th>
@@ -213,7 +201,7 @@ export default async function CustomersPage({
                   {rows.map((x) => {
                     const st = stats.get(x.id);
                     return (
-                      <tr key={x.id} data-contact={x.id}>
+                      <tr key={x.id} data-contact={x.id} className="transition-colors hover:bg-panel-2/50">
                         <td className="px-5 py-2.5">
                           <Link
                             href={`/dashboard/customers/${x.id}`}
@@ -235,7 +223,7 @@ export default async function CustomersPage({
                               .map((l) => (
                                 <span
                                   key={l!.id}
-                                  className="inline-flex items-center gap-1 rounded-full border border-panel-3 px-2 py-0.5 text-xs text-cream/85"
+                                  className="inline-flex items-center gap-1 rounded-md border border-panel-3 px-1.5 py-0.5 text-xs whitespace-nowrap text-cream/85"
                                 >
                                   <span
                                     className="size-1.5 rounded-full"
@@ -250,7 +238,7 @@ export default async function CustomersPage({
                         <td className="px-5 py-2.5 text-cream/80">
                           {st ? c.type.customer : c.type.lead}
                         </td>
-                        <td className="px-5 py-2.5 text-xs text-stone">
+                        <td className="px-5 py-2.5 text-xs whitespace-nowrap text-stone">
                           {optedIn.has(x.id) ? (
                             <span className="text-lime">{c.consentYes}</span>
                           ) : (
@@ -263,7 +251,7 @@ export default async function CustomersPage({
                         <td className="px-5 py-2.5 text-right font-mono text-cream/90 tabular-nums">
                           {st ? formatMinor(st.sales, store.currency) : "—"}
                         </td>
-                        <td className="px-5 py-2.5 text-right text-stone">
+                        <td className="px-5 py-2.5 text-right whitespace-nowrap text-stone">
                           {day(x.first_seen_at)}
                         </td>
                       </tr>
@@ -309,7 +297,7 @@ export default async function CustomersPage({
       )}
 
       {tab === "labels" && (
-        <section className="mt-5 rounded-2xl border border-panel-3 bg-panel p-5">
+        <section className="mt-5 rounded-xl border border-panel-3 bg-panel p-5">
           <p className="mb-4 text-sm text-stone">{c.labelsNote}</p>
           <NewLabel
             t={{ name: c.labelName, colour: c.labelColour, add: c.addLabel }}
@@ -351,7 +339,7 @@ export default async function CustomersPage({
       )}
 
       {tab === "duplicates" && (
-        <section className="mt-5 rounded-2xl border border-panel-3 bg-panel p-5">
+        <section className="mt-5 rounded-xl border border-panel-3 bg-panel p-5">
           <p className="mb-4 text-sm text-stone">{c.dupNote}</p>
           {groups.length === 0 ? (
             <p className="text-sm text-stone">{c.dupNone}</p>

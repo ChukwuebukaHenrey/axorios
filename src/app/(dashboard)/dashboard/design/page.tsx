@@ -1,12 +1,13 @@
 import { FileText } from "lucide-react";
 import Link from "next/link";
 import { connection } from "next/server";
-import type { ReactNode } from "react";
+import { NativeSelect } from "@/components/ui/native-select";
+import { Segmented } from "@/components/ui/segmented";
 import { t } from "@/lib/messages";
 import { getBrandKit, listOwnerStores } from "@/modules/brand";
 import { listMedia, mediaUsage } from "@/modules/media";
 import { listVersions, MARKET_PRESETS, TEMPLATE_VERSIONS, type MarketPresetId } from "@/modules/storefront";
-import { PageHeader } from "../../page-header";
+import { PageHeader, Panel } from "../../page-header";
 import { requireSeller } from "../../session";
 import { AskButton } from "../money/ask-button";
 import { DeleteMedia, MediaUpload, TagEditor } from "./controls";
@@ -19,21 +20,6 @@ type Tab = (typeof TABS)[number];
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 const isPreset = (id: string): id is MarketPresetId => id in MARKET_PRESETS;
 
-function Panel({ title, note, action, children }: { title: string; note?: string; action?: ReactNode; children: ReactNode }) {
-  return (
-    <section className="rounded-2xl border border-panel-3 bg-panel p-5">
-      <div className="mb-1 flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h2 className="text-base font-semibold text-cream">{title}</h2>
-          {note && <p className="mt-0.5 text-sm text-stone">{note}</p>}
-        </div>
-        {action}
-      </div>
-      {children}
-    </section>
-  );
-}
-
 export default async function DesignPage({ searchParams }: { searchParams: Promise<{ tab?: string; q?: string; tag?: string }> }) {
   await connection();
   const { supabase, user } = await requireSeller();
@@ -43,20 +29,11 @@ export default async function DesignPage({ searchParams }: { searchParams: Promi
   const storeName = new Map(stores.map((s) => [s.id, s.name ?? s.slug]));
 
   return (
-    <main className="flex-1 overflow-y-auto px-4 pb-10 sm:px-6 lg:px-8">
+    <main className="flex-1 overflow-y-auto px-4 pt-6 pb-10 sm:px-6 lg:px-8">
       <PageHeader title={d.title} subtitle={d.subtitle} />
-      <nav aria-label={d.title} className="-mx-1 mt-6 flex max-w-full gap-1 overflow-x-auto px-1">
-        {TABS.map((tb) => (
-          <Link
-            key={tb}
-            href={tb === "media" ? "/dashboard/design" : `/dashboard/design?tab=${tb}`}
-            aria-current={tab === tb ? "page" : undefined}
-            className={`shrink-0 rounded-lg px-3 py-1.5 text-sm transition ${tab === tb ? "bg-panel-3 font-medium text-cream" : "text-stone hover:text-cream"}`}
-          >
-            {d.tabs[tb]}
-          </Link>
-        ))}
-      </nav>
+      <div className="mt-6 border-b border-panel-3 pb-4">
+        <Segmented label={d.title} value={tab} items={TABS.map((tb) => ({ value: tb, label: d.tabs[tb], href: tb === "media" ? "/dashboard/design" : `/dashboard/design?tab=${tb}` }))} />
+      </div>
       <div className="mt-5 flex flex-col gap-5">
         {tab === "media" && <MediaTab supabase={supabase} storeName={storeName} q={sp.q} tag={sp.tag} />}
         {tab === "brand" && <BrandTab stores={stores} />}
@@ -84,7 +61,7 @@ async function MediaTab({ supabase, storeName, q, tag }: { supabase: Session; st
       <Panel title={m.uploadTitle} note={m.uploadBody}>
         <MediaUpload />
       </Panel>
-      <section className="rounded-2xl border border-panel-3 bg-panel p-5">
+      <section className="rounded-xl border border-panel-3 bg-panel p-5">
         <form className="flex flex-wrap items-center gap-2" action="/dashboard/design">
           <label className="sr-only" htmlFor="media-q">
             {m.search}
@@ -94,20 +71,20 @@ async function MediaTab({ supabase, storeName, q, tag }: { supabase: Session; st
             name="q"
             defaultValue={q}
             placeholder={m.search}
-            className="h-9 min-w-0 flex-1 rounded-lg border border-panel-3 bg-panel-2 px-3 text-sm text-cream placeholder:text-stone/70 outline-none focus:border-cream/30 sm:max-w-xs"
+            className="h-8 min-w-0 flex-1 rounded-md border border-panel-3 bg-panel px-3 text-sm text-cream outline-none placeholder:text-stone/80 focus-visible:border-lime/50 focus-visible:ring-2 focus-visible:ring-lime/20 sm:max-w-xs"
           />
           <label className="sr-only" htmlFor="media-tag">
             {m.allTags}
           </label>
-          <select id="media-tag" name="tag" defaultValue={tag ?? ""} className="h-9 max-w-full rounded-lg border border-panel-3 bg-panel-2 px-2 text-sm text-cream">
+          <NativeSelect id="media-tag" name="tag" defaultValue={tag ?? ""}>
             <option value="">{m.allTags}</option>
             {tags.map((x) => (
               <option key={x} value={x}>
                 {x}
               </option>
             ))}
-          </select>
-          <button type="submit" className="h-9 rounded-lg bg-panel-3 px-3 text-sm text-cream hover:bg-panel-3/70">
+          </NativeSelect>
+          <button type="submit" className="h-8 rounded-md border border-panel-3 bg-panel-2 px-3 text-sm text-cream transition-colors hover:bg-panel-3">
             {m.filter}
           </button>
           <span className="ml-auto text-sm text-stone">{m.count.replace("{count}", String(items.length))}</span>
@@ -116,7 +93,7 @@ async function MediaTab({ supabase, storeName, q, tag }: { supabase: Session; st
         {items.length === 0 ? (
           <p className="mt-6 text-sm text-stone">{all.length === 0 ? m.none : m.noMatch}</p>
         ) : (
-          <ul className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <ul className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {items.map((item) => {
               const uses = usage.get(item.id) ?? [];
               return (

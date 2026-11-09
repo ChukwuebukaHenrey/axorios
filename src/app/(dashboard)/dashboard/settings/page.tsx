@@ -46,7 +46,7 @@ function SectionNav({ current }: { current: Section }) {
 
 function Panel({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="rounded-2xl border border-panel-3 bg-panel p-5 sm:p-6">
+    <section className="rounded-xl border border-panel-3 bg-panel p-5 sm:p-6">
       <h2 className="text-xl font-semibold text-cream">{title}</h2>
       <div className="mt-4 flex flex-col gap-4 text-sm text-cream/80">{children}</div>
     </section>
@@ -72,7 +72,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const { supabase, user, store } = await requireSeller();
 
   return (
-    <main className="flex-1 overflow-y-auto px-4 pb-10 sm:px-6 lg:px-8">
+    <main className="flex-1 overflow-y-auto px-4 pt-6 pb-10 sm:px-6 lg:px-8">
       <PageHeader title={s.title} subtitle={s.subtitle} />
       <div className="mt-6 flex flex-col gap-6 lg:flex-row">
         <SectionNav current={section} />

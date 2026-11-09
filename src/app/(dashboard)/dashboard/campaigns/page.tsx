@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import type { ReactNode } from "react";
+import { Button } from "@/components/ui/button";
+import { Segmented } from "@/components/ui/segmented";
 import { t } from "@/lib/messages";
 import { formatMinor } from "@/lib/money";
 import {
@@ -26,7 +27,7 @@ import {
 import { listPosts } from "@/modules/creative";
 import { publishTargets } from "@/modules/publishers";
 import { DayBars, RankBars } from "../../charts";
-import { PageHeader } from "../../page-header";
+import { PageHeader, Panel, StatTile as Stat } from "../../page-header";
 import { requireSeller } from "../../session";
 import { CHANNEL_LABEL } from "../orders/labels";
 import { CampaignBoard } from "./campaign-board";
@@ -47,54 +48,14 @@ const day = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { day: "n
 const tracked = (c: { sources: string; posts: number }) => c.sources === "orders" || c.posts > 0;
 const channelLabel = (c: string) => CHANNEL_LABEL[c === "telegram_channel" ? "telegram" : c] ?? c;
 
-function Stat({ label, value, detail }: { label: string; value: string; detail?: string }) {
-  return (
-    <div className="rounded-2xl border border-panel-3 bg-panel p-5">
-      <p className="text-sm text-stone">{label}</p>
-      <p data-stat={label} className="mt-2 text-3xl font-semibold tracking-tight text-cream tabular-nums">
-        {value}
-      </p>
-      {detail && <p className="mt-1 text-sm text-stone">{detail}</p>}
-    </div>
-  );
-}
-
-function Panel({ title, note, action, children }: { title: string; note?: string; action?: ReactNode; children: ReactNode }) {
-  return (
-    <section className="rounded-2xl border border-panel-3 bg-panel p-5">
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-base font-semibold text-cream">{title}</h2>
-          {note && <p className="mt-0.5 text-sm text-stone">{note}</p>}
-        </div>
-        {action}
-      </div>
-      {children}
-    </section>
-  );
-}
-
 function Pills<T extends string>({ items, current, href, label, names }: { items: readonly T[]; current: T; href: (v: T) => string; label: string; names: Record<T, string> }) {
-  return (
-    <nav aria-label={label} className="-mx-1 flex max-w-full gap-1 overflow-x-auto px-1">
-      {items.map((v) => (
-        <Link
-          key={v}
-          href={href(v)}
-          aria-current={current === v ? "true" : undefined}
-          className={`shrink-0 rounded-md px-2.5 py-1 text-xs transition ${current === v ? "bg-panel-3 font-medium text-cream" : "text-stone hover:text-cream"}`}
-        >
-          {names[v]}
-        </Link>
-      ))}
-    </nav>
-  );
+  return <Segmented size="sm" label={label} value={current} items={items.map((v) => ({ value: v, label: names[v], href: href(v) }))} />;
 }
 
-const th = "px-3 py-2 text-left text-xs font-medium text-stone";
-const thNum = "px-3 py-2 text-right text-xs font-medium text-stone";
-const td = "px-3 py-2.5 text-cream/90";
-const tdNum = "px-3 py-2.5 text-right font-mono text-cream/90 tabular-nums";
+const th = "px-3 py-2 first:pl-5 last:pr-5 text-left text-xs font-medium text-stone";
+const thNum = "px-3 py-2 first:pl-5 last:pr-5 text-right text-xs font-medium text-stone";
+const td = "px-3 py-2.5 first:pl-5 last:pr-5 text-cream/90";
+const tdNum = "px-3 py-2.5 first:pl-5 last:pr-5 text-right font-mono text-cream/90 tabular-nums";
 
 export default async function MarketingPage({ searchParams }: { searchParams: Promise<{ tab?: string; period?: string; by?: string; sort?: string }> }) {
   await connection();
@@ -119,41 +80,16 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
 
   const header = (
     <PageHeader title={t.app.nav.marketing} subtitle={t.app.campaignsSubtitle}>
-      <Link
-        href={`/build?prompt=${encodeURIComponent(t.app.cards.makePostsPrompt)}`}
-        className="inline-flex h-11 items-center rounded-lg bg-lime px-4 text-sm font-semibold text-black transition hover:bg-lime/85"
-      >
-        {t.app.cards.makePosts}
-      </Link>
+      <Button asChild>
+        <Link href={`/build?prompt=${encodeURIComponent(t.app.cards.makePostsPrompt)}`}>{t.app.cards.makePosts}</Link>
+      </Button>
     </PageHeader>
   );
   const tabs = (
-    <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-      <nav aria-label={t.app.nav.marketing} className="-mx-1 flex max-w-full gap-1 overflow-x-auto px-1">
-        {TABS.map((tb) => (
-          <Link
-            key={tb}
-            href={link({ tab: tb })}
-            aria-current={tab === tb ? "page" : undefined}
-            className={`shrink-0 rounded-lg px-3 py-1.5 text-sm transition ${tab === tb ? "bg-panel-3 font-medium text-cream" : "text-stone hover:text-cream"}`}
-          >
-            {m.tabs[tb]}
-          </Link>
-        ))}
-      </nav>
+    <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-b border-panel-3 pb-4">
+      <Segmented label={t.app.nav.marketing} value={tab} items={TABS.map((tb) => ({ value: tb, label: m.tabs[tb], href: link({ tab: tb }) }))} />
       {tab !== "posts" && (
-        <nav aria-label={t.app.money.periodLabel} className="flex rounded-lg border border-panel-3 p-0.5">
-          {PERIODS.map((p) => (
-            <Link
-              key={p}
-              href={link({ period: p })}
-              aria-current={period === p ? "true" : undefined}
-              className={`rounded-md px-2.5 py-1 text-xs transition ${period === p ? "bg-lime font-semibold text-ink" : "text-stone hover:text-cream"}`}
-            >
-              {t.app.money.periods[p]}
-            </Link>
-          ))}
-        </nav>
+        <Segmented size="sm" label={t.app.money.periodLabel} value={period} items={PERIODS.map((p) => ({ value: p, label: t.app.money.periods[p], href: link({ period: p }) }))} />
       )}
     </div>
   );
@@ -161,7 +97,7 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
   if (tab === "posts") {
     const [posts, targets] = await Promise.all([listPosts(supabase, store.id), publishTargets(store.id)]);
     return (
-      <main className="flex-1 overflow-y-auto px-4 pb-10 sm:px-6 lg:px-8">
+      <main className="flex-1 overflow-y-auto px-4 pt-6 pb-10 sm:px-6 lg:px-8">
         {header}
         {tabs}
         <div className="mt-5">
@@ -192,7 +128,7 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
     // Campaign posts keep their lifetime numbers whatever the period, like posts.
     const camp = campaignPerformance(inRange, postPerformance({ posts, metrics, clicks, orders }), orders);
     return (
-      <main className="flex-1 overflow-y-auto px-4 pb-10 sm:px-6 lg:px-8">
+      <main className="flex-1 overflow-y-auto px-4 pt-6 pb-10 sm:px-6 lg:px-8">
         {header}
         {tabs}
         <div className="mt-5">
@@ -200,9 +136,9 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
             {camp.length === 0 ? (
               <p className="text-sm text-stone">{m.noCampaigns}</p>
             ) : (
-              <div className="-mx-5 overflow-x-auto">
+              <div className="-mx-5 -mb-5 overflow-x-auto first:-mt-5">
                 <table className="w-full min-w-[760px] text-sm" data-table="campaigns">
-                  <thead className="border-b border-panel-3">
+                  <thead className="border-b border-panel-3 bg-panel-2/40">
                     <tr>
                       <th className={th}>{m.colCampaign}</th>
                       <th className={th}>{m.colDate}</th>
@@ -270,7 +206,7 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
   const byNote = by === "product" ? m.productNote : by === "weekday" || by === "daypart" ? m.timesIn.replace("{zone}", zone) : undefined;
 
   return (
-    <main className="flex-1 overflow-y-auto px-4 pb-10 sm:px-6 lg:px-8">
+    <main className="flex-1 overflow-y-auto px-4 pt-6 pb-10 sm:px-6 lg:px-8">
       {header}
       {tabs}
       <div className="mt-5 space-y-4">
@@ -298,7 +234,7 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
               </div>
               <div className="-mx-5 overflow-x-auto lg:col-span-3 lg:mx-0">
                 <table className="w-full min-w-[520px] text-sm" data-table="breakdown">
-                  <thead className="border-b border-panel-3">
+                  <thead className="border-b border-panel-3 bg-panel-2/40">
                     <tr>
                       <th className={th}>{m.by[by]}</th>
                       <th className={thNum}>{m.posts}</th>
@@ -341,9 +277,9 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
 
 function PostTable({ rows, money, productName }: { rows: PostPerf[]; money: (v: number) => string; productName: Map<string, string> }) {
   return (
-    <div className="-mx-5 overflow-x-auto">
+    <div className="-mx-5 -mb-5 overflow-x-auto first:-mt-5">
       <table className="w-full min-w-[860px] text-sm" data-table="posts">
-        <thead className="border-b border-panel-3">
+        <thead className="border-b border-panel-3 bg-panel-2/40">
           <tr>
             <th className={th}>{m.colDate}</th>
             <th className={th}>{m.colChannel}</th>

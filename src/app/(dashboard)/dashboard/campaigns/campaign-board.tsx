@@ -1,5 +1,7 @@
 "use client";
 
+import { Download, Megaphone } from "lucide-react";
+import { EmptyState } from "../../page-header";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -21,7 +23,7 @@ export function CampaignBoard({ posts, canPublish }: { posts: Post[]; canPublish
   }, [generating, scheduled, router]);
 
   if (posts.length === 0) {
-    return <p className="rounded-2xl border border-panel-3 bg-panel p-6 text-stone">{t.campaigns.empty}</p>;
+    return <EmptyState icon={<Megaphone />} title={t.campaigns.empty} />;
   }
 
   const campaigns = [...new Set(posts.map((p) => p.campaign_id).filter(Boolean))] as string[];
@@ -31,7 +33,7 @@ export function CampaignBoard({ posts, canPublish }: { posts: Post[]; canPublish
         const group = posts.filter((p) => p.campaign_id === campaignId);
         return (
           <section key={campaignId}>
-            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
               {group.map((post) => (
                 <li key={post.id}>
                   <PostCard post={post} canPublish={canPublish} />
@@ -39,8 +41,8 @@ export function CampaignBoard({ posts, canPublish }: { posts: Post[]; canPublish
               ))}
             </ul>
             {group.some((p) => p.media_url) && (
-              <a href={`/api/campaigns/${campaignId}/pack`} className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-lime underline">
-                {t.campaigns.downloadCampaign}
+              <a href={`/api/campaigns/${campaignId}/pack`} className="mt-3 inline-flex h-8 items-center gap-1.5 rounded-md border border-panel-3 bg-panel px-3 text-sm text-cream transition-colors hover:bg-panel-2">
+                <Download className="size-4" aria-hidden="true" /> {t.campaigns.downloadCampaign}
               </a>
             )}
           </section>

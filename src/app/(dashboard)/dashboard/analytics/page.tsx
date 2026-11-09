@@ -56,9 +56,9 @@ export default async function AnalyticsPage() {
 
   if (env().AG_STUDIO_ENABLED !== "true") {
     return (
-      <main className="flex-1 overflow-y-auto px-4 pb-10 sm:px-6 lg:px-8">
+      <main className="flex-1 overflow-y-auto px-4 pt-6 pb-10 sm:px-6 lg:px-8">
         <PageHeader title={a.title} subtitle={subtitle} />
-        <section className="mt-6 rounded-2xl border border-panel-3 bg-panel p-5">
+        <section className="mt-6 rounded-xl border border-panel-3 bg-panel p-5">
           <h2 className="text-base font-semibold text-cream">{a.basicTitle}</h2>
           <p className="mt-1 text-sm text-stone">{a.basicNote}</p>
           <table className="mt-4 w-full text-sm">
@@ -156,7 +156,7 @@ export default async function AnalyticsPage() {
   ) as Record<(typeof PERIODS)[number], { from: string; to: string }>;
 
   return (
-    <main className="flex flex-1 flex-col overflow-y-auto px-4 pb-10 sm:px-6 lg:px-8">
+    <main className="flex flex-1 flex-col overflow-y-auto px-4 pt-6 pb-10 sm:px-6 lg:px-8">
       <PageHeader title={a.title} subtitle={subtitle} />
       {!rows.paypalLive && (
         <p className="mt-3 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-2 text-sm text-amber-100">
@@ -165,7 +165,7 @@ export default async function AnalyticsPage() {
       )}
       <div className="mt-5 flex min-h-0 flex-1 flex-col">
         {rows.orders.length === 0 ? (
-          <p className="rounded-2xl border border-panel-3 bg-panel p-6 text-stone">
+          <p className="rounded-xl border border-panel-3 bg-panel p-6 text-stone">
             {a.empty}
           </p>
         ) : (

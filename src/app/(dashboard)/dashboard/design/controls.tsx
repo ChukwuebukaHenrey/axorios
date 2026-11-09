@@ -21,7 +21,7 @@ export function MediaUpload() {
 
   return (
     <form
-      className="mt-4 flex flex-col gap-3"
+      className="flex flex-col gap-2"
       onSubmit={async (e) => {
         e.preventDefault();
         if (!file) return;
@@ -33,7 +33,7 @@ export function MediaUpload() {
         }
       }}
     >
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <input
           ref={fileRef}
           id="media-file"
@@ -42,31 +42,28 @@ export function MediaUpload() {
           className="sr-only"
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
         />
-        <Button type="button" variant="outline" onClick={() => fileRef.current?.click()}>
-          <Upload aria-hidden="true" /> {m.choose}
+        <Button type="button" variant="outline" onClick={() => fileRef.current?.click()} className="max-w-full shrink-0 sm:max-w-56">
+          <Upload aria-hidden="true" /> <span className="truncate">{file?.name ?? m.choose}</span>
         </Button>
-        <span className="min-w-0 truncate text-sm text-stone">{file?.name}</span>
-      </div>
-      <label className="flex flex-col gap-1 text-sm text-stone">
-        {m.note}
+        <label className="sr-only" htmlFor="media-note">
+          {m.note}
+        </label>
         <input
           id="media-note"
           value={note}
           onChange={(e) => setNote(e.target.value)}
           maxLength={300}
-          placeholder={m.notePlaceholder}
-          className="h-10 rounded-lg border border-panel-3 bg-panel-2 px-3 text-base text-cream placeholder:text-stone/70 outline-none focus:border-cream/30"
+          placeholder={`${m.note} · ${m.notePlaceholder}`}
+          className="h-9 min-w-0 flex-1 rounded-md border border-panel-3 bg-panel-2 px-3 text-sm text-cream outline-none placeholder:text-stone/80 focus-visible:border-lime/50 focus-visible:ring-2 focus-visible:ring-lime/20"
         />
-      </label>
-      <div className="flex flex-wrap items-center gap-3">
-        <Button type="submit" disabled={!file || busy}>
+        <Button type="submit" disabled={!file || busy} className="shrink-0">
           {busy ? m.uploading : m.upload}
         </Button>
-        <p role="status" aria-live="polite" className={`text-sm ${state.status === "error" ? "text-red-300" : "text-lime"}`}>
-          {state.status === "error" && state.message}
-          {state.status === "done" && m.uploaded.replace("{name}", state.item.name).replace("{tags}", state.item.tags.join(", ") || "—")}
-        </p>
       </div>
+      <p role="status" aria-live="polite" className={`text-sm empty:hidden ${state.status === "error" ? "text-red-300" : "text-lime"}`}>
+        {state.status === "error" && state.message}
+        {state.status === "done" && m.uploaded.replace("{name}", state.item.name).replace("{tags}", state.item.tags.join(", ") || "—")}
+      </p>
     </form>
   );
 }

@@ -7,7 +7,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { connection } from "next/server";
-import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { t } from "@/lib/messages";
 import { formatMinor } from "@/lib/money";
@@ -29,7 +28,7 @@ import {
   type Period,
 } from "@/modules/analytics";
 import { DayBars } from "../../charts";
-import { PageHeader } from "../../page-header";
+import { PageHeader, Panel, StatTile as Stat } from "../../page-header";
 import { requireSeller } from "../../session";
 import { Segmented } from "@/components/ui/segmented";
 import { ContextEdit } from "./context-edit";
@@ -48,54 +47,6 @@ const day = (iso: string) =>
     year: "numeric",
     timeZone: "UTC",
   });
-
-function Panel({
-  title,
-  note,
-  action,
-  children,
-}: {
-  title: string;
-  note?: string;
-  action?: ReactNode;
-  children: ReactNode;
-}) {
-  return (
-    <section className="flex flex-col rounded-xl border border-panel-3 bg-panel">
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-panel-3 px-5 py-3.5">
-        <div>
-          <h2 className="text-sm font-semibold text-cream">{title}</h2>
-          {note && <p className="mt-0.5 text-xs text-stone">{note}</p>}
-        </div>
-        {action}
-      </div>
-      <div className="flex min-h-0 flex-1 flex-col p-5">{children}</div>
-    </section>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  detail,
-}: {
-  label: string;
-  value: string;
-  detail?: string;
-}) {
-  return (
-    <div className="rounded-xl border border-panel-3 bg-panel px-5 py-4">
-      <p className="text-sm text-stone">{label}</p>
-      <p
-        data-stat={label}
-        className="mt-1.5 text-2xl font-semibold tracking-tight text-cream tabular-nums"
-      >
-        {value}
-      </p>
-      {detail && <p className="mt-1 text-sm text-stone">{detail}</p>}
-    </div>
-  );
-}
 
 function Trend({ change }: { change: number | null }) {
   if (change === null) return <span className="text-stone">—</span>;

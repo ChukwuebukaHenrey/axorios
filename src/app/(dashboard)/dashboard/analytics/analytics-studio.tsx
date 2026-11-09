@@ -7,6 +7,7 @@ import type { AgReportState, AgStudioApi, AgStudioMode } from "ag-studio";
 import { AgStudio, AgStudioProvider } from "ag-studio-react";
 import { Pencil, RotateCcw, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Segmented } from "@/components/ui/segmented";
 import type { StudioRows } from "@/modules/analytics/studio-rows";
 import { buildStudioData } from "./studio-data";
 import { defaultReport, PAGE_TITLES, PERIOD_FIELD } from "./studio-report";
@@ -79,7 +80,7 @@ export function AnalyticsStudio(props: {
   if (!inBrowser)
     return (
       <div
-        className="h-[70vh] animate-pulse rounded-2xl border border-panel-3 bg-panel"
+        className="h-[70vh] animate-pulse rounded-xl border border-panel-3 bg-panel"
         aria-label={props.labels.loading}
       />
     );
@@ -161,27 +162,12 @@ function Studio({
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <nav
-          aria-label={labels.pages}
-          className="-mx-1 flex max-w-full gap-1 overflow-x-auto px-1"
-        >
-          {pages.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => choosePage(p.id)}
-              aria-current={p.id === pageId ? "page" : undefined}
-              className={`shrink-0 rounded-full px-3 py-1.5 text-sm whitespace-nowrap ${p.id === pageId ? "bg-lime text-ink" : "text-cream/80 hover:bg-panel-2"}`}
-            >
-              {p.title}
-            </button>
-          ))}
-        </nav>
+        <Segmented label={labels.pages} value={pageId} onChange={choosePage} items={pages.map((p) => ({ value: p.id, label: p.title }))} />
         <div className="flex flex-wrap items-center gap-2">
           <div
             role="group"
             aria-label="Period"
-            className={`flex rounded-full border border-panel-3 p-0.5 ${periodOn ? "" : "opacity-50"}`}
+            className={`flex rounded-lg border border-panel-3 bg-panel p-0.5 ${periodOn ? "" : "opacity-50"}`}
           >
             {(Object.keys(ranges) as PeriodKey[]).map((p) => (
               <button
@@ -191,7 +177,7 @@ function Studio({
                 disabled={!periodOn}
                 aria-pressed={p === period}
                 onClick={() => choosePeriod(p)}
-                className={`rounded-full px-2.5 py-1 text-xs ${p === period ? "bg-panel-3 text-cream" : "text-stone hover:text-cream"}`}
+                className={`h-7 rounded-md px-2.5 text-xs font-medium transition-colors ${p === period ? "bg-panel-3 text-cream shadow-[0_1px_2px_rgb(0_0_0/0.4)]" : "text-stone hover:bg-white/[0.03] hover:text-cream"}`}
               >
                 {labels.periods[p]}
               </button>
@@ -231,7 +217,7 @@ function Studio({
           )}
         </div>
       </div>
-      <div className="h-[78vh] min-h-[560px] overflow-hidden rounded-2xl border border-panel-3">
+      <div className="h-[78vh] min-h-[560px] overflow-hidden rounded-xl border border-panel-3">
         <AgStudioProvider licenseKey={licenseKey}>
           <AgStudio
             style={{ height: "100%", width: "100%" }}

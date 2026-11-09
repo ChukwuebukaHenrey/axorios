@@ -557,6 +557,8 @@ function FloatingAxori() {
   const { setOpen, setHolding, holding, mascot, open } = useAxori();
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const held = useRef(false);
+  // The Inbox composer sits at the bottom of the screen; keep the button clear of its send button.
+  const raised = usePathname()?.startsWith("/dashboard/inbox");
   if (open && !holding) return null;
 
   const down = () => {
@@ -580,7 +582,7 @@ function FloatingAxori() {
       onPointerLeave={() => held.current && setHolding(false)}
       onContextMenu={(e) => e.preventDefault()}
       aria-label={t.app.axori.holdToTalk}
-      className="fixed right-4 bottom-20 z-[60] grid size-16 touch-none place-items-center rounded-full border border-lime/40 bg-[#1c2112] shadow-xl shadow-black/50 select-none lg:hidden"
+      className={`fixed right-4 z-[60] grid size-16 ${raised ? "bottom-40" : "bottom-20"} touch-none place-items-center rounded-full border border-lime/40 bg-[#1c2112] shadow-xl shadow-black/50 select-none lg:hidden`}
     >
       <Mascot state={holding ? "listening" : mascot} size={52} />
     </button>

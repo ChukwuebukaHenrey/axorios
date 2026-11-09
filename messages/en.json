@@ -1002,7 +1002,16 @@
     "errorTime": "Pick a time in the next 7 days.",
     "errorGeneric": "That didn't work. Please try again.",
     "imageAlt": "Post image",
-    "shopNow": "Shop now"
+    "shopNow": "Shop now",
+    "edit": "Edit",
+    "open": "Open",
+    "editTitle": "Edit post",
+    "readTitle": "Post",
+    "editNote": "Changes save when you leave the caption box.",
+    "statusDraft": "Draft",
+    "statusScheduled": "Scheduled",
+    "statusPublished": "Posted",
+    "statusFailed": "Failed"
   },
   "brandCard": {
     "title": "Brand kit",
@@ -1329,7 +1338,9 @@
         "axori_ai": "Axori AI",
         "system": "PayPal"
       },
-      "notFound": "That order isn't in this store."
+      "notFound": "That order isn't in this store.",
+      "search": "Search orders",
+      "searchPlaceholder": "Order number, customer or product"
     },
     "inbox": {
       "title": "Inbox",
@@ -1363,7 +1374,24 @@
       },
       "paused": "WhatsApp paused: add Kapso credits",
       "pausedBody": "Kapso couldn't pay Meta's fee for the last message, so nothing more goes out on WhatsApp. Top up your Kapso project and send again.",
-      "windowFailed": "The 24-hour window has closed. Pick a template instead."
+      "windowFailed": "The 24-hour window has closed. Pick a template instead.",
+      "filters": {
+        "all": "All",
+        "waiting": "Waiting",
+        "agent": "Axori AI",
+        "mine": "You"
+      },
+      "filterLabel": "Filter chats",
+      "noneInFilter": "No chats here.",
+      "details": "Details",
+      "dChannel": "Channel",
+      "dHandled": "Replying",
+      "dLast": "Last message",
+      "dLabels": "Labels",
+      "dNoLabels": "No labels",
+      "openCustomer": "Open customer",
+      "today": "Today",
+      "yesterday": "Yesterday"
     },
     "integrations": {
       "title": "Integrations",
@@ -1719,7 +1747,17 @@
       "lastPost": "Last post",
       "lastPostDetail": "{clicks} clicks · {orders} orders",
       "noPost": "No posts yet",
-      "open": "Open {page}"
+      "open": "Open {page}",
+      "needs": "Needs you",
+      "needsNote": "Things to do today",
+      "axori": "Axori AI waiting",
+      "axoriDetail": "Approvals and questions in your chats",
+      "recent": "Recent orders",
+      "recentNote": "Latest paid and pending orders",
+      "viewAll": "View all",
+      "noOrders": "No orders yet. Share your store link to get the first one.",
+      "storeCard": "Store",
+      "salesChartLabel": "Sales per day"
     },
     "store": {
       "title": "Store",
@@ -1774,7 +1812,6 @@
       "noPromos": "No promotions yet",
       "noPromosBody": "Discount codes show here with their dates and whether they are running. Ask Axori AI (Ctrl J) to create one.",
       "promoCodes": "{count} codes",
-      "promoValue": "Discount",
       "promoScope": "Applies to",
       "promoDates": "Runs",
       "detailsNote": "What Axori AI knows about this store. It uses this to answer customers, write posts and build your storefront.",

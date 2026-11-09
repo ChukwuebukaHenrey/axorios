@@ -22,6 +22,7 @@ import {
 } from "@/modules/analytics";
 import { paymentProvider } from "@/modules/payments";
 import { DayBars, RankBars, Sparkline } from "../../charts";
+import { Segmented } from "@/components/ui/segmented";
 import { PageHeader } from "../../page-header";
 import { requireSeller } from "../../session";
 import { CHANNEL_LABEL, when } from "../orders/labels";
@@ -42,7 +43,7 @@ function Tile({ label, value, detail, delta, tone = "plain", downIsGood = false,
   const lime = tone === "lime";
   const good = delta !== undefined && delta !== null && (downIsGood ? delta <= 0 : delta >= 0);
   return (
-    <div className={`rounded-2xl border p-5 ${lime ? "border-lime/40 bg-lime text-ink" : "border-panel-3 bg-panel"}`}>
+    <div className={`rounded-xl border px-5 py-4 ${lime ? "border-lime/40 bg-lime text-ink" : "border-panel-3 bg-panel"}`}>
       <div className="flex items-start justify-between gap-2">
         <p className={`text-sm ${lime ? "text-ink/75" : "text-stone"}`}>{label}</p>
         {delta !== undefined && delta !== null && (
@@ -56,7 +57,7 @@ function Tile({ label, value, detail, delta, tone = "plain", downIsGood = false,
           </span>
         )}
       </div>
-      <p className={`mt-2 text-3xl font-semibold tracking-tight tabular-nums ${lime ? "text-ink" : "text-cream"}`}>{value}</p>
+      <p data-stat={label} className={`mt-1.5 text-2xl font-semibold tracking-tight tabular-nums ${lime ? "text-ink" : "text-cream"}`}>{value}</p>
       <p className={`mt-1 text-sm ${lime ? "text-ink/75" : "text-stone"}`}>{detail}</p>
       {children}
     </div>
@@ -65,22 +66,22 @@ function Tile({ label, value, detail, delta, tone = "plain", downIsGood = false,
 
 function Panel({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) {
   return (
-    <section className="rounded-2xl border border-panel-3 bg-panel p-5">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-base font-semibold text-cream">{title}</h2>
+    <section className="rounded-xl border border-panel-3 bg-panel">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-panel-3 px-5 py-3">
+        <h2 className="text-sm font-semibold text-cream">{title}</h2>
         {action}
       </div>
-      {children}
+      <div className="p-5">{children}</div>
     </section>
   );
 }
 
 function Table({ head, rows, align = [] }: { head: string[]; rows: ReactNode[][]; align?: ("left" | "right")[] }) {
   return (
-    <div className="-mx-5 overflow-x-auto">
+    <div className="-mx-5 -mb-5 overflow-x-auto first:-mt-5">
       <table className="w-full min-w-[32rem] text-sm">
         <thead>
-          <tr className="border-b border-panel-3 text-xs tracking-wide text-stone uppercase">
+          <tr className="border-b border-panel-3 bg-panel-2/40 text-xs text-stone">
             {head.map((h, i) => (
               <th key={h} scope="col" className={`px-5 py-2 font-medium ${align[i] === "right" ? "text-right" : "text-left"}`}>
                 {h}
@@ -151,36 +152,12 @@ export default async function MoneyPage({ searchParams }: { searchParams: Promis
   const periodRefunds = refunds.filter((x) => periodOrders.has(x.order_id)).sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
 
   return (
-    <main className="flex-1 overflow-y-auto px-4 pb-10 sm:px-6 lg:px-8">
+    <main className="flex-1 overflow-y-auto px-4 pt-6 pb-10 sm:px-6 lg:px-8">
       <PageHeader title={m.title} subtitle={m.subtitle.replace("{currency}", cur)} />
 
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-        <nav aria-label={m.title} className="-mx-1 flex max-w-full gap-1 overflow-x-auto px-1">
-          {TABS.map((tb) => (
-            <Link
-              key={tb}
-              href={link({ tab: tb })}
-              aria-current={tab === tb ? "page" : undefined}
-              className={`shrink-0 rounded-lg px-3 py-1.5 text-sm transition ${tab === tb ? "bg-panel-3 font-medium text-cream" : "text-stone hover:text-cream"}`}
-            >
-              {m.tabs[tb]}
-            </Link>
-          ))}
-        </nav>
-        {!periodless && (
-          <nav aria-label={m.periodLabel} className="flex rounded-lg border border-panel-3 p-0.5">
-            {PERIODS.map((p) => (
-              <Link
-                key={p}
-                href={link({ period: p })}
-                aria-current={period === p ? "true" : undefined}
-                className={`rounded-md px-2.5 py-1 text-xs transition ${period === p ? "bg-lime font-semibold text-ink" : "text-stone hover:text-cream"}`}
-              >
-                {m.periods[p]}
-              </Link>
-            ))}
-          </nav>
-        )}
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-b border-panel-3 pb-4">
+        <Segmented label={m.title} value={tab} items={TABS.map((tb) => ({ value: tb, label: m.tabs[tb], href: link({ tab: tb }) }))} />
+        {!periodless && <Segmented size="sm" label={m.periodLabel} value={period} items={PERIODS.map((p) => ({ value: p, label: m.periods[p], href: link({ period: p }) }))} />}
       </div>
 
       {tab === "overview" && (

@@ -28,7 +28,7 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
 
 function Card({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="rounded-2xl border border-panel-3 bg-panel p-5">
+    <section className="rounded-xl border border-panel-3 bg-panel p-5">
       <h2 className="text-sm font-medium tracking-wide text-stone uppercase">{title}</h2>
       <div className="mt-2">{children}</div>
     </section>
@@ -49,7 +49,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
   const short = order.id.slice(0, 8);
 
   return (
-    <main className="flex-1 overflow-y-auto px-4 pb-10 sm:px-6 lg:px-8">
+    <main className="flex-1 overflow-y-auto px-4 pt-6 pb-10 sm:px-6 lg:px-8">
       <AxoriSees chip={{ kind: "order", id: order.id, label: `#${short}` }} />
       <Link href="/dashboard/orders" className="inline-flex items-center gap-1.5 text-sm text-stone hover:text-cream">
         <ArrowLeft className="size-4" aria-hidden="true" /> {o.back}

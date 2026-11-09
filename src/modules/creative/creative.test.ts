@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { BrandKitSchema } from "../brand/schema";
-import { CampaignCopySchema, campaignPrompt, composeCaption, imagePrompt, suggestedTimes } from "./copy";
+import { isQuotaFailure } from "./adapters/cloudflare-errors";
+import { backgroundPrompt, CampaignCopySchema, campaignPrompt, composeCaption, imagePrompt, suggestedTimes } from "./copy";
 
 const kit = BrandKitSchema.parse({
   name: "Mama Cakes",
@@ -59,5 +60,22 @@ describe("suggestedTimes", () => {
   it("suggests one post a day from tomorrow, across a month end", () => {
     const times = suggestedTimes(3, new Date("2026-11-30T20:00:00Z")).map((d) => d.toISOString());
     expect(times).toEqual(["2026-12-01T09:00:00.000Z", "2026-12-02T09:00:00.000Z", "2026-12-03T09:00:00.000Z"]);
+  });
+});
+
+describe("cloudflare flux background", () => {
+  it("asks for a wordless background in the brand palette", () => {
+    const prompt = backgroundPrompt(kit, { headline: "Big day", subline: "Small price" });
+    for (const piece of ["deep burgundy", "golden yellow", "Big day", "No text"]) expect(prompt).toContain(piece);
+    expect(prompt).not.toMatch(/#[0-9a-f]{6}/i);
+    expect(prompt).not.toContain("Headline:");
+  });
+
+  it("falls back on 429 and spent allocations only", () => {
+    expect(isQuotaFailure(429, "")).toBe(true);
+    expect(isQuotaFailure(400, '{"errors":[{"code":3036,"message":"daily free allocation of 10,000 neurons"}]}')).toBe(true);
+    expect(isQuotaFailure(503, '{"errors":[{"code":3040,"message":"Capacity temporarily exceeded"}]}')).toBe(true);
+    expect(isQuotaFailure(401, '{"errors":[{"code":10000,"message":"Authentication error"}]}')).toBe(false);
+    expect(isQuotaFailure(500, "Internal error")).toBe(false);
   });
 });

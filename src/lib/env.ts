@@ -17,7 +17,10 @@ const schema = z.object({
   GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(1),
   GEMINI_TEXT_MODEL: z.string().min(1),
   GEMINI_IMAGE_MODEL: z.string().min(1),
-  IMAGE_PROVIDER: z.enum(["template"]).default("template"),
+  IMAGE_PROVIDER: z.enum(["template", "cloudflare-flux"]).default("template"),
+  CLOUDFLARE_ACCOUNT_ID: optional,
+  CLOUDFLARE_AI_TOKEN: optional,
+  CLOUDFLARE_IMAGE_MODEL: optional,
 
   TEXT_MODEL_PROVIDER: z.enum(["google", "groq"]).default("google"),
   GROQ_API_KEY: optional,
@@ -54,14 +57,22 @@ const schema = z.object({
   DEMO_SELLER_PASSWORD: optional,
 });
 
-export type Env = z.infer<typeof schema>;
+/** A selected vendor must have its keys; a dormant one may leave them blank. */
+const checked = schema.superRefine((e, ctx) => {
+  if (e.IMAGE_PROVIDER !== "cloudflare-flux") return;
+  for (const key of ["CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_AI_TOKEN", "CLOUDFLARE_IMAGE_MODEL"] as const) {
+    if (!e[key]) ctx.addIssue({ code: "custom", path: [key], message: "Required when IMAGE_PROVIDER=cloudflare-flux" });
+  }
+});
+
+export type Env = z.infer<typeof checked>;
 
 let cached: Env | undefined;
 
 /** Validated on first use so `next build` doesn't require production secrets. Errors name keys, never values. */
 export function env(): Env {
   if (cached) return cached;
-  const parsed = schema.safeParse(process.env);
+  const parsed = checked.safeParse(process.env);
   if (!parsed.success) {
     const keys = parsed.error.issues.map((i) => i.path.join(".")).join(", ");
     throw new Error(`Invalid environment variables: ${keys}`);

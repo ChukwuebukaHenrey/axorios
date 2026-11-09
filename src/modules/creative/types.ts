@@ -16,7 +16,8 @@ export type ImageRequest = {
   variant: number;
 };
 
-export type GeneratedImage = { bytes: Uint8Array; contentType: string };
+/** PNG for flat template graphics, JPEG for photo backgrounds. Storage paths take their extension from this. */
+export type GeneratedImage = { bytes: Uint8Array; contentType: "image/png" | "image/jpeg" };
 
 export interface ImageProvider {
   name: string;

@@ -7,13 +7,13 @@ describe("packEntries", () => {
   it("gives each post its image, caption and suggested time", () => {
     const entries = packEntries([
       { caption: "First", suggestedAt: "2026-11-06T09:00:00Z", image: new Uint8Array([1]) },
-      { caption: "Second", suggestedAt: null, image: new Uint8Array([2]) },
+      { caption: "Second", suggestedAt: null, image: new Uint8Array([0xff, 0xd8, 0xff, 0xe0]) },
     ]);
     expect(entries.map((e) => e.path)).toEqual([
       "post-1/image.png",
       "post-1/caption.txt",
       "post-1/suggested-time.txt",
-      "post-2/image.png",
+      "post-2/image.jpg",
       "post-2/caption.txt",
       "post-2/suggested-time.txt",
     ]);

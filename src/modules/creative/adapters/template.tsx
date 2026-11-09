@@ -3,7 +3,8 @@ import "server-only";
 import { ImageResponse } from "next/og";
 import type { BrandKit } from "@/modules/brand";
 import { allowedImage, readableOn } from "@/modules/storefront";
-import type { ImageProvider, ImageRequest } from "../types";
+import type { ReactElement } from "react";
+import type { GeneratedImage, ImageProvider, ImageRequest } from "../types";
 
 type FontEntry = { name: string; data: ArrayBuffer; weight: 400 | 700; style: "normal" };
 
@@ -26,7 +27,7 @@ async function googleFont(family: string, weight: 400 | 700, subset?: string): P
   }
 }
 
-function Footer({ kit, color, priceLabel }: { kit: BrandKit; color: string; priceLabel?: string }) {
+export function Footer({ kit, color, priceLabel }: { kit: BrandKit; color: string; priceLabel?: string }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 40, color, fontSize: 36 }}>
       <div style={{ display: "flex", fontFamily: kit.fonts.heading, fontWeight: 700 }}>{kit.name}</div>
@@ -35,7 +36,7 @@ function Footer({ kit, color, priceLabel }: { kit: BrandKit; color: string; pric
   );
 }
 
-function headlineSize(headline: string): number {
+export function headlineSize(headline: string): number {
   if (headline.length <= 18) return 128;
   if (headline.length <= 34) return 104;
   return 84;
@@ -99,24 +100,29 @@ function layout({ brand: kit, headline, subline, priceLabel, productImageUrl, va
   );
 }
 
+/**
+ * Draws a layout with next/og in the brand fonts. Shared by every provider, so the words and the
+ * database price on a post are always typeset by code, never painted by a model.
+ */
+export async function renderPng(element: ReactElement, request: ImageRequest): Promise<GeneratedImage> {
+  const { fonts } = request.brand;
+  // Many brand fonts have no ₦ or ₵, which would draw as an empty box. The renderer falls back to this for missing glyphs.
+  const loaded = await Promise.all([
+    googleFont(fonts.heading, 700),
+    googleFont(fonts.body, 400),
+    request.priceLabel ? googleFont("Noto Sans", 700, request.priceLabel) : null,
+  ]);
+  const image = new ImageResponse(element, {
+    ...request.size,
+    fonts: loaded.filter((font): font is FontEntry => font !== null),
+  });
+  const bytes = new Uint8Array(await image.arrayBuffer());
+  if (bytes.length === 0) throw new Error("Image render returned nothing");
+  return { bytes, contentType: "image/png" };
+}
+
 /** Renders on-brand graphics with no AI model, so marketing works with no image billing. */
 export const templateImages: ImageProvider = {
   name: "template",
-
-  async generate(request) {
-    const { fonts } = request.brand;
-    // Many brand fonts have no ₦ or ₵, which would draw as an empty box. The renderer falls back to this for missing glyphs.
-    const loaded = await Promise.all([
-      googleFont(fonts.heading, 700),
-      googleFont(fonts.body, 400),
-      request.priceLabel ? googleFont("Noto Sans", 700, request.priceLabel) : null,
-    ]);
-    const image = new ImageResponse(layout(request), {
-      ...request.size,
-      fonts: loaded.filter((font): font is FontEntry => font !== null),
-    });
-    const bytes = new Uint8Array(await image.arrayBuffer());
-    if (bytes.length === 0) throw new Error("Image render returned nothing");
-    return { bytes, contentType: "image/png" };
-  },
+  generate: (request) => renderPng(layout(request), request),
 };

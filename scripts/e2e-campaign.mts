@@ -94,10 +94,12 @@ try {
     if (post.caption.includes("₦")) check(realPrices.some((p) => post.caption.includes(p)), "any price shown is from the database");
     const image = await fetch(post.media_url!);
     const bytes = Buffer.from(await image.arrayBuffer());
-    check(image.ok && bytes.subarray(1, 4).toString() === "PNG", "image is a public PNG", `${bytes.length} bytes`);
+    const isPng = bytes.subarray(1, 4).toString() === "PNG";
+    const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8;
+    check(image.ok && (isPng || isJpeg), "image is a public PNG or JPEG", `${bytes.length} bytes`);
     if (imageFolder) {
       mkdirSync(imageFolder, { recursive: true });
-      writeFileSync(join(imageFolder, `${posts.indexOf(post)}.png`), bytes);
+      writeFileSync(join(imageFolder, `${posts.indexOf(post)}.${isJpeg ? "jpg" : "png"}`), bytes);
     }
   }
   console.log(`products: ${products.map((p) => p.name).join(", ")}`);

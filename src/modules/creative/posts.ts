@@ -74,7 +74,7 @@ export async function finishPost(storeId: string, postId: string, copy: PostCopy
     variant: index,
   });
 
-  const path = `stores/${storeId}/posts/${postId}.png`;
+  const path = `stores/${storeId}/posts/${postId}.${image.contentType === "image/jpeg" ? "jpg" : "png"}`;
   const { error: uploadError } = await db.storage
     .from("store-assets")
     .upload(path, image.bytes, { contentType: image.contentType, upsert: true });

@@ -101,7 +101,7 @@ export function ChatInput({
               </ul>
             )}
           </div>
-          <Link href="/dashboard/integrations" aria-label={b.integrations} title={b.integrations} className={tool}>
+          <Link href="/dashboard/settings?section=connections" aria-label={b.integrations} title={b.integrations} className={tool}>
             <Network className="size-5" aria-hidden="true" />
           </Link>
           <button

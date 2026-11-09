@@ -19,9 +19,10 @@ async function signedIn() {
 
 const COOKIE_OPTIONS = { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: 60 * 60 * 24 * 365 } as const;
 
+/** Log out of this device only (avatar menu and Settings). "Log out everywhere" is in Settings › Sign-in & security. */
 export async function signOut(): Promise<void> {
   const supabase = await createServerSupabase();
-  await supabase.auth.signOut();
+  await supabase.auth.signOut({ scope: "local" });
   (await cookies()).delete(STORE_COOKIE);
   redirect("/sign-in");
 }

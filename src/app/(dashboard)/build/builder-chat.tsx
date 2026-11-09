@@ -10,6 +10,7 @@ import { Logo } from "@/components/logo";
 import { t } from "@/lib/messages";
 import type { BrandKit } from "@/modules/brand";
 import type { Product } from "@/modules/catalog";
+import { StricterApprovalCard, type ToolPart as ApprovalPart } from "../_axori/parts";
 import { AgentIntro } from "./agent-intro";
 import { BrandCard } from "./brand-card";
 import { CampaignCard } from "./campaign-card";
@@ -237,6 +238,8 @@ export function BuilderChat({
                       const queued = (part as ToolPart).output as { campaignId?: string; count?: number };
                       return queued.campaignId ? <CampaignCard key={i} campaignId={queued.campaignId} count={queued.count ?? 3} /> : null;
                     }
+                    const stricter = StricterApprovalCard({ part: part as ApprovalPart, onRespond: (id, approved) => addToolApprovalResponse({ id, approved }) });
+                    if (stricter) return <div key={i}>{stricter}</div>;
                     const kit = brandOutput(part as ToolPart);
                     if (kit) {
                       return (

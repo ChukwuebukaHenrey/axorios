@@ -154,7 +154,7 @@ export function StatusCards({
         )}
       </Card>
 
-      <Card icon={ShoppingBag} title={c.shopify} href="/dashboard/integrations">
+      <Card icon={ShoppingBag} title={c.shopify} href="/dashboard/settings?section=connections">
         <p className="flex items-center gap-2">
           <span className={`rounded-full px-2.5 py-0.5 text-xs ${shop ? "bg-lime/15 text-lime" : "bg-panel-3 text-stone"}`}>
             • {shop ? c.connected : c.notConnected}

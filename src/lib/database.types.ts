@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_settings: {
+        Row: {
+          display_name: string | null
+          owner_id: string
+          tool_permissions: Json
+          updated_at: string
+        }
+        Insert: {
+          display_name?: string | null
+          owner_id: string
+          tool_permissions?: Json
+          updated_at?: string
+        }
+        Update: {
+          display_name?: string | null
+          owner_id?: string
+          tool_permissions?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       activity_log: {
         Row: {
           action: string

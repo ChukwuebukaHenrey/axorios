@@ -80,6 +80,22 @@ export function ApprovalCard({ part, title, children, onRespond }: { part: ToolP
 }
 
 /** The tool's own input, as plain key/value lines. Values are the model's proposal; the server re-checks everything. */
+/**
+ * A tool that normally runs straight away but the seller set to Needs approval in Settings (6.12):
+ * the generic card while it waits, then the tool's usual output once it has run.
+ */
+export function StricterApprovalCard({ part, onRespond }: { part: ToolPart; onRespond: Handlers["onRespond"] }) {
+  const name = part.type.replace(/^tool-/, "");
+  if (!part.type.startsWith("tool-") || requiresApproval(name) || !part.approval || part.approval.isAutomatic) return null;
+  if (part.state === "output-available") return null;
+  const title = (a.approval.tools as Record<string, string>)[name] ?? name.replaceAll("_", " ");
+  return (
+    <ApprovalCard part={part} title={title} onRespond={onRespond}>
+      <InputLines input={part.input} />
+    </ApprovalCard>
+  );
+}
+
 function InputLines({ input }: { input: unknown }) {
   const entries = Object.entries((input as Record<string, unknown>) ?? {}).filter(([, v]) => v !== undefined && v !== "");
   if (entries.length === 0) return null;
@@ -164,6 +180,8 @@ export function MessageParts({ message, handlers }: { message: UIMessage; handle
           );
         }
         if (part.type === "tool-schedule_posts") return <ScheduleCard key={i} part={part as ComponentProps<typeof ScheduleCard>["part"]} onRespond={onRespond} />;
+        const stricter = StricterApprovalCard({ part, onRespond });
+        if (stricter) return <div key={i}>{stricter}</div>;
         if (part.type === "tool-generate_campaign" && part.state === "output-available") {
           const queued = part.output as { campaignId?: string; count?: number };
           return queued.campaignId ? <CampaignCard key={i} campaignId={queued.campaignId} count={queued.count ?? 3} /> : null;

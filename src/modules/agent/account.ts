@@ -5,6 +5,8 @@ import type { Json } from "@/lib/database.types";
 import { serviceRoleClient } from "@/lib/supabase/service-role";
 import { approvalPolicy } from "./approvals";
 import { MAX_TOOL_STEPS } from "./limits";
+import { gateTools } from "./registry";
+import { toolPermissionsFor } from "./settings";
 import { textModel } from "./model";
 import { CHOICES_TOOL } from "./seller";
 import { collapseVoiceNotes } from "./voice";
@@ -46,12 +48,13 @@ function accountTools(ownerId: string) {
 }
 
 export async function runAccountAgent(ownerId: string, messages: UIMessage[], save: (messages: UIMessage[]) => Promise<void>): Promise<Response> {
+  const permissions = await toolPermissionsFor(ownerId);
   const result = streamText({
     model: textModel(),
-    system: SYSTEM,
+    system: permissions.create_store === "blocked" ? `${SYSTEM}\nThe owner blocked create_store in Settings, so you can't create a store. Say so if they ask.` : SYSTEM,
     messages: await convertToModelMessages(collapseVoiceNotes(messages, { keepLatest: true })),
-    tools: accountTools(ownerId),
-    toolApproval: approvalPolicy(),
+    tools: gateTools(accountTools(ownerId), permissions),
+    toolApproval: approvalPolicy(permissions),
     stopWhen: isStepCount(MAX_TOOL_STEPS),
     maxRetries: 3,
   });

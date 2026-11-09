@@ -29,10 +29,14 @@ import {
   syncBrandToDraft,
   type MarketPresetId,
 } from "@/modules/storefront";
+import { serviceRoleClient } from "@/lib/supabase/service-role";
 import { approvalPolicy } from "./approvals";
 import { MAX_TOOL_STEPS } from "./limits";
+import { blockedTools } from "./permissions";
+import { gateTools } from "./registry";
 import { textModel } from "./model";
 import { saveSellerSession } from "./session";
+import { logActivity, toolPermissionsFor } from "./settings";
 import { collapseVoiceNotes, latestIsVoiceNote } from "./voice";
 
 const SYSTEM = `You are Axori AI, the assistant inside AxoriOS: a warm, capable partner helping a small business owner with no technical experience go from an idea to a first paid order.
@@ -248,7 +252,11 @@ export type SellerRunOptions = {
 
 export async function runSellerAgent(storeId: string, messages: UIMessage[], options: SellerRunOptions = {}): Promise<Response> {
   const { selectedSectionId, pageContext = [], save = (m) => saveSellerSession(storeId, m) } = options;
-  const [kit, products, draft, posts, shop] = await Promise.all([
+  const { data: owner, error: ownerError } = await serviceRoleClient().from("stores").select("owner_id").eq("id", storeId).single();
+  if (ownerError) throw new Error(`Store read failed: ${ownerError.code}`);
+  const ownerId = owner.owner_id;
+  const [permissions, kit, products, draft, posts, shop] = await Promise.all([
+    toolPermissionsFor(ownerId, storeId),
     getBrandKit(storeId),
     listProducts(storeId),
     getDraftConfig(storeId),
@@ -256,6 +264,7 @@ export async function runSellerAgent(storeId: string, messages: UIMessage[], opt
     shopConnection(storeId),
   ]);
   const selected = draft?.sections.find((s) => s.id === selectedSectionId);
+  const blocked = blockedTools(permissions);
   const context = [
     `The current time is ${new Date().toISOString()}.`,
     shop && `This store is connected to Shopify at ${shop.shopDomain}.`,
@@ -269,6 +278,8 @@ export async function runSellerAgent(storeId: string, messages: UIMessage[], opt
     selected &&
       `The owner clicked the "${selected.id}" section in the preview, so "this" in their next message means that section.`,
     ...pageContext,
+    blocked.length > 0 &&
+      `The owner blocked these actions in Settings, so you don't have them: ${blocked.join(", ")}. If they ask for one, say it's blocked and that they can change it in Settings › Axori AI or Connections.`,
   ].filter(Boolean);
   const modelMessages = collapseVoiceNotes(messages, { keepLatest: true });
   const heardVoiceNote = latestIsVoiceNote(modelMessages);
@@ -276,11 +287,14 @@ export async function runSellerAgent(storeId: string, messages: UIMessage[], opt
     model: textModel(),
     system: [SYSTEM, ...context].join("\n\n"),
     messages: await convertToModelMessages(modelMessages),
-    tools: sellerTools(storeId),
+    tools: gateTools(sellerTools(storeId), permissions, ({ toolName, toolCallId, ok }) =>
+      // approval_id only when the seller pressed Approve for it.
+      logActivity({ ownerId, storeId, actor: "axori_ai", action: toolName, approvalId: permissions[toolName] === "approve" ? toolCallId : null, details: { ok } }),
+    ),
     // The seller must see what was heard, so this isn't left to the model: it skipped the tool in testing.
     prepareStep: ({ stepNumber }) =>
       heardVoiceNote && stepNumber === 0 ? { toolChoice: { type: "tool", toolName: "show_transcript" } } : {},
-    toolApproval: approvalPolicy(),
+    toolApproval: approvalPolicy(permissions),
     stopWhen: isStepCount(MAX_TOOL_STEPS),
     maxRetries: 3,
   });

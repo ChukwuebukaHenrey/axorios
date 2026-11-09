@@ -86,6 +86,15 @@ export async function shopConnection(storeId: string): Promise<{ shopDomain: str
   return { shopDomain: data.shop_domain, lastSyncedAt: data.last_synced_at, lastResult: data.last_sync_result as SyncResult | null };
 }
 
+/**
+ * Settings › Connections › Disconnect, after the seller confirmed the effect. Removes the token;
+ * what was already copied stays in Shopify. Connecting again goes through Axori AI's approval card.
+ */
+export async function disconnectShop(storeId: string): Promise<void> {
+  const { error } = await serviceRoleClient().from("platform_connections").delete().eq("store_id", storeId).eq("platform", PLATFORM);
+  if (error) throw new Error(`Disconnect failed: ${error.code}`);
+}
+
 /** Queues the sync after the seller has approved. */
 export async function queueSync(storeId: string): Promise<void> {
   if (!(await shopConnection(storeId))) throw new PlatformError("not_connected");

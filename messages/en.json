@@ -1117,7 +1117,7 @@
       "caughtUp": "You're all caught up.",
       "openInbox": "Open inbox",
       "account": "Account",
-      "signOut": "Sign out",
+      "signOut": "Log out",
       "viewLive": "View live store",
       "viewDraft": "Open draft preview",
       "live": "Live",
@@ -1923,6 +1923,222 @@
         "cancelled": "Cancelled"
       },
       "demoNote": "Facebook, Instagram, TikTok and Google run on demo connections: reach comes from seeded data and posts link back to your store."
+    },
+    "settings": {
+      "title": "Settings",
+      "subtitle": "Your account and every business on it.",
+      "groupAccount": "Your account",
+      "groupBusiness": "Your business",
+      "later": "Coming after the hackathon",
+      "sections": {
+        "profile": "Profile",
+        "security": "Sign-in & security",
+        "preferences": "Preferences",
+        "notifications": "Notifications",
+        "ai": "Axori AI",
+        "privacy": "Data & privacy",
+        "stores": "Stores",
+        "connections": "Connections",
+        "payments": "Payments & payouts",
+        "messages": "Customer messages",
+        "policies": "Policies",
+        "activity": "Activity log",
+        "usage": "Plan & usage",
+        "team": "Team & roles"
+      },
+      "profile": {
+        "email": "Email",
+        "name": "Your name",
+        "namePlaceholder": "How Axori AI should address you",
+        "save": "Save",
+        "saved": "Saved"
+      },
+      "security": {
+        "methods": "You sign in with a magic link sent to your email. The demo account also has a password.",
+        "logOut": "Log out",
+        "logOutBody": "Ends this session on this device.",
+        "logOutEverywhere": "Log out everywhere",
+        "logOutEverywhereBody": "Ends every session on every device, including this one.",
+        "twoFactor": "Two-factor sign-in and a list of active devices come later."
+      },
+      "preferences": {
+        "body": "App language, Axori AI's reply language, voice input, theme and time zone. For now the app is in English and Axori AI replies in the language you write in."
+      },
+      "notifications": {
+        "body": "Choose what to hear about, where, and quiet hours. For now new chats show in the bell and the Inbox."
+      },
+      "ai": {
+        "body": "Choose what Axori AI may do on its own. You can make an action stricter, never looser: anything that publishes, sends, spends or connects always asks first.",
+        "always": "Always allow",
+        "approve": "Needs approval",
+        "blocked": "Blocked",
+        "saved": "Saved",
+        "failed": "Couldn't save. Try again.",
+        "connectionTools": "Actions that use a connection are set under Connections.",
+        "tools": {
+          "create_store": "Create a new store",
+          "create_brand_kit": "Create the brand kit",
+          "update_brand_kit": "Change the brand kit",
+          "suggest_names": "Suggest names",
+          "add_products": "Add or change products",
+          "set_currency": "Set the store's currency",
+          "edit_site": "Edit the storefront draft",
+          "revert_site": "Undo a storefront change",
+          "choose_template": "Switch storefront template",
+          "generate_campaign": "Make marketing posts",
+          "schedule_posts": "Schedule or publish posts",
+          "publish_store": "Publish the store",
+          "log_expense": "Log an expense",
+          "connect_shopify": "Connect a Shopify shop",
+          "sync_to_shopify": "Copy products to Shopify",
+          "refund_order": "Refund an order",
+          "zapier_action": "Run a Zapier action"
+        }
+      },
+      "privacy": {
+        "body": "Export your data, set how long chats are kept, or delete your account. You can already export customers from Customers."
+      },
+      "stores": {
+        "body": "Every business on this account. Use the store switcher at the top to change store or start a new business.",
+        "live": "Live",
+        "draft": "Draft",
+        "demo": "Demo",
+        "open": "Open storefront",
+        "unnamed": "Unnamed store",
+        "archive": "Archiving and deleting a store come later."
+      },
+      "payments": {
+        "paypal": "PayPal",
+        "paypalBody": "Buyers pay through PayPal and the money stays in your PayPal account. This build uses PayPal's sandbox.",
+        "settlement": "Prices in {currency}; buyers are charged in {settlement}.",
+        "paga": "Naira withdrawals",
+        "pagaBody": "Withdraw to a Nigerian bank through Paga. AxoriOS links out and records it in Money; it never holds your money.",
+        "openMoney": "Open Money"
+      },
+      "messages": {
+        "body": "WhatsApp needs an approved template to message a customer more than 24 hours after their last message. These are the templates AxoriOS can send:",
+        "editLater": "Editing order and reminder wording and opt-out text comes later."
+      },
+      "policies": {
+        "body": "Refund, privacy and terms pages for your storefront. For now ask Axori AI to add them to your store as sections."
+      },
+      "activity": {
+        "body": "Every action Axori AI took and every approval, with who and when.",
+        "empty": "Nothing yet. Actions Axori AI takes for you show up here.",
+        "when": "When",
+        "who": "Who",
+        "what": "What",
+        "store": "Store",
+        "approved": "Approved on a card",
+        "older": "Older",
+        "actors": {
+          "seller": "You",
+          "axori_ai": "Axori AI",
+          "system": "System"
+        }
+      },
+      "usage": {
+        "body": "Axori AI answers up to {cap} requests a day per store. The count resets at midnight UTC.",
+        "today": "Used today",
+        "images": "Images and messages count against each provider's free tier."
+      },
+      "team": {
+        "body": "Invite people to help run your stores, each with their own role."
+      },
+      "connections": {
+        "body": "Everything your stores are connected to, what each can see, and what Axori AI may do with it.",
+        "groups": {
+          "sales": "Sales channels",
+          "messaging": "Messaging",
+          "social": "Social",
+          "payments": "Payments",
+          "apps": "Files & apps",
+          "advanced": "Advanced"
+        },
+        "status": {
+          "connected": "Connected",
+          "sandbox": "Sandbox",
+          "demo": "Demo",
+          "off": "Off",
+          "notConnected": "Not connected",
+          "reconnect": "Needs reconnecting",
+          "linkOut": "Link out"
+        },
+        "scopeStore": "This store",
+        "scopeAll": "All stores",
+        "lastUsed": "Last used {when}",
+        "never": "Never used",
+        "data": "Can see:",
+        "unused": "Unused for 30 days",
+        "permissions": "What Axori AI may do",
+        "reconnect": "Reconnect",
+        "connect": "Ask Axori AI to connect",
+        "disconnect": "Disconnect",
+        "cancel": "Keep connected",
+        "disconnectTitle": "Disconnect {name}?",
+        "items": {
+          "shopify": {
+            "name": "Shopify",
+            "body": "A one-way copy of your products, a collection and your pages.",
+            "data": "Your products, prices and store pages. No customer data.",
+            "disconnectEffect": "Syncing to {domain} stops. Products already copied stay in Shopify. You can connect again through Axori AI."
+          },
+          "telegram": {
+            "name": "Telegram chat",
+            "body": "Customers chat with your store's sales agent on Telegram.",
+            "data": "Customers' Telegram names and the messages they send.",
+            "needsPublish": "Publish your store to get a chat link."
+          },
+          "whatsapp": {
+            "name": "WhatsApp (Kapso)",
+            "body": "Customers message your WhatsApp business number and replies go out through Kapso. A customer starts with \"start {slug}\".",
+            "bodyOff": "Built and switched off until it's tested end to end with a real number.",
+            "data": "Customers' phone numbers and the messages they send."
+          },
+          "telegramChannel": {
+            "name": "Telegram channel",
+            "body": "Scheduled posts go to the store's Telegram channel.",
+            "bodyOther": "Only the demo store posts to the shared channel. Other stores get a download pack.",
+            "data": "Nothing about your customers."
+          },
+          "meta": {
+            "name": "Facebook & Instagram",
+            "body": "Demo connection: posts and numbers come from seed data until a Meta developer account is linked.",
+            "data": "Post reach and engagement."
+          },
+          "tiktok": {
+            "name": "TikTok",
+            "body": "Demo connection fed by seed data.",
+            "data": "Post reach and engagement."
+          },
+          "google": {
+            "name": "Google Business",
+            "body": "Demo connection fed by seed data.",
+            "data": "Post reach and engagement."
+          },
+          "paypal": {
+            "name": "PayPal",
+            "body": "Checkout on your storefront, chat payment links and refunds.",
+            "data": "Buyers' names, emails, delivery addresses and payment status. Never card details."
+          },
+          "paga": {
+            "name": "Paga",
+            "body": "Withdraw to a Nigerian bank. AxoriOS links out and records the withdrawal.",
+            "data": "Nothing; you record the amount and reference."
+          },
+          "zapier": {
+            "name": "Zapier",
+            "body": "Send orders to Google Sheets and other apps. Every write asks you first.",
+            "bodyOff": "Not switched on yet.",
+            "data": "Only the order fields shown on each approval card."
+          },
+          "customMcp": {
+            "name": "Custom MCP server",
+            "body": "Off. A custom server could read or change your data in ways AxoriOS can't check, so it isn't available in this build.",
+            "data": "Whatever you allow it."
+          }
+        }
+      }
     }
   }
 }

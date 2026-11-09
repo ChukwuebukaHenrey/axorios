@@ -2,6 +2,7 @@ export { isShopDomain, pagesFromStore, productHandle } from "./content";
 export {
   activeProductCount,
   connectShop,
+  disconnectShop,
   finishSync,
   PlatformError,
   productStepCount,

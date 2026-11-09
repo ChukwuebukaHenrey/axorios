@@ -142,7 +142,7 @@ function Sidebar({ counts, onNavigate }: { counts: Props["counts"]; onNavigate?:
         ))}
       </nav>
       <div className="border-t border-panel-3 pt-3">
-        <NavLink item={{ href: "/dashboard/integrations", label: n.settings, icon: Settings }} onNavigate={onNavigate} />
+        <NavLink item={{ href: "/dashboard/settings", label: n.settings, icon: Settings }} onNavigate={onNavigate} />
       </div>
     </div>
   );
@@ -364,7 +364,7 @@ function TopBar({ store, stores, account, counts, approvals, onMenu }: Omit<Prop
           <DropdownMenuContent align="end" className="w-64">
             <DropdownMenuLabel className="truncate font-normal text-stone">{account.email}</DropdownMenuLabel>
             <DropdownMenuItem asChild>
-              <Link href="/dashboard/integrations">
+              <Link href="/dashboard/settings">
                 <Settings aria-hidden="true" /> {n.settings}
               </Link>
             </DropdownMenuItem>

@@ -2,7 +2,7 @@ import "server-only";
 import { serviceRoleClient } from "@/lib/supabase/service-role";
 
 export const MAX_TOOL_STEPS = 8;
-const DAILY_REQUEST_CAP = 300;
+export const DAILY_REQUEST_CAP = 300;
 
 /** Counts one agent request for the store. Returns false once today's cap is reached. */
 export async function consumeDailyRequest(storeId: string): Promise<boolean> {

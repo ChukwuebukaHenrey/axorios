@@ -93,3 +93,30 @@ Handoff for the next session. Everything below is **committed and pushed** (`70b
 1. **6.6 Analytics (AG Studio)** at `dashboard/analytics`: read the boilerplate for its pattern only. Packages are already pinned. Load rows on the server with the loaders above. Verification: Studio's Sales equals the metrics module for 4 periods. Flip `soon` off for Analytics.
 2. **6.8 Home tiles + Store overview** (`/dashboard` placeholder; Store still points at `/build`).
 3. **6.9 Customers** (flip `soon` off), **6.10 Marketing performance**.
+
+---
+
+# Session 5 (9–10 Nov 2026): 6.6, 6.8, 6.9 done
+
+Pushed: `fecbe41` 6.6 AG Studio analytics, `0ba3a5b` 6.8 Home tiles + Store overview, and 6.9 Customers (see Progress). Tests 161/161, lint, `tsc` and build pass.
+
+## What exists now (to build on)
+
+- **Studio:** `src/app/(dashboard)/dashboard/analytics/` (`studio-data.ts` tables/relations/measures, `studio-report.ts` default pages and `PERIOD_FIELD`, `studio-theme.ts`, `analytics-studio.tsx` host with tabs, period toggle, Edit/Save/Reset). Rows come from `analytics/studio-rows.ts` (pure). `window.__axoriStudio` is the Studio API; `executeQuery` sits behind the `ag.internal` symbol (see `scripts/e2e-analytics.mts`).
+- **Shared metrics** added: `isLowStock`, `lowStockCount`, `lineSales`, `productRanking`, `visitsIn`, `openedAt`. Loaders added in `analytics/data.ts`: order items, products, contacts (+label ids), labels, posts, post metrics, campaigns (+send counts), links, clicks per day.
+- **Customers module** `src/modules/customers` (rules + service). Checkout capture creates the contact and consent.
+- **Pages:** `/dashboard` Home tiles, `/dashboard/store` (4 tabs), `/dashboard/customers` (3 tabs) + profile + export. Sidebar: Store → `/dashboard/store`; Analytics and Customers live. Design still `soon`.
+- **e2e:** `e2e-analytics.mts`, `e2e-analytics-off.mts` (run against `next start` with `AG_STUDIO_ENABLED=false`), `e2e-home.mts`, `e2e-customers.mts` (needs `--import ./scripts/no-server-only.mjs`).
+
+## Gotchas
+
+- `globals.css` uses `@theme inline`: Tailwind tokens are NOT CSS variables at runtime. Third-party themes (Studio) need literal colours.
+- No Prettier config: `prettier --write` reflows to 80 columns. Don't run it on existing files (6.6 already reflowed `analytics/data.ts`, `metrics.ts`, `metrics.test.ts`, `index.ts`; functionally identical).
+- Two `next` servers can't share the folder (dev lock). Stop one first.
+- PayPal Transaction Search returns **403**: switch on "Transaction search" for the sandbox REST app (user task), then the PayPal grid fills and matches by capture ID.
+- In e2e, wait ~2.5 s after navigation before clicking client buttons (hydration), and wait for a toggled button to re-enable before clicking again.
+
+## Next, in order
+
+1. **6.10 Marketing performance** (spec v2, Marketing): Performance view per post and campaign (clicks, orders, revenue, new contacts via tracked links; reach/engagement from `post_metrics`), breakdowns by content type, length, product, time, channel; campaigns list; demo adapters for Meta, TikTok, Google behind `Publisher` that return an internal permalink. Verification: post conversion = orders with that `link_id` (use `metrics.postConversions`); demo publish returns an internal permalink. Studio's `posts` rows already compute orders/revenue per post the same way.
+2. Then 6.11 Kapso, 6.12 Settings, per the plan and cut list.

@@ -2,6 +2,7 @@ import { ArrowLeft, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { t } from "@/lib/messages";
 import { conversationMessages, listConversations } from "@/modules/channels";
+import { labelsForContacts } from "@/modules/customers";
 import { PageHeader } from "../../page-header";
 import { requireSeller } from "../../session";
 import { Conversation } from "./conversation";
@@ -20,7 +21,10 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
   const { store } = await requireSeller();
   const [{ c }, conversations] = await Promise.all([searchParams, listConversations(store.id)]);
   const selected = conversations.find((conv) => conv.id === c) ?? null;
-  const messages = selected ? await conversationMessages(store.id, selected.id) : [];
+  const [messages, chips] = await Promise.all([
+    selected ? conversationMessages(store.id, selected.id) : Promise.resolve([]),
+    labelsForContacts(store.id, [...new Set(conversations.map((x) => x.contactId).filter((x): x is string => !!x))]),
+  ]);
 
   return (
     <main className="flex min-h-0 flex-1 flex-col px-4 pb-4 sm:px-6 lg:px-8">
@@ -49,6 +53,16 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
                       </span>
                     </span>
                     <span className="mt-1 block truncate text-sm text-stone">{conv.lastMessage?.body ?? "—"}</span>
+                    {conv.contactId && chips.get(conv.contactId)?.length ? (
+                      <span aria-label={t.app.inbox.labelsLabel} data-thread-labels className="mt-1.5 flex flex-wrap gap-1">
+                        {chips.get(conv.contactId)!.map((l) => (
+                          <span key={l.name} className="inline-flex items-center gap-1 rounded-full border border-panel-3 px-1.5 py-0.5 text-[11px] text-cream/80">
+                            <span className="size-1.5 rounded-full" style={{ background: l.colour }} aria-hidden="true" />
+                            {l.name}
+                          </span>
+                        ))}
+                      </span>
+                    ) : null}
                     <span className="mt-2 flex flex-wrap gap-1.5 text-xs">
                       <span className="rounded-md bg-panel-2 px-2 py-0.5 text-cream/80">{CHANNEL_LABEL[conv.channel] ?? conv.channel}</span>
                       <span className={`rounded-md px-2 py-0.5 ${conv.agentPaused ? "bg-accent/15 text-accent" : "bg-lime/10 text-lime"}`}>

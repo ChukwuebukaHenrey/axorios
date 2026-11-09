@@ -74,7 +74,7 @@ function navGroups(counts: Props["counts"]): { label: string | null; items: NavI
       items: [
         { href: "/dashboard/store", label: n.store, icon: Store },
         { href: "/dashboard/orders", label: n.orders, icon: Package, count: counts.orders },
-        { href: "/dashboard/customers", label: n.customers, icon: Users, soon: true },
+        { href: "/dashboard/customers", label: n.customers, icon: Users },
         { href: "/dashboard/inbox", label: n.inbox, icon: Inbox, count: counts.inbox },
       ],
     },

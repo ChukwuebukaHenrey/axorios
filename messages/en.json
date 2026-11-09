@@ -1336,7 +1336,8 @@
       "agent": "Agent",
       "seller": "You",
       "back": "All chats",
-      "needsReply": "Needs a reply"
+      "needsReply": "Needs a reply",
+      "labelsLabel": "Labels"
     },
     "integrations": {
       "title": "Integrations",
@@ -1726,6 +1727,92 @@
         "delivery": "Delivery zones",
         "policies": "Policies"
       }
+    },
+    "customers": {
+      "title": "Customers",
+      "subtitle": "Contacts, labels and consent. Conversations live in the Inbox.",
+      "tabs": {
+        "contacts": "Contacts",
+        "labels": "Labels",
+        "duplicates": "Duplicates"
+      },
+      "search": "Search name, email or phone",
+      "allLabels": "All labels",
+      "allTypes": "Customers and leads",
+      "type": {
+        "customer": "Customer",
+        "lead": "Lead"
+      },
+      "filter": "Filter",
+      "colName": "Contact",
+      "colLabels": "Labels",
+      "colType": "Type",
+      "colConsent": "Marketing",
+      "colOrders": "Orders",
+      "colSales": "Sales",
+      "colSeen": "First seen",
+      "consentYes": "Opted in",
+      "consentNo": "Order updates only",
+      "count": "{count} contacts",
+      "none": "No contacts match.",
+      "prev": "Newer",
+      "next": "Older",
+      "page": "Page {page} of {pages}",
+      "labelsNote": "customer and lead are system labels: computed from paid orders, so they can't be changed. Labels show on Inbox threads and can target campaigns.",
+      "labelName": "Label name",
+      "labelColour": "Colour",
+      "addLabel": "Add label",
+      "save": "Save",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "labelConfirm": "Contacts lose this label. A label used by a scheduled campaign can't be deleted.",
+      "labelContacts": "{count} contacts",
+      "system": "System",
+      "dupNote": "Contacts that share an email or phone. Merging keeps the older contact and moves orders, chats, consent and labels onto it.",
+      "dupNone": "No duplicates found.",
+      "dupReason": {
+        "email": "Same email",
+        "phone": "Same phone"
+      },
+      "mergeInto": "Merge into {name}",
+      "back": "All customers",
+      "details": "Details",
+      "labels": "Labels",
+      "consent": "Consent",
+      "orders": "Orders",
+      "campaigns": "Campaigns responded to",
+      "privacy": "Data & privacy",
+      "email": "Email",
+      "phone": "Phone",
+      "telegram": "Telegram",
+      "country": "Country",
+      "source": "Came from",
+      "firstSeen": "First seen",
+      "sources": {
+        "checkout": "Checkout",
+        "chat": "A chat",
+        "signup": "Sign-up form",
+        "import": "Import",
+        "seed": "Demo data"
+      },
+      "channel": "Channel",
+      "marketing": "Marketing",
+      "marketingOn": "Yes",
+      "marketingOff": "No, order updates only",
+      "withdrawn": "Withdrawn {date}",
+      "since": "Since {date} · {source}",
+      "noConsent": "No consent recorded.",
+      "noOrders": "No orders yet.",
+      "noCampaigns": "No campaign led to an order yet.",
+      "message": "Message in Inbox",
+      "noThread": "No chat yet",
+      "external": "Outside AxoriOS",
+      "whatsapp": "WhatsApp",
+      "mail": "Email",
+      "export": "Export data (JSON)",
+      "deleteContact": "Delete contact",
+      "deleteConfirm": "This removes the contact, their consent, labels and campaign history. Orders stay in your books without their name or email.",
+      "merged": "Merged into another contact"
     }
   }
 }

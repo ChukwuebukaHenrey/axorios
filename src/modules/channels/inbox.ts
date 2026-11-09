@@ -9,6 +9,7 @@ export type InboxConversation = {
   id: string;
   channel: ChannelName;
   customerRef: string;
+  contactId: string | null;
   agentPaused: boolean;
   lastMessageAt: string;
   lastMessage: { role: InboxRole; body: string } | null;
@@ -22,7 +23,7 @@ export async function listConversations(storeId: string, limit = 50): Promise<In
   const db = serviceRoleClient();
   const { data, error } = await db
     .from("conversations")
-    .select("id, channel, customer_ref, agent_paused, last_message_at")
+    .select("id, channel, customer_ref, contact_id, agent_paused, last_message_at")
     .eq("store_id", storeId)
     .order("last_message_at", { ascending: false })
     .limit(limit);
@@ -50,6 +51,7 @@ export async function listConversations(storeId: string, limit = 50): Promise<In
     id: c.id,
     channel: c.channel as ChannelName,
     customerRef: c.customer_ref,
+    contactId: c.contact_id,
     agentPaused: c.agent_paused,
     lastMessageAt: c.last_message_at,
     lastMessage: latest.get(c.id) ?? null,

@@ -5,6 +5,7 @@ import { env } from "@/lib/env";
 import { serviceRoleClient } from "@/lib/supabase/service-role";
 import { BrandKitSchema } from "@/modules/brand";
 import { decrementStock, listProducts } from "@/modules/catalog";
+import { contactFromCheckout } from "@/modules/customers";
 import { isChargeable, paymentProvider, quote } from "@/modules/payments";
 import { CheckoutError, OrderLineSchema, priceCart, vatFor, type CartItem, type OrderLine } from "./schema";
 
@@ -224,6 +225,13 @@ async function markPaid(order: Order, { captureId, payerEmail, payerCountry, fee
   const [updated] = data;
   if (!updated) return (await getOrder(order.store_id, order.id)) ?? order;
   await decrementStock(order.store_id, order.items);
+  // A buyer from checkout becomes a contact with an order-updates consent (spec v2, Customers). Never blocks the sale.
+  try {
+    const contactId = await contactFromCheckout(order.store_id, { orderId: order.id, email: payerEmail, country: payerCountry });
+    if (contactId) updated.contact_id = contactId;
+  } catch (e) {
+    console.error(`Contact from checkout failed on order ${order.id}: ${(e as Error).message}`);
+  }
   return toOrder(updated);
 }
 

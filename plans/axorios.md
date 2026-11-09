@@ -1,6 +1,6 @@
 # AxoriOS build plan
 
-Source: `docs/spec.md` (Build plan; Decisions, open questions and scope). Working target: **submit 9 Nov 2026**. Official dates: submit by 11 Nov, hard stop 12 Nov. Days 10-12 Nov are buffer.
+Source: `docs/spec.md` (Build plan; Decisions, open questions and scope). Working target: **submit 11 Nov 2026** (spec v2 supersedes 9 Nov); hard stop 12 Nov. Phase 6 comes from `docs/spec-v2.md`, which wins over `docs/spec.md`.
 
 Scope marks: **Core** is on the 9 Nov path. **Cut** is out unless time remains; restore in the order listed under "Restore order".
 
@@ -89,6 +89,30 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 | 5.4 Rehearse and record the under-3-minute video, upload to YouTube | S | Core | Video public, under 3:00 | Watch it logged out | 5.3 |
 | 5.5 Submit on Devpost | XS | Core | Submission confirmed | Devpost status | 5.4 |
 
+## Phase 6: v2 seller workspace (spec v2)
+Verified when: the demo seller opens to a 6-month business with every tab full and every number agreeing; refunds and the reconciliation grid work on real sandbox orders. Order of work: backend first (6.0, 6.1, 6.2, 6.4, 6.7 backend), then interfaces.
+
+| Step | Acceptance | Verification | Blocked by | Day |
+|---|---|---|---|---|
+| 6.0 Docs and config | CLAUDE.md edits; `docs/spec-v2.md`; new env keys in `.env.example`, env schema and Vercel | `npm run build`; `vercel env ls` names | none | 9 Nov |
+| 6.1 Approval regression | Every tool in the approval list returns a card and runs only on approval | One test per tool: nothing happened before approval | 6.0 | 9 Nov |
+| 6.2 v2 migration + metrics module | Tables, columns, RLS, `order_items` view; `analytics/metrics.ts` | `db push`; types regenerated; RLS test A can't read B | 6.0 | 9 Nov |
+| 6.3 Shell and Axori AI | Top bar, sidebar, Axori AI panel (Ctrl/⌘+J), full page, threads, chips, mobile bar; animated mascot with emotion states | Headless browser 1280 / 390 px | 6.2 | 9 Nov |
+| 6.4 Seed and import | `seed-v2`, import module, `reset-demo`; both stores; test orders hidden | Checks after seeding; rerun gives identical counts | 6.2 | 9 Nov |
+| 6.5 Cloudflare FLUX adapter | Done in 0.4 (9 Nov); media rows remain | `scripts/spike-image.mts` | 6.0 | 9 Nov |
+| 6.6 Analytics (AG Studio) | Tables, relations, measures, default report, reconciliation + PayPal grids; flag off falls back | Studio Sales = metrics for 4 periods | 6.4 | 10 Nov |
+| 6.7 Money and refunds | Money sections; refund flow with card, balance check, idempotency, webhook, VAT credit note | Real sandbox full + partial refund; repeat approval sends nothing | 6.4 | 10 Nov |
+| 6.8 Home and Store overview | Home tiles; Store overview, inventory modes, ranking, visits | Tiles equal Money/Analytics | 6.4 | 10 Nov |
+| 6.9 Customers and labels | Contacts, consents, labels, merge, delete guard | Label used by scheduled campaign can't be deleted | 6.4 | 10 Nov |
+| 6.10 Marketing performance | Per-post metrics, breakdowns, campaigns; demo adapters | Post conversion = orders with `link_id` | 6.4, 6.5 | 10 Nov |
+| 6.11 Kapso WhatsApp | Adapter, secret-path webhook, replies, 24 h window | Phone round trip; forged webhook 403 | 6.0 | 10 Nov |
+| 6.12 Settings and Connections | Settings, Connections directory, permissions, activity log | Log out both places; Blocked tool can't run | 6.3 | 10 Nov |
+| 6.13 Zapier connection | Export orders to Sheets through a card | Row in sheet; sales agent has no Zapier tool | 6.12 | 10 Nov |
+| 6.14 Design tab | Brand kits, templates, media library | Upload lands tagged | 6.3 | 10 Nov |
+| 6.15 Sandbox orders and final reset | 20-30 real payments, 3 refunds, `reset-demo`, click-through | Reconciliation matches PayPal | 6.6, 6.7 | 10 Nov |
+
+Cut list (bottom first): 6.14 → media library only; 6.13 → page without live action; 6.12 → log out, profile, Connections; 6.11 → demo adapter. Never cut: 6.1, 6.2, 6.4, 6.6, 6.7, 6.15.
+
 ## Restore order, if time remains
 3.4 inbox, 3.3 web chat, 4.3 `apply_reference`, 4.5 logo, 4.3 Studio, 4.3 Kiosk. Anything still cut at submission goes in the README as roadmap.
 
@@ -163,6 +187,7 @@ Verified when: the whole demo runs end to end from a voice note, and the submiss
 | 5.2 | Done | README, setup steps and `docs/architecture.svg` written. `scripts/seed-demo-store.mts` keeps product IDs, because the Shopify sync and past orders point at them. Every value in `.env.local` was searched for in all tracked files and git history: only public names matched (model IDs, the channel, the bot's username). Verified 6 Nov: `git clone` into a new folder, `npm install` (434 packages), `npm run build` clean, `npm test` 97/97, `npm start -p 3101` served `/api/health` 200 and `/` 200 on localhost. Memory was tight throughout (0.6-1.9 GB free even with Chrome and VS Code closed); installs and builds ran in the background rather than foreground to avoid the earlier low-memory stop. Test folder removed after. |
 | 5.3 | Done | Run from a new Edge profile on production on 5 Nov: `/dashboard` redirects to sign-in, the demo seller signs in through the real form, and Orders, Marketing and the builder open. `scripts/e2e-paid-order.mts`: real sandbox purchase, 4500000 NGN charged 33.44 USD, stock 99 to 98, a replay changes nothing. README links return 200. Daily `keep-alive` ran on production. Logins go in Devpost's testing notes at 5.5. Flash-lite's daily cap is still unknown: see Waiting on the user. |
 | 5.4, 5.5 | Not started | The user records and submits. Per the user on 6 Nov, the video is made only after everything, including a UI pass with the user's assets and references, is fixed. Submission date 9 Nov is confirmed. |
+| 6.0 | Done | spec saved as `docs/spec-v2.md`; CLAUDE.md edits; env schema accepts `cloudflare`/`og` aliases plus Kapso, demo-adapter, AG Studio and Zapier keys (each required only when switched on). Vercel keys still to add. |
 
 ## Waiting on the user
 - This network couldn't reach `axorios.vercel.app` or `t.me` on 5 Nov (see working notes). On 6 Nov `curl` reached production and PayPal sandbox directly; `t.me` wasn't rechecked. Check whether `/s/demo` opens in your browser here before recording 5.4.

@@ -9,13 +9,14 @@ When the session runs Fable or Opus and the requested task, or the next step abo
 AxoriOS (pronounced "axo-ree-os"). The UI reads the name from `APP_NAME`.
 Read these before any work:
 
+- `docs/spec-v2.md` — v2 product and build spec; **this wins over `docs/spec.md` where they differ**
 - `docs/spec.md` — architecture, modules, data model, build plan, review fixes
 - `REQUIREMENTS.md` — what the product must do and how each requirement is accepted
 - `plans/axorios.md` — the step list and Progress table (you create it in session 1)
 
 ## Product in one paragraph
 
-A voice-first AI agent that takes a non-technical seller anywhere in the world from a business idea to a first paid order. It covers a brand kit, a designed storefront with PayPal checkout, chat selling on Telegram, scheduled on-brand marketing, and Shopify sync. Built solo for the PayPal AI Hackathon (Devpost). Submit by 11 Nov 2026; hard deadline 12 Nov; judging 1–15 Dec. Hard requirements: working prototype, public MIT repo, YouTube demo under 3 min, PayPal sandbox integration.
+A voice-first AI agent that takes a non-technical seller anywhere in the world from a business idea to a first paid order. It covers a brand kit, a designed storefront with PayPal checkout, chat selling on Telegram, scheduled on-brand marketing, and Shopify sync. The in-app assistant is called Axori AI. Built solo for the PayPal AI Hackathon (Devpost). Submit by 11 Nov 2026; hard deadline 12 Nov. Judging 1–15 Dec. Hard requirements: working prototype, public MIT repo, YouTube demo under 3 min, PayPal sandbox integration.
 
 Demo story: a Lagos cake shop priced in naira. A buyer in the UK orders a birthday cake for family in Lagos and pays in USD through PayPal, with local delivery.
 
@@ -31,8 +32,10 @@ Demo story: a Lagos cake shop priced in naira. A buyer in the UK orders a birthd
 - Inngest for every background, slow or scheduled task
 - Zod for every schema: env, tool inputs, API bodies, `SiteConfig`, `DesignTokens`
 - Vitest for tests. Vercel hosting. cloudflared only for local debugging
+- `ag-grid-community`, `ag-grid-react`, `ag-studio`, `ag-studio-react` (exact versions) for Analytics
+- Cloudflare Workers AI (FLUX.1 schnell) for images; Kapso for WhatsApp; Zapier MCP as one seller-side connection; Playwright for sandbox scripts
 
-**Version pinning:** exact versions (no `^`/`~`) for `ai`, `@ai-sdk/*`, `@paypal/agent-toolkit`. The working set is recorded in step 0.2. Don't upgrade them without re-running `scripts/spike-paypal.ts`.
+**Version pinning:** exact versions (no `^`/`~`) for `ai`, `@ai-sdk/*`, `@paypal/agent-toolkit`, `ag-grid-community`, `ag-grid-react`, `ag-studio`, `ag-studio-react`. The working set is recorded in step 0.2. Don't upgrade them without re-running `scripts/spike-paypal.ts`.
 
 ## Folder layout
 
@@ -59,7 +62,7 @@ docs/spec.md
 
 - Public API only from `src/modules/<name>/index.ts`. Never import another module's internals.
 - Vendors sit behind interfaces in `src/modules/<name>/adapters/`, chosen by a registry from env flags:
-  `PaymentProvider` (PayPal), `Channel` (Telegram, web chat), `Publisher` (Telegram channel, download pack), `ImageProvider` (Gemini), `CommercePlatform` (Shopify).
+  `PaymentProvider` (PayPal), `Channel` (Telegram, Kapso WhatsApp, web chat), `Publisher` (Telegram channel, download pack), `ImageProvider` (Cloudflare FLUX, `next/og`, Gemini), `CommercePlatform` (Shopify), `AppConnection` (Zapier). Meta, TikTok and Google use demo adapters behind the same interfaces.
 - Adding Meta later = one adapter file + one flag; no agent changes.
 
 ## Non-negotiables
@@ -76,6 +79,13 @@ docs/spec.md
 - **Language:** UI strings in `messages/en.json`. The agent replies in the user's language and writes store copy in `storeLanguage`.
 - **Secrets:** only in `.env.local` / Vercel env. Never print, log or commit them. `.env.example` lists every key with a comment. Shopify tokens are encrypted with `ENCRYPTION_KEY`.
 - **Webhook URLs:** always the production domain, never preview URLs (Vercel protects those) or a tunnel.
+- **Refunds** go through an approval card and use `PayPal-Request-Id`.
+- **VAT** is computed server-side and stored on every order.
+- **Connections:** only the seller agent may use connection tools; the sales agent never does.
+- **Metrics:** every number shown in two places comes from `src/modules/analytics/metrics.ts`.
+- **Image prompts** never contain prices; text and prices are drawn by `next/og` from the database.
+- **Kapso webhooks** follow the same verify, store, 200, Inngest rule.
+- **Demo data:** seeded and imported rows carry `source`; `reset-demo` must restore the demo account in one command.
 
 ## Commands
 
@@ -100,4 +110,4 @@ CLI tools don't read `.env.local`. Load it first: `node scripts/check-env.mjs &&
 
 ## Never (this build)
 
-Real money; WhatsApp switched on without a usable account and an end-to-end test; Jumia/Konga integrations; creating Shopify stores by API; paid ad buying; video generation; Midjourney; n8n/Make; multi-agent orchestration; external template platforms; storing card or bank details; LLM calls inside webhook requests.
+Real money; WhatsApp switched on without a usable account and an end-to-end test; Jumia/Konga integrations; creating Shopify stores by API; paid ad buying; video generation; Midjourney; n8n/Make (Zapier MCP is allowed only as the one approval-gated seller connection in spec v2); Render; multi-agent orchestration; external template platforms; storing card or bank details; LLM calls inside webhook requests.

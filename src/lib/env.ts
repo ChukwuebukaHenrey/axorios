@@ -17,7 +17,11 @@ const schema = z.object({
   GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(1),
   GEMINI_TEXT_MODEL: z.string().min(1),
   GEMINI_IMAGE_MODEL: z.string().min(1),
-  IMAGE_PROVIDER: z.enum(["template", "cloudflare-flux"]).default("template"),
+  // spec v2 names: "cloudflare" and "og" are aliases for "cloudflare-flux" and "template".
+  IMAGE_PROVIDER: z
+    .enum(["template", "og", "cloudflare-flux", "cloudflare"])
+    .default("template")
+    .transform((v) => (v === "cloudflare" ? "cloudflare-flux" : v === "og" ? "template" : v)),
   CLOUDFLARE_ACCOUNT_ID: optional,
   CLOUDFLARE_AI_TOKEN: optional,
   CLOUDFLARE_IMAGE_MODEL: optional,
@@ -36,6 +40,22 @@ const schema = z.object({
   TWILIO_ACCOUNT_SID: optional,
   TWILIO_AUTH_TOKEN: optional,
   TWILIO_WHATSAPP_FROM: optional,
+
+  WHATSAPP_PROVIDER: z.enum(["off", "kapso", "twilio"]).default("off"),
+  KAPSO_API_KEY: optional,
+  KAPSO_PHONE_NUMBER_ID: optional,
+  KAPSO_WEBHOOK_SECRET: optional,
+
+  META_PROVIDER: z.enum(["off", "demo"]).default("demo"),
+  TIKTOK_PROVIDER: z.enum(["off", "demo"]).default("demo"),
+  GOOGLE_PROVIDER: z.enum(["off", "demo"]).default("demo"),
+
+  AG_STUDIO_ENABLED: z.enum(["true", "false"]).default("true"),
+  AG_STUDIO: optional,
+
+  ZAPIER_ENABLED: z.enum(["true", "false"]).default("false"),
+  ZAPIER_MCP_URL: optional,
+  ZAPIER_MCP_TOKEN: optional,
 
   TELEGRAM_BOT_TOKEN: z.string().min(1),
   TELEGRAM_WEBHOOK_SECRET: z.string().min(1),
@@ -59,10 +79,16 @@ const schema = z.object({
 
 /** A selected vendor must have its keys; a dormant one may leave them blank. */
 const checked = schema.superRefine((e, ctx) => {
-  if (e.IMAGE_PROVIDER !== "cloudflare-flux") return;
-  for (const key of ["CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_AI_TOKEN", "CLOUDFLARE_IMAGE_MODEL"] as const) {
-    if (!e[key]) ctx.addIssue({ code: "custom", path: [key], message: "Required when IMAGE_PROVIDER=cloudflare-flux" });
+  const need = (keys: readonly (keyof typeof e)[], why: string) => {
+    for (const key of keys) if (!e[key]) ctx.addIssue({ code: "custom", path: [key], message: `Required when ${why}` });
+  };
+  if (e.IMAGE_PROVIDER === "cloudflare-flux") {
+    need(["CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_AI_TOKEN", "CLOUDFLARE_IMAGE_MODEL"], "IMAGE_PROVIDER=cloudflare-flux");
   }
+  if (e.WHATSAPP_PROVIDER === "kapso") {
+    need(["KAPSO_API_KEY", "KAPSO_PHONE_NUMBER_ID", "KAPSO_WEBHOOK_SECRET"], "WHATSAPP_PROVIDER=kapso");
+  }
+  if (e.ZAPIER_ENABLED === "true") need(["ZAPIER_MCP_URL", "ZAPIER_MCP_TOKEN"], "ZAPIER_ENABLED=true");
 });
 
 export type Env = z.infer<typeof checked>;

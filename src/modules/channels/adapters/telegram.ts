@@ -46,4 +46,9 @@ export const telegram: Channel = {
     }
     await callApi("sendMessage", { chat_id: to, text: msg.text.slice(0, MAX_TEXT) });
   },
+
+  // Telegram shows "typing…" for about 5 s per call, so a caller repeats it while the agent works.
+  async typing(to) {
+    await callApi("sendChatAction", { chat_id: to, action: "typing" });
+  },
 };

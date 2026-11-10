@@ -2,8 +2,11 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/lib/database.types";
 import { env } from "@/lib/env";
+import { t } from "@/lib/messages";
+import { formatMinor } from "@/lib/money";
 import { serviceRoleClient } from "@/lib/supabase/service-role";
 import { BrandKitSchema } from "@/modules/brand";
+import { getChannel } from "@/modules/channels";
 import { decrementStock, listProducts } from "@/modules/catalog";
 import { contactFromCheckout } from "@/modules/customers";
 import { isChargeable, paymentProvider, quote } from "@/modules/payments";
@@ -204,6 +207,28 @@ export async function settleByProviderOrder(providerOrderId: string): Promise<Or
 /** Only the first call for an order changes anything, so stock moves once however often this runs. */
 type Captured = { captureId: string; payerEmail?: string; payerCountry?: string; feeMinor?: number; netMinor?: number };
 
+/**
+ * A chat buyer gets a receipt in the same chat the moment the order first turns paid (markPaid only gets here once,
+ * whether the return page or the webhook captured). Telegram only: the WhatsApp window may be closed. Never blocks the sale.
+ */
+async function notifyPaidInChat(row: OrderRow): Promise<void> {
+  if (row.channel !== "telegram" || !row.customer_ref) return;
+  try {
+    const { data: store } = await serviceRoleClient().from("stores").select("slug, brand_kit").eq("id", row.store_id).maybeSingle();
+    const kit = BrandKitSchema.safeParse(store?.brand_kit);
+    const name = kit.success ? kit.data.name : (store?.slug ?? "The shop");
+    const charged = row.charge_currency !== row.currency ? t.chat.paidCharged.replace("{amount}", formatMinor(row.charge_total_minor, row.charge_currency)) : "";
+    const text = t.chat.paid
+      .replace("{order}", row.id.slice(0, 8).toUpperCase())
+      .replace("{total}", formatMinor(row.total_minor, row.currency))
+      .replace("{charged}", charged)
+      .replace("{store}", name);
+    await getChannel("telegram").send(row.customer_ref, { text });
+  } catch (e) {
+    console.error(`Paid notice failed on order ${row.id}: ${(e as Error).message}`);
+  }
+}
+
 async function markPaid(order: Order, { captureId, payerEmail, payerCountry, feeMinor, netMinor }: Captured): Promise<Order> {
   const { data, error } = await serviceRoleClient()
     .from("orders")
@@ -225,6 +250,7 @@ async function markPaid(order: Order, { captureId, payerEmail, payerCountry, fee
   const [updated] = data;
   if (!updated) return (await getOrder(order.store_id, order.id)) ?? order;
   await decrementStock(order.store_id, order.items);
+  await notifyPaidInChat(updated as OrderRow);
   // A buyer from checkout becomes a contact with an order-updates consent (spec v2, Customers). Never blocks the sale.
   try {
     const contactId = await contactFromCheckout(order.store_id, { orderId: order.id, email: payerEmail, country: payerCountry });

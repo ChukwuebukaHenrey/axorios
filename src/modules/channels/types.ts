@@ -25,6 +25,8 @@ export interface Channel {
   verify(req: Request): Promise<boolean>;
   parseWebhook(req: Request): Promise<ParsedInbound[]>;
   send(to: string, msg: OutboundMessage): Promise<void>;
+  /** Shows the buyer that a reply is on its way ("typing…"). Optional: not every channel has it. */
+  typing?(to: string): Promise<void>;
   /** Pre-approved message, the only kind WhatsApp allows once the 24 h window has closed. */
   sendTemplate?(to: string, template: { name: string; language: string }): Promise<void>;
 }

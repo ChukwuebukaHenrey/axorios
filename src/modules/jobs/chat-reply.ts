@@ -15,10 +15,25 @@ import {
   type ParsedInbound,
 } from "@/modules/channels";
 import { CHAT_MESSAGE_RECEIVED, inngest } from "./client";
+import { shopSlugIn } from "./shop-link";
 
 function storeName(store: BoundStore): string {
   const kit = BrandKitSchema.safeParse(store.brandKit);
   return kit.success ? kit.data.name : store.slug;
+}
+
+/** Keeps "typing…" up in the chat until the work finishes (channels without it are skipped). Never fails the reply. */
+async function whileTyping<T>(message: ParsedInbound, work: () => Promise<T>): Promise<T> {
+  const channel = getChannel(message.channel);
+  if (!channel.typing) return work();
+  const ping = () => channel.typing!(message.customerRef).catch(() => {});
+  void ping();
+  const timer = setInterval(ping, 4000);
+  try {
+    return await work();
+  } finally {
+    clearInterval(timer);
+  }
 }
 
 type Turn =
@@ -34,8 +49,14 @@ async function prepareTurn({ channel, customerRef, text, start, windowEndsAt }: 
     return { reply: start.slug ? t.chat.storeClosed : t.chat.noStore };
   }
 
-  const store = await boundStore(channel, customerRef);
-  if (!store) return { reply: t.chat.noStore };
+  let store = await boundStore(channel, customerRef);
+  // Some Telegram apps open an existing chat without sending "/start <shop>", so a pasted shop link or name also binds.
+  if (!store) {
+    const slug = shopSlugIn(text);
+    store = slug ? await bindCustomer(channel, customerRef, slug) : null;
+    if (store) return { reply: t.chat.welcome.replace("{store}", storeName(store)), storeId: store.storeId };
+    return { reply: t.chat.noStore };
+  }
   if (!text?.trim()) return { reply: t.chat.textOnly, storeId: store.storeId };
 
   const { conversationId, agentPaused } = await openConversation(store.storeId, channel, customerRef, windowEndsAt);
@@ -69,7 +90,7 @@ export const chatReply = inngest.createFunction(
     if ("agent" in turn) {
       const { store, conversationId } = turn.agent;
       storeId = store.storeId;
-      const text = await step.run("agent", () => runSalesAgent(store, conversationId, message));
+      const text = await step.run("agent", () => whileTyping(message, () => runSalesAgent(store, conversationId, message)));
       reply = text || t.chat.failed;
       await step.run("save-reply", () => recordMessage(store.storeId, conversationId, "agent", reply!));
     }

@@ -130,8 +130,20 @@ body {
   }
 }
 
+/* Integration rows: alternate directions, slower than the logo strip, paused while hovered. */
+.marquee-row {
+  animation: marquee var(--marquee-duration, 48s) linear infinite;
+}
+.marquee-row[data-direction="right"] {
+  animation-direction: reverse;
+}
+.marquee-lane:hover .marquee-row {
+  animation-play-state: paused;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .animate-marquee {
+  .animate-marquee,
+  .marquee-row {
     animation: none;
   }
 }

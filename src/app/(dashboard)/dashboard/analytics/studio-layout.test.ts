@@ -1,6 +1,6 @@
 import type { AgPageState, AgReportState } from "ag-studio";
 import { describe, expect, it } from "vitest";
-import { PAGED_GRID, PAGED_GRID_SPAN, PHONE_PAGER_EXTRA } from "./paged-grid-config";
+import { PAGED_GRID, PAGED_GRID_SPAN, PHONE_PAGER_EXTRA, SHORT_GRID_SPAN } from "./paged-grid-config";
 import { defaultReport, upgradeSaved } from "./studio-report";
 import { phoneLayout, reflow, type Layout } from "./studio-layout";
 
@@ -51,10 +51,15 @@ describe("Analytics phone layout", () => {
   });
 
   it("keeps paged tables at their full height on phones, so a page of rows never scrolls inside the card", () => {
-    for (const id of ["reconciliation", "paypal"]) {
+    for (const [id, widget, span] of [
+      ["reconciliation", "grid", PAGED_GRID_SPAN],
+      ["paypal", "grid", PAGED_GRID_SPAN],
+      ["channels", "channel-grid", SHORT_GRID_SPAN],
+      ["marketing", "funnel", SHORT_GRID_SPAN],
+    ] as const) {
       const page = defaultReport.pages.find((p) => p.id === id) as AgPageState;
-      expect((page.widgets as Record<string, { type: string }>).grid.type).toBe(PAGED_GRID);
-      expect(phoneLayout(page, false).grid).toMatchObject({ xTrack: 0, xSpan: 24, ySpan: PAGED_GRID_SPAN + PHONE_PAGER_EXTRA });
+      expect((page.widgets as Record<string, { type: string }>)[widget].type).toBe(PAGED_GRID);
+      expect(phoneLayout(page, false)[widget]).toMatchObject({ xTrack: 0, xSpan: 24, ySpan: span + PHONE_PAGER_EXTRA });
     }
   });
 
@@ -68,5 +73,18 @@ describe("Analytics phone layout", () => {
     expect((after.widgets as Record<string, { type: string }>).grid.type).toBe(PAGED_GRID);
     expect((after.widgetLayout as Layout).grid.ySpan).toBe(PAGED_GRID_SPAN);
     expect(up.pages.find((p) => p.id === "sales")).toEqual(old.pages.find((p) => p.id === "sales"));
+  });
+
+  it("moves charts below an upgraded short table down so nothing overlaps", () => {
+    const old = structuredClone(defaultReport) as AgReportState;
+    const mk = old.pages.find((p) => p.id === "marketing")!;
+    (mk.widgets as Record<string, { type: string }>).funnel.type = "grid";
+    const l = mk.widgetLayout as Layout;
+    l.funnel.ySpan = 14;
+    l["by-type"].yTrack = l["by-length"].yTrack = 21;
+    const after = upgradeSaved(old).pages.find((p) => p.id === "marketing")!.widgetLayout as Layout;
+    expect(after.funnel.ySpan).toBe(SHORT_GRID_SPAN);
+    expect(after["by-type"].yTrack).toBe(7 + SHORT_GRID_SPAN);
+    expect(after["kpi-reach"].yTrack).toBe(0);
   });
 });

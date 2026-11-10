@@ -6,7 +6,7 @@ import type {
   AgReportState,
   AgWidgetLayoutState,
 } from "ag-studio";
-import { PAGED_GRID, PAGED_GRID_SPAN } from "./paged-grid-config";
+import { PAGED_GRID, PAGED_GRID_SPAN, SHORT_GRID_SPAN } from "./paged-grid-config";
 
 const at = (
   xTrack: number,
@@ -158,7 +158,7 @@ const channels: AgPageState = {
       format: { ...title("Channel mix by month"), ...legend },
     },
     "channel-grid": {
-      type: "grid",
+      type: PAGED_GRID as "grid",
       dataMapping: {
         cols: [
           { id: "orders.channel" },
@@ -176,7 +176,7 @@ const channels: AgPageState = {
   widgetLayout: {
     "channel-sales": at(0, 0, 9, 20),
     "channel-month": at(9, 0, 15, 20),
-    "channel-grid": at(0, 20, 24, 14),
+    "channel-grid": at(0, 20, 24, SHORT_GRID_SPAN),
   },
 };
 
@@ -188,7 +188,7 @@ const marketing: AgPageState = {
     "kpi-orders": kpi("Orders from posts", sum("posts.orders")),
     "kpi-conv": kpi("Post conversion", { id: "postConversion" }),
     funnel: {
-      type: "grid",
+      type: PAGED_GRID as "grid",
       dataMapping: {
         cols: [
           { id: "posts.channel" },
@@ -225,9 +225,9 @@ const marketing: AgPageState = {
     "kpi-clicks": at(6, 0, 6, 7),
     "kpi-orders": at(12, 0, 6, 7),
     "kpi-conv": at(18, 0, 6, 7),
-    funnel: at(0, 7, 24, 14),
-    "by-type": at(0, 21, 12, 16),
-    "by-length": at(12, 21, 12, 16),
+    funnel: at(0, 7, 24, SHORT_GRID_SPAN),
+    "by-type": at(0, 7 + SHORT_GRID_SPAN, 12, 16),
+    "by-length": at(12, 7 + SHORT_GRID_SPAN, 12, 16),
   },
 };
 
@@ -388,20 +388,35 @@ export const defaultReport: AgReportState = {
 };
 
 /** Widgets that moved to the paged table: reports saved in a browser before the move are upgraded on load. */
-const PAGED: Record<string, string> = { reconciliation: "grid", paypal: "grid" };
+const PAGED: Record<string, { id: string; span: number }> = {
+  channels: { id: "channel-grid", span: SHORT_GRID_SPAN },
+  marketing: { id: "funnel", span: SHORT_GRID_SPAN },
+  reconciliation: { id: "grid", span: PAGED_GRID_SPAN },
+  paypal: { id: "grid", span: PAGED_GRID_SPAN },
+};
 
 export function upgradeSaved(state: AgReportState): AgReportState {
   return {
     ...state,
     pages: state.pages.map((page) => {
-      const id = PAGED[page.id];
+      const id = PAGED[page.id]?.id;
+      const span = PAGED[page.id]?.span ?? PAGED_GRID_SPAN;
       const widget = id ? (page.widgets as Record<string, { type?: string }> | undefined)?.[id] : undefined;
       if (!id || !widget || widget.type !== "grid") return page;
       const layout = (page.widgetLayout ?? {}) as Record<string, AgWidgetLayoutState>;
+      const grow = layout[id] ? span - layout[id].ySpan : 0;
       return {
         ...page,
         widgets: { ...page.widgets, [id]: { ...widget, type: PAGED_GRID } } as AgPageState["widgets"],
-        widgetLayout: layout[id] ? { ...layout, [id]: { ...layout[id], ySpan: Math.max(layout[id].ySpan, PAGED_GRID_SPAN) } } : layout,
+        // The table grows; anything laid out below it moves down by the same amount, so nothing overlaps.
+        widgetLayout:
+          grow > 0
+            ? Object.fromEntries(
+                Object.entries(layout).map(([k, l]) =>
+                  k === id ? [k, { ...l, ySpan: span }] : l.yTrack >= layout[id].yTrack + layout[id].ySpan ? [k, { ...l, yTrack: l.yTrack + grow }] : [k, l],
+                ),
+              )
+            : layout,
       };
     }),
   };

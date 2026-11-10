@@ -4,7 +4,7 @@ import { CONTAINER, SECTION, SectionHeading } from "./ui";
 
 const n = t.marketing.home.notes;
 const SPEC_URL = "https://github.com/ChukwuebukaHenrey/axorios/blob/main/docs/spec.md";
-const IMAGES = ["/images/marketing/usecase-bg.png", "/images/tritty/food-2.jpg", "/images/marketing/features-bg.png"];
+const IMAGES = ["/images/marketing/note-naira-dollars.webp", "/images/marketing/note-approvals.webp", "/images/marketing/note-telegram.webp"];
 
 /** The reference's blog row. AxoriOS has no blog, so the cards point at the product spec. */
 export function NotesSection() {

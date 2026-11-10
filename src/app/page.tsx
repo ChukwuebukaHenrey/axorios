@@ -28,10 +28,10 @@ export default function Home() {
         visual={
           <GlassFrame className="max-w-[1000px]">
             <Image
-              src="/images/marketing/home-dash.png"
+              src="/images/marketing/dash-home.webp"
               alt={h.dashAlt}
-              width={1448}
-              height={1086}
+              width={1531}
+              height={815}
               priority
               sizes="(min-width: 1024px) 1000px, 100vw"
               className="h-auto w-full rounded-2xl"

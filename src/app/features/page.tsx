@@ -1,4 +1,4 @@
-import { Bot, Ellipsis, Megaphone, MessageSquare, Mic, Plug, ShieldCheck, Sparkles, Store } from "lucide-react";
+import { Bot, Ellipsis, MessageSquare, Sparkles } from "lucide-react";
 import Image from "next/image";
 import { FaqSection } from "@/components/marketing/faq-section";
 import { FEATURE_VISUALS } from "@/components/marketing/feature-visuals";
@@ -12,7 +12,8 @@ import { t } from "@/lib/messages";
 export const metadata = { title: "Feature | AxoriOS" };
 
 const fp = t.marketing.featuresPage;
-const CARD_ICONS = [Mic, Store, MessageSquare, Megaphone, Plug, ShieldCheck];
+/** One photo per capability card, in card order (docs/landing-image-prompts.md §4). */
+const CARD_IMAGES = ["voice", "storefront", "chat", "marketing", "integrations", "safety"].map((n) => `/images/marketing/cap-${n}.webp`);
 const WORKFLOW_ICONS = [MessageSquare, Sparkles, Bot];
 const ROW_BACKGROUNDS = [
   "/images/marketing/usecase-bg.png",
@@ -77,11 +78,12 @@ export default function FeaturesPage() {
           <SectionHeading eyebrow={fp.capabilities.eyebrow} title={fp.capabilities.title} subhead={fp.capabilities.subhead} />
           <ul className="mt-16 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {fp.capabilities.cards.map((card, i) => {
-              const Icon = CARD_ICONS[i];
               return (
-                <li key={card.title} className="flex aspect-square flex-col justify-between rounded-3xl bg-[#222] p-6 sm:aspect-auto sm:min-h-[373px]">
-                  <Icon className="size-12 text-[#6b6b6b]" strokeWidth={1.8} aria-hidden="true" />
-                  <div>
+                <li key={card.title} className="flex flex-col gap-6 rounded-3xl bg-[#222] p-3 pb-6">
+                  <div className="relative aspect-[4/3] overflow-hidden rounded-2xl">
+                    <Image src={CARD_IMAGES[i]} alt="" fill sizes="(min-width: 1024px) 373px, (min-width: 640px) 50vw, 100vw" className="object-cover" />
+                  </div>
+                  <div className="px-3">
                     <h3 className="font-display text-[28px] leading-tight font-medium tracking-[-0.02em] text-cream">{card.title}</h3>
                     <p className="mt-3 text-base leading-relaxed text-stone">{card.body}</p>
                   </div>

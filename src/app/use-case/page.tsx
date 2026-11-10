@@ -4,17 +4,18 @@ import { FaqSection } from "@/components/marketing/faq-section";
 import { GlassFrame, PhotoHero } from "@/components/marketing/hero";
 import { CtaBanner, SiteFooter } from "@/components/marketing/site-footer";
 import { StatsGrid } from "@/components/marketing/stats-grid";
-import { AssetPlaceholder, CONTAINER, SECTION, SectionHeading } from "@/components/marketing/ui";
+import { CONTAINER, SECTION, SectionHeading } from "@/components/marketing/ui";
 import { t } from "@/lib/messages";
 
 export const metadata = { title: "Use Case | AxoriOS" };
 
 const u = t.marketing.useCasePage;
-const SHOTS = [
-  { src: "/images/marketing/home-dash.png", w: 1448, h: 1086 },
-  { src: "/images/tritty/food-2.jpg", w: 736, h: 919, placeholder: true },
-  { src: "/images/checkout-live.jpg", w: 1080, h: 2400 },
-  { src: "/images/tritty/shopify-install.png", w: 1600, h: 900 },
+/** Storefront shows the product itself (a screenshot on the light panel); the others are photos that fill it. */
+const SHOTS: { src: string; w: number; h: number; photo?: boolean }[] = [
+  { src: "/images/marketing/dash-store.webp", w: 1528, h: 811 },
+  { src: "/images/marketing/usecase-sales.webp", w: 1448, h: 1086, photo: true },
+  { src: "/images/marketing/service-payments.webp", w: 1447, h: 1087, photo: true },
+  { src: "/images/marketing/usecase-marketing.webp", w: 1600, h: 1174, photo: true },
 ];
 
 /** The reference's "barcode" meter under each stat: decorative, the last one lit lime. */
@@ -86,17 +87,20 @@ export default function UseCasePage() {
                     </div>
                   </div>
                   <div className="relative min-h-[320px] overflow-hidden rounded-2xl bg-[#ecebe6] lg:min-h-[483px]">
-                    <div className="absolute inset-0 flex items-center justify-center p-4">
-                      <Image
-                        src={shot.src}
-                        alt={item.imageAlt}
-                        width={shot.w}
-                        height={shot.h}
-                        sizes="(min-width: 1024px) 624px, 100vw"
-                        className={`rounded-lg shadow-lg ${tall ? "h-full w-auto" : "h-auto w-full"}`}
-                      />
-                    </div>
-                    {"placeholder" in shot && <AssetPlaceholder label={item.imageAlt} className="absolute inset-8 bg-black/70" />}
+                    {shot.photo ? (
+                      <Image src={shot.src} alt={item.imageAlt} fill sizes="(min-width: 1024px) 624px, 100vw" className="object-cover" />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center p-4">
+                        <Image
+                          src={shot.src}
+                          alt={item.imageAlt}
+                          width={shot.w}
+                          height={shot.h}
+                          sizes="(min-width: 1024px) 624px, 100vw"
+                          className={`rounded-lg shadow-lg ${tall ? "h-full w-auto" : "h-auto w-full"}`}
+                        />
+                      </div>
+                    )}
                   </div>
                 </li>
               );

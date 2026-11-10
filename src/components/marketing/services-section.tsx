@@ -1,19 +1,27 @@
 import Image from "next/image";
 import { t } from "@/lib/messages";
-import { AssetPlaceholder, CONTAINER, SECTION, SectionHeading } from "./ui";
+import { CONTAINER, SECTION, SectionHeading } from "./ui";
 
 const s = t.marketing.home.services;
 
-/** Each card in the reference is a landscape photo with a product screen floating on it. */
-const SHOTS = [
-  { bg: "/images/marketing/home-bg.png", src: "/images/marketing/home-dash.png", w: 1448, h: 1086 },
-  { bg: "/images/marketing/usecase-bg.png", src: "/images/checkout-live.jpg", w: 1080, h: 2400 },
-  { bg: "/images/marketing/features-bg.png", src: "/images/tritty/food-2.jpg", w: 736, h: 919, placeholder: true },
-  { bg: "/images/marketing/home-bg.png", src: "/images/tritty/shopify-install.png", w: 1600, h: 900 },
+/** A product screen floats on a landscape; a photo fills the card edge to edge. */
+type Shot = { src: string; w: number; h: number; bg?: string };
+const SHOTS: Shot[] = [
+  { bg: "/images/marketing/home-bg.png", src: "/images/marketing/dash-home.webp", w: 1531, h: 815 },
+  { src: "/images/marketing/service-payments.webp", w: 1447, h: 1087 },
+  { src: "/images/marketing/service-chat.webp", w: 1600, h: 1200 },
+  { src: "/images/marketing/service-marketing.webp", w: 1600, h: 1200 },
 ];
 
 function Shot({ index }: { index: number }) {
   const shot = SHOTS[index];
+  if (!shot.bg) {
+    return (
+      <div className="relative aspect-[532/600] overflow-hidden rounded-3xl">
+        <Image src={shot.src} alt={s.imageAlts[index]} fill sizes="(min-width: 1024px) 532px, 100vw" className="object-cover" />
+      </div>
+    );
+  }
   const tall = shot.h > shot.w;
   return (
     <div className="relative aspect-[532/600] overflow-hidden rounded-3xl">
@@ -28,9 +36,6 @@ function Shot({ index }: { index: number }) {
             sizes="(min-width: 1024px) 470px, 90vw"
             className={tall ? "h-full w-auto" : "h-auto w-full"}
           />
-          {shot.placeholder && (
-            <AssetPlaceholder label={s.imageAlts[index]} className="absolute inset-3 bg-black/70 backdrop-blur-sm" />
-          )}
         </div>
       </div>
     </div>

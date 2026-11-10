@@ -288,10 +288,10 @@
           }
         ],
         "imageAlts": [
-          "The AxoriOS build workspace",
-          "A paid order on the live demo store",
-          "Placeholder image: chat selling screenshot not available yet",
-          "Shopify asking to install the AxoriOS app"
+          "The AxoriOS Home dashboard: sales, orders to fulfil and store visits",
+          "A buyer in London smiling at her phone as a PayPal payment goes through",
+          "A buyer in a Lagos market paying from a chat link while the seller hands over a cake",
+          "A baker photographing a cake for posts, with three post drafts on her laptop"
         ]
       },
       "stats": {
@@ -617,7 +617,7 @@
                 "Code"
               ]
             ],
-            "imageAlt": "The AxoriOS build workspace"
+            "imageAlt": "The Store page in AxoriOS: sales, visits and a live storefront preview"
           },
           {
             "label": "Sales",
@@ -643,7 +643,7 @@
                 "Language"
               ]
             ],
-            "imageAlt": "Placeholder image: chat selling screenshot not available yet"
+            "imageAlt": "A seller asleep while their phone keeps answering buyers and taking a payment"
           },
           {
             "label": "Payments",
@@ -669,7 +669,7 @@
                 "Model-set prices"
               ]
             ],
-            "imageAlt": "A paid order on the live demo store"
+            "imageAlt": "A buyer in London paying for a cake delivered in Lagos"
           },
           {
             "label": "Marketing",
@@ -695,7 +695,7 @@
                 "Shopify sync"
               ]
             ],
-            "imageAlt": "Shopify asking to install the AxoriOS app"
+            "imageAlt": "A returning customer collecting a cake and waving to the baker"
           }
         ]
       }

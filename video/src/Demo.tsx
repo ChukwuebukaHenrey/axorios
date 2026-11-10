@@ -1,7 +1,8 @@
 import React from "react";
 import { TransitionSeries, linearTiming } from "@remotion/transitions";
 import { fade } from "@remotion/transitions/fade";
-import { Audio, staticFile } from "remotion";
+import { Audio, Sequence, interpolate, staticFile } from "remotion";
+import VO from "../public/audio/vo/lines.json";
 import { LEN, S1, S10, S11, S12, S13, S2, S3, S4, S5, S6, S7, S8, S9 } from "./shots";
 
 const XF = 10; // frames: soft fade inside a chapter; chapters change on a hard cut, as in the reference
@@ -25,10 +26,27 @@ const SHOTS: [React.FC, number, boolean][] = [
 
 export const DEMO_FRAMES = SHOTS.reduce((t, [, d]) => t + d, 0) - SHOTS.filter(([, , f]) => f).length * XF;
 
+const DUCK = 0.42; // about -7.5 dB under the voice
+const RAMP = 8;
+/** Music level per frame: full between lines, ducked while a line plays. */
+const musicVolume = (f: number) =>
+  VO.reduce((v, l) => {
+    const a = l.from - RAMP;
+    const b = l.from + l.frames + RAMP;
+    if (f < a - RAMP || f > b + RAMP) return v;
+    const d = interpolate(f, [a, l.from, l.from + l.frames, b], [1, DUCK, DUCK, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+    return Math.min(v, d);
+  }, 1);
+
 export const Demo: React.FC = () => (
   <>
-  {/* Original track from scripts/make-music.py, timed to the cuts below. */}
-  <Audio src={staticFile("audio/music.m4a")} />
+  {/* Original track from scripts/make-music.py, timed to the cuts below; it dips under the voice. */}
+  <Audio src={staticFile("audio/music.m4a")} volume={musicVolume} />
+  {VO.map((l) => (
+    <Sequence key={l.id} from={l.from} durationInFrames={l.frames + 15}>
+      <Audio src={staticFile(`audio/vo/${l.id}.m4a`)} />
+    </Sequence>
+  ))}
   <TransitionSeries>
     {SHOTS.flatMap(([Shot, d, fadeNext], i) => {
       const seq = (

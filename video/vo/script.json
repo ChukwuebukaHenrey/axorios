@@ -1,0 +1,83 @@
+{
+  "voice": "am_michael",
+  "lang": "en-us",
+  "speed": 1.0,
+  "lines": [
+    {
+      "id": "01",
+      "at": 0.3,
+      "until": 12.8,
+      "text": "Most business ideas never reach a first order. They stall on a logo, a website, payments. AxoriOS is a voice-first agent that takes you from idea to paid order."
+    },
+    {
+      "id": "02",
+      "at": 13.0,
+      "until": 19.0,
+      "text": "Just tell it what you sell, in your own words."
+    },
+    {
+      "id": "03",
+      "at": 19.6,
+      "until": 34.6,
+      "text": "From one voice note, Axori AI writes a brand kit: a name, a colour palette, fonts, and a tone of voice."
+    },
+    {
+      "id": "04",
+      "at": 35.2,
+      "until": 47.9,
+      "text": "I change anything by just asking. Here I rename the shop, and price my signature cake at fifty thousand naira."
+    },
+    {
+      "id": "05",
+      "at": 48.4,
+      "until": 54.9,
+      "text": "Nothing goes live until I approve it."
+    },
+    {
+      "id": "06",
+      "at": 55.4,
+      "until": 64.9,
+      "text": "And there's the storefront. Designed, live, and ready for orders."
+    },
+    {
+      "id": "07",
+      "at": 65.4,
+      "until": 87.5,
+      "text": "Customers can also buy right inside Telegram. Axori AI answers in their language, even Pidgin, quotes from the real catalogue, and sends a PayPal link. It can't invent prices. Totals come from the database."
+    },
+    {
+      "id": "08",
+      "at": 88.0,
+      "until": 92.5,
+      "text": "The buyer pays with PayPal."
+    },
+    {
+      "id": "09",
+      "at": 93.0,
+      "until": 106.5,
+      "text": "The shop is priced in naira. PayPal charges dollars, at the rate shown before paying, and the order keeps both amounts."
+    },
+    {
+      "id": "10",
+      "at": 107.0,
+      "until": 124.5,
+      "text": "Axori AI also writes on-brand posts with the real price drawn on, schedules them only after I approve, and syncs the catalogue to Shopify in one step."
+    },
+    {
+      "id": "11",
+      "at": 125.0,
+      "until": 152.5,
+      "text": "And everything lives in one place. Sales, orders, customers, and PayPal payouts, with every number reconciled against PayPal."
+    },
+    {
+      "id": "12",
+      "at": 153.2,
+      "until": 162.5,
+      "text": "AxoriOS. From idea to first paid order. Built on PayPal."
+    }
+  ],
+  "say": {
+    "AxoriOS": "Axo-ree-oss",
+    "Axori AI": "Axo-ree A.I."
+  }
+}

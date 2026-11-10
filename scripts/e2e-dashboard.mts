@@ -45,28 +45,46 @@ try {
     fx_rate: 0.000743,
     fx_source: "test",
   };
-  const { error } = await admin.from("orders").insert([
-    { ...order, items: line("Paid Velvet Cake"), status: "paid", channel: "telegram", delivery_note: "For Ada, Ikeja", paid_at: new Date().toISOString() },
-    { ...order, items: line("Abandoned Ube Cake"), status: "pending", channel: "web" },
-  ]);
-  if (error) throw new Error(`Order insert failed: ${error.code}`);
+  const { data: rows, error } = await admin
+    .from("orders")
+    .insert([
+      { ...order, items: line("Paid Velvet Cake"), status: "paid", channel: "telegram", delivery_note: "For Ada, Ikeja", paid_at: new Date().toISOString() },
+      { ...order, items: line("Abandoned Ube Cake"), status: "pending", channel: "web" },
+    ])
+    .select("id, status");
+  if (error || !rows) throw new Error(`Order insert failed: ${error?.code}`);
+  const paidId = rows.find((r) => r.status === "paid")!.id;
 
-  const page = async (cookie?: string) =>
-    fetch(`${base}/dashboard`, { redirect: "manual", headers: cookie ? { Cookie: cookie } : {} });
+  const page = async (path: string, cookie?: string) => fetch(`${base}${path}`, { redirect: "manual", headers: cookie ? { Cookie: cookie } : {} });
 
-  const html = await (await page(a.cookie)).text();
+  // Home's recent orders: what was bought and the owner's amount; the paid order links to its detail page.
+  const html = await (await page("/dashboard", a.cookie)).text();
   check(html.includes("Paid Velvet Cake"), "the paid order is listed");
   check(html.includes("₦45,000"), "it shows the owner's amount");
-  check(html.includes("$33.44"), "it shows the amount charged");
-  check(html.includes("Telegram"), "it shows the channel");
-  check(html.includes("For Ada, Ikeja"), "it shows where to deliver");
+  check(html.includes(`/dashboard/orders/${paidId}`), "it links to the order");
   check(!html.includes("Abandoned Ube Cake"), "an unpaid cart stays out of the list");
 
-  const other = await (await page(b.cookie)).text();
-  check(!other.includes("Paid Velvet Cake") && other.includes("No orders yet"), "another seller can't see it");
+  // The order page carries what Home used to: the amount charged, the channel and where to deliver.
+  const detail = await (await page(`/dashboard/orders/${paidId}`, a.cookie)).text();
+  check(detail.includes("Paid Velvet Cake") && detail.includes("₦45,000"), "the order page shows the order and the owner's amount");
+  check(detail.includes("$33.44"), "it shows the amount charged");
+  check(detail.includes("Telegram"), "it shows the channel");
+  check(detail.includes("For Ada, Ikeja"), "it shows where to deliver");
 
-  const signedOut = await page();
+  const other = await (await page("/dashboard", b.cookie)).text();
+  check(!other.includes("Paid Velvet Cake") && other.includes("No orders yet"), "another seller can't see it on Home");
+  const otherDetail = await page(`/dashboard/orders/${paidId}`, b.cookie);
+  const otherText = await otherDetail.text();
+  // The route's skeleton streams first, so the status is 200; the body is the not-found page.
+  check(
+    !otherText.includes("Paid Velvet Cake") && !otherText.includes("For Ada, Ikeja") && otherText.includes("The link may be broken"),
+    `another seller gets not-found on the order page (${otherDetail.status})`,
+  );
+
+  const signedOut = await page("/dashboard");
   check(signedOut.status >= 300 && signedOut.status < 400, "signed out goes to sign-in");
+  const signedOutDetail = await page(`/dashboard/orders/${paidId}`);
+  check(signedOutDetail.status >= 300 && signedOutDetail.status < 400, "signed out, the order page goes to sign-in");
 } finally {
   for (const { userId } of [a, b]) {
     await admin.from("stores").delete().eq("owner_id", userId);

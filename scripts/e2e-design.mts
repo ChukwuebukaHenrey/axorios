@@ -136,7 +136,18 @@ try {
   await b.go("/dashboard/design", `!!document.querySelector('[data-media="${guardRow}"]')`);
   await new Promise((r) => setTimeout(r, 2500));
   const gcard = `document.querySelector('[data-media="${guardRow}"]')`;
-  check(await b.evaluate<boolean>(`${gcard}.textContent.includes('Product photo: ${redVelvet!.name}')`), "card shows it's the Red Velvet product photo");
+  // The card counts its uses; the list of them opens in a dialog.
+  check(await b.evaluate<boolean>(`Number(${gcard}.querySelector('[data-usages]')?.dataset.usages) >= 1 && !${gcard}.textContent.includes('Not used yet')`), "card says the file is in use");
+  await b.evaluate(`${gcard}.querySelector('[data-usages]').click()`);
+  check(
+    await b.waitFor(
+      `[...document.querySelectorAll('[role="dialog"] li a')].some(a => a.textContent.includes('Product photo') && a.textContent.includes(${JSON.stringify(redVelvet!.name)}) && a.getAttribute('href') === '/dashboard/store?tab=products')`,
+      10_000,
+    ),
+    "its uses list the Red Velvet product photo, linked to Products",
+  );
+  await b.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
+  check(await b.waitFor(`!document.querySelector('[role="dialog"]')`, 5000), "uses dialog closes");
   await b.evaluate(`${gcard}.querySelector('button[aria-label^="Delete"]').click()`);
   await b.waitFor(`!!document.querySelector('[role="dialog"]')`);
   await b.evaluate(`[...document.querySelectorAll('[role="dialog"] button')].find(x => x.textContent.trim() === 'Delete').click()`);

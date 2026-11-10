@@ -105,7 +105,8 @@ try {
   }
   const want = summary(raw, periodRange("30d"));
   await b.go("/dashboard/money?tab=in", `document.body.textContent.includes('Sales per day')`);
-  const salesTile = await b.evaluate<string>(`[...document.querySelectorAll('main p')].find(p => p.textContent === 'Sales').parentElement.parentElement.querySelector('p.text-3xl').textContent`);
+  check((await b.evaluate<number>(`document.querySelectorAll('main [data-stat="Sales"]').length`)) === 1, "Money in has one Sales tile");
+  const salesTile = await b.evaluate<string>(`document.querySelector('main [data-stat="Sales"]').textContent`);
   check(salesTile === formatMinor(want.sales, "NGN"), `Money in Sales (30d) = metrics module (${salesTile})`);
 
   for (const tab of ["overview", "out", "expenses", "withdrawals", "vat", "statements"]) {

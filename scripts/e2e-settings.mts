@@ -165,12 +165,20 @@ try {
   );
   await shot("settings-activity-1280");
 
-  // ── Log out from the avatar menu ──
+  // ── Log out from the avatar menu (the account row at the foot of the sidebar) ──
+  const ACCOUNT = `aside button[aria-label="Account"]`;
+  const LOG_OUT = `[...document.querySelectorAll('[role="menu"] [role="menuitem"]')].find(b => b.textContent.trim() === 'Log out')`;
   await send("Page.navigate", { url: `${base}/dashboard` });
-  check(await waitFor(`!!document.querySelector('header button[aria-label="Account"]')`), "avatar menu present");
-  await press(`header button[aria-label="Account"]`);
-  check(await waitFor(`[...document.querySelectorAll('[role="menu"] button')].some(b => b.textContent.trim() === 'Log out')`), "avatar menu has Log out");
-  await evaluate(`[...document.querySelectorAll('[role="menu"] button')].find(b => b.textContent.trim() === 'Log out').click()`);
+  check(await waitFor(`!!document.querySelector('${ACCOUNT}')`), "avatar menu present");
+  // The sidebar is server-rendered; press until React has hydrated it and the menu opens.
+  let menuOpen = false;
+  for (let i = 0; i < 10 && !menuOpen; i++) {
+    await press(ACCOUNT);
+    menuOpen = await waitFor(`!!${LOG_OUT}`, 2000);
+  }
+  check(menuOpen, "avatar menu has Log out");
+  check(await evaluate<boolean>(`document.querySelector('[role="menu"]').textContent.includes(${JSON.stringify(process.env.DEMO_SELLER_EMAIL)})`), "avatar menu names the signed-in account");
+  await evaluate(`${LOG_OUT}.click()`);
   check(await waitFor(`location.pathname === '/sign-in'`), "avatar Log out lands on sign-in");
   await send("Page.navigate", { url: `${base}/dashboard` });
   check(await waitFor(`location.pathname === '/sign-in'`), "after avatar Log out, the dashboard needs sign-in");

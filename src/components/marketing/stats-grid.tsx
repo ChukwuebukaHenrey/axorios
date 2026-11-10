@@ -32,15 +32,20 @@ export function StatsGrid() {
       <div className={CONTAINER}>
         <SectionHeading eyebrow={s.eyebrow} title={s.title} subhead={s.subhead} />
         <div className="mt-16 grid gap-5 lg:grid-cols-3">
-          <div className="relative isolate flex min-h-[380px] flex-col justify-end overflow-hidden rounded-3xl p-6 sm:min-h-[450px] lg:col-span-2">
-            <Image src="/images/marketing/features-bg.png" alt="" fill sizes="(min-width: 1024px) 767px, 100vw" className="-z-10 object-cover" />
-            <div aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-t from-black/85 via-black/40 to-black/10" />
-            <h3 className="font-display text-4xl font-medium tracking-[-0.02em] text-cream">{s.blueprintTitle}</h3>
-            <p className="mt-4 text-lg leading-relaxed text-cream sm:text-2xl sm:leading-relaxed">{s.blueprintBody}</p>
+          {/* Text on the left, the agent building a store on the right (stacked on phones), so the copy never sits on a busy image. */}
+          <div className="grid overflow-hidden rounded-3xl bg-[#121212] lg:col-span-2 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+            <div className="flex flex-col justify-end p-6 sm:p-8 lg:order-none">
+              <h3 className="font-display text-3xl font-medium tracking-[-0.02em] text-cream sm:text-4xl">{s.blueprintTitle}</h3>
+              <p className="mt-4 text-base leading-relaxed text-cream/85 sm:text-lg sm:leading-relaxed">{s.blueprintBody}</p>
+            </div>
+            <div className="relative order-first aspect-[4/3] lg:order-none lg:aspect-auto lg:min-h-[450px]">
+              <Image src="/images/marketing/stat-blueprint.webp" alt="" fill sizes="(min-width: 1024px) 420px, 100vw" className="object-cover object-[70%_50%]" />
+              <div aria-hidden="true" className="absolute inset-0 hidden bg-gradient-to-r from-[#121212] via-transparent to-transparent lg:block" />
+            </div>
           </div>
           <StatCard {...first} image="/images/marketing/stat-chat.webp" focus="82% 50%" />
           <StatCard {...third} image="/images/marketing/stat-approvals.webp" focus="80% 50%" />
-          <StatCard {...second} image="/images/marketing/stat-voice.webp" focus="62% 50%" />
+          <StatCard {...second} image="/images/marketing/stat-voice-repair.webp" focus="58% 50%" />
           <StatCard {...fourth} image="/images/marketing/stat-currency.webp" focus="78% 50%" />
         </div>
       </div>

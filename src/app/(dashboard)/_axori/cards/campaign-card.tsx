@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { t } from "@/lib/messages";
-import { campaignStatus } from "../dashboard/campaigns/actions";
+import { campaignStatus } from "../../dashboard/campaigns/actions";
 
 type PostStatus = Awaited<ReturnType<typeof campaignStatus>>;
 

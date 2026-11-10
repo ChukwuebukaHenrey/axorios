@@ -457,11 +457,11 @@ function TopBar({ counts, approvals, onMenu, onSearch }: Pick<Props, "counts" | 
   const waiting = approvals.reduce((sum, a) => sum + a.count, 0);
   const here = [...ALL_ITEMS].sort((a, b) => b.href.length - a.href.length).find((item) => isActive(pathname, item));
   const iconButton =
-    "relative grid size-8 place-items-center rounded-md border border-panel-3 text-stone transition-colors hover:border-cream/20 hover:bg-panel-2 hover:text-cream data-[state=open]:bg-panel-2 data-[state=open]:text-cream";
+    "relative grid size-9 place-items-center rounded-md border border-panel-3 lg:size-8 text-stone transition-colors hover:border-cream/20 hover:bg-panel-2 hover:text-cream data-[state=open]:bg-panel-2 data-[state=open]:text-cream";
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-2 border-b border-panel-3 bg-black/80 px-3 backdrop-blur sm:px-5">
-      <button type="button" onClick={onMenu} aria-label={n.menu} className="grid size-8 place-items-center rounded-md text-cream hover:bg-panel-2 lg:hidden">
+    <header className="flex h-14 shrink-0 items-center gap-2 border-b border-panel-3 bg-black/80 px-3 pt-[env(safe-area-inset-top)] backdrop-blur sm:px-5 [@supports(padding:env(safe-area-inset-top))]:h-[calc(3.5rem+env(safe-area-inset-top))]">
+      <button type="button" onClick={onMenu} aria-label={n.menu} className="-ml-1 grid size-10 place-items-center rounded-md text-cream hover:bg-panel-2 lg:hidden">
         <Menu className="size-5" aria-hidden="true" />
       </button>
       <Link href="/dashboard/ai" aria-label={t.app.axori.newChatHint} className="lg:hidden">
@@ -522,29 +522,43 @@ function TopBar({ counts, approvals, onMenu, onSearch }: Pick<Props, "counts" | 
   );
 }
 
-/** Phones: Home, Orders, Inbox, Marketing, More. */
+/** Bottom bar height plus its gap; the workspace keeps this much clear at the bottom on phones. */
+const BAR_SPACE = "pb-[calc(env(safe-area-inset-bottom)+5.5rem)]";
+
+/**
+ * Phones: one bottom bar on every workspace page. Home, Orders, Axori AI in the middle (tap to type, hold to talk),
+ * Inbox, and More (the full menu). Axori AI lives in the bar, so nothing floats over charts, tables or send buttons.
+ */
 function BottomBar({ counts, onMore }: { counts: Props["counts"]; onMore: () => void }) {
   const pathname = usePathname();
   const items: (NavItem & { icon: LucideIcon })[] = [
     { href: "/dashboard", label: n.home, icon: Home, exact: true },
     { href: "/dashboard/orders", label: n.orders, icon: Package, count: counts.orders },
     { href: "/dashboard/inbox", label: n.inbox, icon: Inbox, count: counts.inbox },
-    { href: "/dashboard/campaigns", label: n.marketing, icon: Megaphone },
   ];
+  const slot = "relative flex h-12 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl text-[10.5px] font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-lime/60";
+  const link = (item: (typeof items)[number]) => {
+    const on = isActive(pathname, item);
+    const Icon = item.icon;
+    return (
+      <Link key={item.href} href={item.href} aria-current={on ? "page" : undefined} className={cn(slot, on ? "bg-panel-2 text-cream" : "text-stone active:bg-panel-2/60")}>
+        <Icon className={cn("size-5", on && "text-lime")} aria-hidden="true" />
+        {item.label}
+        {item.count ? <span className="absolute top-1.5 left-[calc(50%+7px)] size-2 rounded-full bg-lime ring-2 ring-[#141414]" aria-hidden="true" /> : null}
+      </Link>
+    );
+  };
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 grid h-16 grid-cols-5 border-t border-panel-3 bg-[#0d0d0d]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
-      {items.map((item) => {
-        const on = isActive(pathname, item);
-        const Icon = item.icon;
-        return (
-          <Link key={item.href} href={item.href} aria-current={on ? "page" : undefined} className={`relative flex flex-col items-center justify-center gap-0.5 text-[11px] ${on ? "text-lime" : "text-stone"}`}>
-            <Icon className="size-5" aria-hidden="true" />
-            {item.label}
-            {item.count ? <span className="absolute top-2 left-[calc(50%+6px)] size-2 rounded-full bg-lime" /> : null}
-          </Link>
-        );
-      })}
-      <button type="button" onClick={onMore} className="flex flex-col items-center justify-center gap-0.5 text-[11px] text-stone">
+    <nav
+      aria-label={n.bottomBar}
+      data-bottom-bar
+      className="fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] z-40 flex h-16 items-center gap-1 rounded-2xl border border-panel-3 bg-[#141414]/95 px-1.5 shadow-[0_8px_32px_rgb(0_0_0/0.55)] backdrop-blur-md lg:hidden"
+    >
+      {link(items[0])}
+      {link(items[1])}
+      <AxoriBarButton />
+      {link(items[2])}
+      <button type="button" onClick={onMore} className={cn(slot, "text-stone active:bg-panel-2/60")}>
         <Menu className="size-5" aria-hidden="true" />
         {n.more}
       </button>
@@ -552,39 +566,42 @@ function BottomBar({ counts, onMore }: { counts: Props["counts"]; onMore: () => 
   );
 }
 
-/** Phones: tap to type, hold to talk (spec v2, "Opening it"). */
-function FloatingAxori() {
+/** The bar's middle button: tap opens Axori AI (or the composer, on its own page); press and hold records a voice note. */
+function AxoriBarButton() {
   const { setOpen, setHolding, holding, mascot, open } = useAxori();
+  const onPage = usePathname()?.startsWith("/dashboard/ai");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const held = useRef(false);
-  // The Inbox composer sits at the bottom of the screen; keep the button clear of its send button.
-  const raised = usePathname()?.startsWith("/dashboard/inbox");
-  if (open && !holding) return null;
 
   const down = () => {
     held.current = false;
     timer.current = setTimeout(() => {
       held.current = true;
-      setOpen(true);
+      if (!onPage) setOpen(true);
       setHolding(true);
     }, 350);
   };
   const up = () => {
     if (timer.current) clearTimeout(timer.current);
-    if (held.current) setHolding(false);
-    else setOpen(true);
+    if (held.current) return setHolding(false);
+    if (onPage) document.getElementById("axori-input-page")?.focus();
+    else setOpen(!open);
   };
   return (
     <button
       type="button"
       onPointerDown={down}
       onPointerUp={up}
-      onPointerLeave={() => held.current && setHolding(false)}
+      onPointerLeave={() => {
+        if (timer.current) clearTimeout(timer.current);
+        if (held.current) setHolding(false);
+      }}
       onContextMenu={(e) => e.preventDefault()}
-      aria-label={t.app.axori.holdToTalk}
-      className={`fixed right-4 z-[60] grid size-16 ${raised ? "bottom-40" : "bottom-20"} touch-none place-items-center rounded-full border border-lime/40 bg-[#1c2112] shadow-xl shadow-black/50 select-none lg:hidden`}
+      aria-label={`${t.app.axori.title}: ${t.app.axori.holdToTalk}`}
+      aria-pressed={open || onPage}
+      className="relative mx-0.5 grid size-14 shrink-0 touch-none place-items-center rounded-2xl border border-lime/35 bg-[#1c2112] transition-transform outline-none select-none focus-visible:ring-2 focus-visible:ring-lime/60 active:scale-95"
     >
-      <Mascot state={holding ? "listening" : mascot} size={52} />
+      <Mascot state={holding ? "listening" : mascot} size={40} />
     </button>
   );
 }
@@ -629,7 +646,7 @@ export function AppShell({ pageLabels, children, ...props }: Props) {
           {drawer && (
             <div className="fixed inset-0 z-50 lg:hidden">
               <button type="button" aria-label={n.close} onClick={() => setDrawer(false)} className="absolute inset-0 bg-black/70" />
-              <aside className="absolute inset-y-0 left-0 w-[272px] border-r border-panel-3 bg-[#0a0a0a]">
+              <aside className="absolute inset-y-0 left-0 w-[min(288px,86vw)] border-r border-panel-3 bg-[#0a0a0a] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
                 <button type="button" onClick={() => setDrawer(false)} aria-label={n.close} className="absolute top-3.5 right-3 z-10 grid size-8 place-items-center rounded-md text-stone hover:text-cream">
                   <X className="size-4" aria-hidden="true" />
                 </button>
@@ -648,12 +665,11 @@ export function AppShell({ pageLabels, children, ...props }: Props) {
 
           <div className="flex min-w-0 flex-1 flex-col">
             <TopBar counts={props.counts} approvals={props.approvals} onMenu={() => setDrawer(true)} onSearch={() => setSearch(true)} />
-            <div className="flex min-h-0 flex-1 flex-col pb-16 lg:pb-0">{children}</div>
+            <div className={cn("flex min-h-0 flex-1 flex-col lg:pb-0", BAR_SPACE)}>{children}</div>
           </div>
         </div>
         <SearchPalette open={search} onOpenChange={setSearch} />
         <AxoriPanel storeName={props.store.name ?? props.store.slug} greetingName={props.account.name ?? ""} />
-        <FloatingAxori />
         <BottomBar counts={props.counts} onMore={() => setDrawer(true)} />
       </TooltipProvider>
     </AxoriProvider>

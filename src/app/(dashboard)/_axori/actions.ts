@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { MAX_ORDERS_PER_EXPORT, previewOrderExport, type ExportPreview } from "@/modules/connections";
+import { shopConnection, type SyncResult } from "@/modules/platforms";
 import { requireSeller } from "../session";
 
 const Input = z.object({
@@ -15,4 +16,10 @@ export async function previewZapierExportAction(input: unknown): Promise<ExportP
   if (!parsed.success) return { ok: false, error: "zapier_failed" };
   const { store } = await requireSeller();
   return previewOrderExport(store.id, parsed.data);
+}
+
+/** The Shopify card's last sync result. Works without the model. The store comes from the session. */
+export async function shopifySyncResult(): Promise<SyncResult | null> {
+  const { store } = await requireSeller();
+  return (await shopConnection(store.id))?.lastResult ?? null;
 }

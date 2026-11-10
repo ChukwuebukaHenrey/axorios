@@ -77,5 +77,5 @@ const anon = await fetch(`${base}/api/agent`, {
   body: JSON.stringify({ messages: [{ id: "x", role: "user", parts: [{ type: "text", text: "hi" }] }] }),
 });
 if (anon.status !== 401) throw new Error(`Expected 401, got ${anon.status}`);
-const page = await fetch(`${base}/build`, { redirect: "manual" });
-console.log(`PASS 401 on agent; /build signed out -> ${page.status} ${page.headers.get("location")}`);
+const page = await fetch(`${base}/dashboard`, { redirect: "manual" });
+console.log(`PASS 401 on agent; /dashboard signed out -> ${page.status} ${page.headers.get("location")}`);

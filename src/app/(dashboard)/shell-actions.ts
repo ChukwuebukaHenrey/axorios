@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { STORE_COOKIE } from "@/lib/store-cookie";
 import { createServerSupabase } from "@/lib/supabase/server";
-import { createThread, deleteThread, getThread, listThreads, renameThread, type Thread, type ThreadSummary } from "@/modules/agent";
+import { deleteThread, getThread, listThreads, renameThread, type Thread, type ThreadSummary } from "@/modules/agent";
 import { createOwnerStore, getOrCreateStore, listOwnerStores } from "@/modules/brand";
 
 async function signedIn() {
@@ -42,15 +42,6 @@ export async function newBusiness(): Promise<{ storeId: string }> {
   const store = await createOwnerStore(supabase, user.id);
   (await cookies()).set(STORE_COOKIE, store.id, COOKIE_OPTIONS);
   return { storeId: store.id };
-}
-
-const ScopeSchema = z.enum(["store", "account"]);
-
-export async function startThread(scope: "store" | "account"): Promise<{ id: string }> {
-  const { supabase, user } = await signedIn();
-  const store = await getOrCreateStore(supabase, user.id, (await cookies()).get(STORE_COOKIE)?.value);
-  const id = await createThread(supabase, user.id, ScopeSchema.parse(scope) === "store" ? store.id : null);
-  return { id };
 }
 
 export async function openThread(threadId: string): Promise<Thread | null> {

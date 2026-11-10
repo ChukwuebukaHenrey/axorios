@@ -10,5 +10,5 @@ export async function GET(req: Request) {
 
   const supabase = await createServerSupabase();
   const { error } = await supabase.auth.exchangeCodeForSession(code);
-  return NextResponse.redirect(error ? `${base}/sign-in?error=link` : `${base}/build`);
+  return NextResponse.redirect(error ? `${base}/sign-in?error=link` : `${base}/dashboard`);
 }

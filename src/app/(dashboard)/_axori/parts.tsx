@@ -7,12 +7,12 @@ import { t } from "@/lib/messages";
 import { requiresApproval } from "@/modules/agent/approvals";
 import type { BrandKit } from "@/modules/brand";
 import type { Product } from "@/modules/catalog";
-import { BrandCard } from "../build/brand-card";
-import { CampaignCard } from "../build/campaign-card";
-import { ProductsCard } from "../build/products-card";
-import { PublishCard } from "../build/publish-card";
-import { ScheduleCard } from "../build/schedule-card";
-import { ShopifyCard } from "../build/shopify-card";
+import { BrandCard } from "./cards/brand-card";
+import { CampaignCard } from "./cards/campaign-card";
+import { ProductsCard } from "./cards/products-card";
+import { PublishCard } from "./cards/publish-card";
+import { ScheduleCard } from "./cards/schedule-card";
+import { ShopifyCard } from "./cards/shopify-card";
 import { RefundToolSummary } from "../dashboard/orders/refund-card";
 import { ZapierSummary } from "./zapier-card";
 

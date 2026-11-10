@@ -17,7 +17,7 @@ type Status = keyof typeof c.status;
 
 const img = (src: string) => <Image src={src} alt="" width={32} height={32} className="size-8 object-contain" />;
 const action = "inline-flex h-8 items-center rounded-md border border-panel-3 bg-panel-2 px-3 text-sm text-cream transition hover:border-cream/30";
-const ask = (prompt: string) => `/build?prompt=${encodeURIComponent(prompt)}`;
+const ask = (prompt: string) => `/dashboard/ai?prompt=${encodeURIComponent(prompt)}`;
 
 function when(iso: string) {
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });

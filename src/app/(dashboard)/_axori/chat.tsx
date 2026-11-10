@@ -6,7 +6,7 @@ import { ArrowUp, Mic, Paperclip, Square, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type KeyboardEvent } from "react";
 import { t } from "@/lib/messages";
-import { useVoiceRecorder, type VoiceNote } from "../build/use-voice-recorder";
+import { useVoiceRecorder, type VoiceNote } from "./use-voice-recorder";
 import { switchStore } from "../shell-actions";
 import { Mascot, useMomentary, type MascotState } from "./mascot";
 import { ApprovalCard, MessageParts, type ToolPart } from "./parts";
@@ -38,15 +38,26 @@ function chipsToSend(chips: Chip[]) {
   return [...chips.filter((c) => c.kind === "page"), ...chips.filter((c) => c.kind !== "page").slice(-3)].map(chipPayload);
 }
 
-export type ChatThread = { id: string; storeId: string | null; messages: UIMessage[] };
+/**
+ * `draft`: a new chat with no database row; its id is made in the browser. `fresh`: started as a draft in this tab,
+ * so its requests ask the agent route to create the row with the first message (a no-op once the row exists).
+ */
+export type ChatThread = { id: string; storeId: string | null; messages: UIMessage[]; draft?: boolean; fresh?: boolean };
 
-/** A new chat that has no database row yet. The row is made on the first send. */
-export const DRAFT = "draft";
-export type Handoff = { text?: string; voice?: VoiceNote; file?: File };
-const handoffs = new Map<string, Handoff>();
-/** Passes the draft's first message to the real thread's chat, which sends it on mount. */
-export function handOff(threadId: string, first: Handoff) {
-  handoffs.set(threadId, first);
+/** Unsent text in a new chat survives navigation and reloads in this tab only, and goes when the tab closes. */
+const draftKey = (account: boolean) => `axori:draft:${account ? "account" : "store"}`;
+function readDraft(key: string) {
+  try {
+    return sessionStorage.getItem(key) ?? "";
+  } catch {
+    return "";
+  }
+}
+function writeDraft(key: string, text: string) {
+  try {
+    if (text) sessionStorage.setItem(key, text);
+    else sessionStorage.removeItem(key);
+  } catch {}
 }
 
 export function AxoriChat({
@@ -54,23 +65,49 @@ export function AxoriChat({
   greetingName,
   variant,
   onTitle,
-  onDraft,
+  onStart,
+  initialInput,
 }: {
   thread: ChatThread;
   storeName?: string;
   greetingName: string;
   variant: "panel" | "page";
   onTitle?: () => void;
-  /** Draft only: called with the first message so the parent can create the thread. */
-  onDraft?: (first: Handoff) => void;
+  /** Draft only: the first message is on its way, so the parent shows this chat as a saved thread. */
+  onStart?: (id: string, storeId: string | null) => void;
+  /** Prefills a new chat's composer (a `?prompt=` link). Never sent on its own. */
+  initialInput?: string;
 }) {
-  const isDraft = thread.id === DRAFT;
+  const [saved, setSaved] = useState(!thread.draft);
+  const isDraft = !saved;
   const router = useRouter();
   const { chips, getChips, addChip, removeChip, setMascot, holding, takePending, pending } = useAxori();
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(initialInput ?? "");
   const endRef = useRef<HTMLDivElement>(null);
   const areaRef = useRef<HTMLTextAreaElement>(null);
   const isAccount = thread.storeId === null;
+  const fresh = Boolean(thread.fresh);
+  const key = draftKey(isAccount);
+
+  // Bring back unsent text from earlier in this tab (after mount, so the server render matches).
+  useEffect(() => {
+    if (!thread.draft || initialInput) return;
+    const text = readDraft(key);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (text) setInput(text);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (isDraft) writeDraft(key, input);
+  }, [isDraft, key, input]);
+
+  /** The first real message is going out: from here the route saves the chat with it. */
+  const began = useCallback(() => {
+    if (saved) return;
+    setSaved(true);
+    writeDraft(key, "");
+    onStart?.(thread.id, thread.storeId);
+  }, [saved, key, onStart, thread.id, thread.storeId]);
 
   const transport = useMemo(
     () =>
@@ -80,6 +117,7 @@ export function AxoriChat({
           body: {
             ...body,
             threadId: thread.id,
+            ...(fresh && { newThread: isAccount ? "account" : "store" }),
             context: isAccount ? [] : chipsToSend(getChips()),
             // Audio goes up once, in the turn it was spoken; later turns carry the transcript.
             messages: messages.map((message, index) =>
@@ -90,7 +128,7 @@ export function AxoriChat({
           },
         }),
       }),
-    [thread.id, isAccount, getChips],
+    [thread.id, isAccount, fresh, getChips],
   );
   const { messages, sendMessage, addToolApprovalResponse, status, error } = useChat({
     id: thread.id,
@@ -100,16 +138,19 @@ export function AxoriChat({
   });
   const busy = status === "submitted" || status === "streaming";
   const sendVoice = useCallback(
-    (note: VoiceNote) => (isDraft ? onDraft?.({ voice: note }) : sendMessage({ files: [{ type: "file", mediaType: note.mediaType, url: note.url }] })),
-    [sendMessage, isDraft, onDraft],
+    (note: VoiceNote) => {
+      void sendMessage({ files: [{ type: "file", mediaType: note.mediaType, url: note.url }] });
+      began();
+    },
+    [sendMessage, began],
   );
   const voice = useVoiceRecorder(sendVoice);
-  const media = useMediaUpload(thread.id);
+  // A draft's upload goes to the library under the session's store; the chat stays a draft until a message.
+  const media = useMediaUpload(saved ? thread.id : undefined);
   const fileRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const attach = async (file: File | undefined) => {
     if (!file || media.state.status === "uploading") return;
-    if (isDraft) return onDraft?.({ file });
     const item = await media.upload(file);
     // Store threads see the file through a chip; the server re-reads it, scoped to the store.
     if (item && !isAccount) addChip({ kind: "media", id: item.id, label: item.name });
@@ -128,25 +169,16 @@ export function AxoriChat({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [holding]);
 
-  // A draft's first message arrives here once the thread exists.
-  useEffect(() => {
-    const first = handoffs.get(thread.id);
-    if (!first) return;
-    handoffs.delete(thread.id);
-    if (first.text) sendMessage({ text: first.text });
-    if (first.voice) sendMessage({ files: [{ type: "file", mediaType: first.voice.mediaType, url: first.voice.url }] });
-    if (first.file) void attach(first.file);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [thread.id]);
-
   // Search's "Ask Axori AI" hands its text over once.
   useEffect(() => {
     if (pending === null || busy) return;
     const text = takePending();
     if (!text) return;
-    if (isDraft) onDraft?.({ text });
-    else sendMessage({ text });
-  }, [pending, busy, takePending, sendMessage, isDraft, onDraft]);
+    void sendMessage({ text });
+    // The hand-over comes from outside this chat (the search palette), so marking the draft saved belongs here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    began();
+  }, [pending, busy, takePending, sendMessage, began]);
 
   const approvalsSeen = useMemo(
     () => messages.flatMap((m) => m.parts as ToolPart[]).filter((p) => p.state === "approval-requested").length,
@@ -173,8 +205,9 @@ export function AxoriChat({
   }, [finished, router]);
   // The thread gets its title from the first message, saved when the turn ends.
   const turns = messages.filter((m) => m.role === "user").length;
+  // A new chat appears in the history as soon as its row exists (the stream has started), then again with its title.
   useEffect(() => {
-    if (status === "ready" && turns === 1) onTitle?.();
+    if ((status === "streaming" || status === "ready") && turns === 1) onTitle?.();
   }, [status, turns, onTitle]);
 
   useEffect(() => {
@@ -188,8 +221,8 @@ export function AxoriChat({
     const clean = text.trim();
     if (!clean || busy) return;
     setInput("");
-    if (isDraft) onDraft?.({ text: clean });
-    else sendMessage({ text: clean });
+    void sendMessage({ text: clean });
+    began();
   }
   function onKey(e: KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && !e.shiftKey) {

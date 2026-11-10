@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { t } from "@/lib/messages";
@@ -8,28 +9,27 @@ const REPO_URL = "https://github.com/ChukwuebukaHenrey/axorios";
 
 const COLUMNS = [
   {
-    title: f.main,
+    title: f.product,
     links: [
-      { href: "/", label: f.home },
       { href: "/features", label: f.features },
       { href: "/use-case", label: f.useCase },
       { href: "/integrations", label: f.integrations },
+      { href: "/pricing", label: f.pricing },
     ],
   },
   {
-    title: f.other,
+    title: f.tryIt,
     links: [
-      { href: "/pricing", label: f.pricing },
       { href: "/s/demo", label: f.demo },
+      { href: "/sign-up", label: f.signUp },
       { href: "/sign-in", label: f.signIn },
     ],
   },
   {
-    title: f.utilities,
+    title: f.project,
     links: [
       { href: REPO_URL, label: f.source, external: true },
       { href: `${REPO_URL}/blob/main/docs/spec.md`, label: f.spec, external: true },
-      { href: "/404", label: f.notFound },
     ],
   },
 ];
@@ -60,40 +60,61 @@ export function CtaBanner() {
   );
 }
 
+const linkClass = "inline-flex min-h-8 items-center text-[15px] text-cream/70 transition-colors hover:text-cream focus-visible:text-cream focus-visible:outline-none";
+
+/**
+ * Links sit on the artwork's dark sky; the landscape rises underneath. The art keeps its full width and is pinned to
+ * the bottom of the card, so nothing important is cropped. Phones reserve room under the links for it instead of
+ * scaling it down behind them.
+ */
 export function SiteFooter() {
   return (
-    <footer className="pt-16 pb-10 sm:pt-[120px]">
+    <footer className="pt-10 pb-5 sm:pt-16 sm:pb-8">
       <div className={CONTAINER}>
-        <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-[275px_1fr_1fr_1fr] lg:gap-0">
-          <div className="lg:pr-10">
-            <Link href="/" className="flex items-center gap-3 text-cream">
-              <Logo className="size-8" />
-              <span className="font-display text-[22px] font-medium tracking-tight">{t.marketing.brand}</span>
-            </Link>
-            <p className="mt-6 text-base leading-relaxed text-stone">{f.tagline}</p>
+        <div className="relative isolate overflow-hidden rounded-3xl border border-white/[0.06] bg-[#0b0e10] px-6 pt-10 pb-[64vw] sm:px-10 sm:pt-14 sm:pb-[46vw] lg:aspect-[1448/1190] lg:px-14 lg:pb-14">
+          <div aria-hidden="true" className="absolute inset-x-0 bottom-0 -z-10 aspect-[1448/1086]">
+            <Image src="/images/marketing/footer-landscape.webp" alt="" fill sizes="(min-width: 1160px) 1160px, 100vw" className="object-cover object-bottom" />
+            {/* Fades the art's top edge into the card so the sky and the card read as one surface. */}
+            <div className="absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-[#0b0e10] to-transparent" />
           </div>
-          {COLUMNS.map((column) => (
-            <div key={column.title} className="lg:justify-self-center">
-              <p className="font-display text-base font-medium text-cream">{column.title}</p>
-              <ul className="mt-5 flex flex-col gap-3">
-                {column.links.map((link) => (
-                  <li key={link.href}>
-                    {"external" in link ? (
-                      <a href={link.href} target="_blank" rel="noreferrer" className="text-base text-stone transition hover:text-cream">
-                        {link.label}
-                      </a>
-                    ) : (
-                      <Link href={link.href} className="text-base text-stone transition hover:text-cream">
-                        {link.label}
-                      </Link>
-                    )}
-                  </li>
-                ))}
-              </ul>
+
+          <div className="grid gap-x-8 gap-y-10 sm:grid-cols-3 lg:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,1fr))]">
+            <div className="sm:col-span-3 lg:col-span-1 lg:pr-8">
+              <Link href="/" className="inline-flex items-center gap-3 text-cream">
+                <Logo className="size-8" />
+                <span className="font-display text-[22px] font-medium tracking-tight">{t.marketing.brand}</span>
+              </Link>
+              <p className="mt-4 max-w-[34ch] text-[15px] leading-relaxed text-cream/65">{f.tagline}</p>
             </div>
-          ))}
+            <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:col-span-3 sm:grid-cols-3 lg:col-span-3">
+              {COLUMNS.map((column) => (
+                <nav key={column.title} aria-label={column.title}>
+                  <p className="text-xs font-medium tracking-wide text-stone uppercase">{column.title}</p>
+                  <ul className="mt-3 flex flex-col gap-1">
+                    {column.links.map((link) => (
+                      <li key={link.href}>
+                        {"external" in link ? (
+                          <a href={link.href} target="_blank" rel="noreferrer" className={linkClass}>
+                            {link.label}
+                          </a>
+                        ) : (
+                          <Link href={link.href} className={linkClass}>
+                            {link.label}
+                          </Link>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-10 flex flex-col gap-1 border-t border-white/10 pt-5 text-sm text-cream/60 sm:flex-row sm:items-center sm:justify-between">
+            <span>{f.copyright}</span>
+            <span>{f.builtFor}</span>
+          </div>
         </div>
-        <div className="mt-16 border-t border-panel-3 pt-8 text-base text-stone sm:mt-[120px]">{f.copyright}</div>
       </div>
     </footer>
   );

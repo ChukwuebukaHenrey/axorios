@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { DM_Sans, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -10,6 +10,9 @@ export const metadata: Metadata = {
   title: "AxoriOS",
   description: "From a business idea to a first paid order.",
 };
+
+/** Edge to edge on notched phones; the workspace pads its top bar and bottom bar with the safe-area insets. */
+export const viewport: Viewport = { viewportFit: "cover", themeColor: "#000000" };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (

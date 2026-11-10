@@ -148,7 +148,7 @@ export default async function StorePage({
             </a>
           </Button>
           <Button asChild>
-            <Link href="/build">
+            <Link href={`/dashboard/ai?prompt=${encodeURIComponent(s.editPrompt)}`}>
               <Pencil aria-hidden="true" /> {s.edit}
             </Link>
           </Button>

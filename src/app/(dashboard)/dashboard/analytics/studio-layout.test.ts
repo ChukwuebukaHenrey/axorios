@@ -1,0 +1,51 @@
+import type { AgPageState, AgReportState } from "ag-studio";
+import { describe, expect, it } from "vitest";
+import { defaultReport } from "./studio-report";
+import { phoneLayout, reflow, type Layout } from "./studio-layout";
+
+const sales = defaultReport.pages.find((p) => p.id === "sales") as AgPageState;
+
+/** No two widgets share a cell, and none runs past the 24 columns. */
+function overlaps(layout: Layout) {
+  const cells = new Set<string>();
+  for (const l of Object.values(layout)) {
+    if (l.xTrack + l.xSpan > 24) return true;
+    for (let x = l.xTrack; x < l.xTrack + l.xSpan; x++)
+      for (let y = l.yTrack; y < l.yTrack + l.ySpan; y++) {
+        const key = `${x}:${y}`;
+        if (cells.has(key)) return true;
+        cells.add(key);
+      }
+  }
+  return false;
+}
+
+describe("Analytics phone layout", () => {
+  it("puts KPI tiles two to a row and charts full width, in reading order, without overlaps", () => {
+    const l = phoneLayout(sales, false);
+    expect([l["kpi-sales"].xSpan, l["kpi-orders"].xSpan, l["kpi-aov"].xSpan, l["kpi-net"].xSpan]).toEqual([12, 12, 12, 12]);
+    expect(l["kpi-sales"].yTrack).toBe(l["kpi-orders"].yTrack);
+    expect(l["kpi-aov"].yTrack).toBeGreaterThan(l["kpi-sales"].yTrack);
+    expect(l["sales-time"]).toMatchObject({ xTrack: 0, xSpan: 24 });
+    expect(l["sales-month"].yTrack).toBeGreaterThan(l["sales-time"].yTrack);
+    expect(overlaps(l)).toBe(false);
+  });
+
+  it("stacks every widget in one column on very narrow screens", () => {
+    const l = phoneLayout(sales, true);
+    expect(Object.values(l).every((w) => w.xSpan === 24 && w.xTrack === 0)).toBe(true);
+    expect(overlaps(l)).toBe(false);
+  });
+
+  it("lays out every default page without overlaps", () => {
+    for (const page of defaultReport.pages) expect(overlaps(phoneLayout(page as AgPageState, false))).toBe(false);
+  });
+
+  it("gives the desktop layout back unchanged when the screen widens again", () => {
+    const kept = new Map<string, Layout>();
+    const onPhone = reflow(defaultReport as AgReportState, true, false, kept);
+    expect(onPhone.pages[0].widgetLayout).not.toEqual(defaultReport.pages[0].widgetLayout);
+    const back = reflow(onPhone, false, false, kept);
+    back.pages.forEach((p, i) => expect(p.widgetLayout).toEqual(defaultReport.pages[i].widgetLayout));
+  });
+});

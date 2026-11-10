@@ -113,7 +113,7 @@ try {
   );
   check(
     await b.evaluate<boolean>(
-      `!!document.querySelector('iframe[src^="/s/"]') && !!document.querySelector('a[href="/build"]')`,
+      `!!document.querySelector('iframe[src^="/s/"]') && !!document.querySelector('a[href^="/dashboard/ai?prompt="]')`,
     ),
     "overview: storefront preview and Edit storefront",
   );

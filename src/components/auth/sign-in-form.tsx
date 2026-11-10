@@ -30,7 +30,7 @@ export function SignInForm({ linkFailed, providers }: { linkFailed: boolean; pro
         setBusy(false);
         return;
       }
-      router.push("/build");
+      router.push("/dashboard");
       router.refresh();
       return;
     }

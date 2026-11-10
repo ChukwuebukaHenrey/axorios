@@ -26,7 +26,6 @@ const PAGE_FOR_PATH: [string, PageKey][] = [
   ["/dashboard/design", "design"],
   ["/dashboard/settings", "settings"],
   ["/dashboard/integrations", "settings"],
-  ["/build", "store"],
 ];
 
 export function pageFor(pathname: string): PageKey {

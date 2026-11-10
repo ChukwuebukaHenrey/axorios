@@ -4,7 +4,7 @@ import { ExternalLink, Loader2, ShoppingBag } from "lucide-react";
 import { useEffect, useState } from "react";
 import { t } from "@/lib/messages";
 import type { SyncResult } from "@/modules/platforms";
-import { shopifySyncResult } from "./actions";
+import { shopifySyncResult } from "../actions";
 
 type ShopifyPart = {
   state?: string;

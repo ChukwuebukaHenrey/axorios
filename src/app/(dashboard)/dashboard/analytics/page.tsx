@@ -104,7 +104,7 @@ export default async function AnalyticsPage() {
     <main className="flex flex-1 flex-col overflow-y-auto px-4 pt-6 pb-10 sm:px-6 lg:px-8">
       <PageHeader title={a.title} subtitle={subtitle} />
       {/* PayPal Transaction Search can take seconds, so the header shows at once and the report streams in. */}
-      <Suspense fallback={<div className="mt-5 h-[78vh] min-h-[560px] animate-pulse rounded-xl border border-panel-3 bg-panel" aria-label={a.loading} />}>
+      <Suspense fallback={<div className="mt-5 h-[640px] animate-pulse rounded-xl border border-panel-3 bg-panel" aria-label={a.loading} />}>
         <StudioSection storeId={store.id} currency={cur} now={now} />
       </Suspense>
     </main>
@@ -177,7 +177,7 @@ async function StudioSection({ storeId, currency: cur, now }: { storeId: string;
           {a.paypalOff}
         </p>
       )}
-      <div className="mt-5 flex min-h-0 flex-1 flex-col">
+      <div className="mt-5">
         {rows.orders.length === 0 ? (
           <p className="rounded-xl border border-panel-3 bg-panel p-6 text-stone">
             {a.empty}
@@ -197,12 +197,11 @@ async function StudioSection({ storeId, currency: cur, now }: { storeId: string;
               reset: a.reset,
               loading: a.loading,
               pages: a.pages,
+              period: a.period,
               filters: a.filters,
-              filtersNote: a.filtersNote,
-              filterPanel: a.filterPanel,
+              hideFilters: a.hideFilters,
+              moreActions: a.moreActions,
               clearFilters: a.clearFilters,
-              noFilters: a.noFilters,
-              activeFilters: a.activeFilters,
             }}
           />
         )}

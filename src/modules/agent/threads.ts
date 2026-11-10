@@ -54,10 +54,15 @@ export async function listThreads(supabase: SupabaseClient<Database>, ownerId: s
       if (error || !data) throw new Error(`Thread list failed: ${error?.code}`);
     }
   }
-  return data.map((row) => {
-    const { id, title, storeId, updatedAt, waiting } = summary(row);
-    return { id, title, storeId, updatedAt, waiting };
-  });
+  // Chats saved before a first message (the old "New chat" button) never show, and are cleared out here.
+  const empty = data.filter((row) => !hasSellerMessage((row.messages as unknown as UIMessage[]) ?? []));
+  if (empty.length > 0) await supabase.from("ai_threads").delete().in("id", empty.map((row) => row.id));
+  return data
+    .filter((row) => !empty.includes(row))
+    .map((row) => {
+      const { id, title, storeId, updatedAt, waiting } = summary(row);
+      return { id, title, storeId, updatedAt, waiting };
+    });
 }
 
 export async function getThread(supabase: SupabaseClient<Database>, threadId: string): Promise<Thread | null> {
@@ -66,11 +71,32 @@ export async function getThread(supabase: SupabaseClient<Database>, threadId: st
   return data ? summary(data) : null;
 }
 
-/** storeId null = an account thread, for ideas before a store exists. */
-export async function createThread(supabase: SupabaseClient<Database>, ownerId: string, storeId: string | null): Promise<string> {
-  const { data, error } = await supabase.from("ai_threads").insert({ owner_id: ownerId, store_id: storeId, title: NEW_TITLE }).select("id").single();
+/** A thread is worth keeping only once the seller has said something in it. */
+export function hasSellerMessage(messages: UIMessage[]): boolean {
+  return messages.some((m) => m.role === "user");
+}
+
+/**
+ * Saves a new chat together with the seller's first message, so no thread row ever exists empty. The id comes from
+ * the browser's unsaved draft; a clash with an existing id returns null and the caller answers 404.
+ * storeId null = an account thread, for ideas before a store exists.
+ */
+export async function createThread(
+  supabase: SupabaseClient<Database>,
+  ownerId: string,
+  storeId: string | null,
+  first: { id: string; messages: UIMessage[] },
+): Promise<Thread | null> {
+  const messages = first.messages.filter((m) => m.role === "user");
+  if (!hasSellerMessage(messages)) return null;
+  const { data, error } = await supabase
+    .from("ai_threads")
+    .insert({ id: first.id, owner_id: ownerId, store_id: storeId, title: titleFrom(messages) ?? NEW_TITLE, messages: messages as unknown as Json })
+    .select("id, title, store_id, updated_at, messages")
+    .single();
+  if (error?.code === "23505") return null;
   if (error) throw new Error(`Thread create failed: ${error.code}`);
-  return data.id;
+  return summary(data);
 }
 
 export async function deleteThread(supabase: SupabaseClient<Database>, threadId: string): Promise<void> {

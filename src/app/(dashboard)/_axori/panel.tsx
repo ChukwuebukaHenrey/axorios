@@ -87,7 +87,7 @@ export function AxoriPanel({ storeName, greetingName }: { storeName: string; gre
             </button>
           </header>
           {thread ? (
-            <AxoriChat key={thread.id} thread={thread} storeName={storeName} greetingName={greetingName} variant="panel" onTitle={refresh} onDraft={(first) => void start(first)} />
+            <AxoriChat key={thread.id} thread={thread} storeName={storeName} greetingName={greetingName} variant="panel" onTitle={refresh} onStart={start} />
           ) : (
             <div className="grid flex-1 place-items-center">
               <Mascot state="thinking" size={72} />

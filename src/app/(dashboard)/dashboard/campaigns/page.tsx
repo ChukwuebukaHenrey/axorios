@@ -81,7 +81,7 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
   const header = (
     <PageHeader title={t.app.nav.marketing} subtitle={t.app.campaignsSubtitle}>
       <Button asChild>
-        <Link href={`/build?prompt=${encodeURIComponent(t.app.cards.makePostsPrompt)}`}>{t.app.cards.makePosts}</Link>
+        <Link href={`/dashboard/ai?prompt=${encodeURIComponent(t.app.cards.makePostsPrompt)}`}>{t.app.cards.makePosts}</Link>
       </Button>
     </PageHeader>
   );

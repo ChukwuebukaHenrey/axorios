@@ -532,19 +532,19 @@ function BottomBar({ counts, onMore }: { counts: Props["counts"]; onMore: () => 
     { href: "/dashboard/campaigns", label: n.marketing, icon: Megaphone },
   ];
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 grid h-16 grid-cols-5 border-t border-panel-3 bg-[#0d0d0d]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
+    <nav className="fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+10px)] z-40 grid h-[68px] grid-cols-5 items-center rounded-[26px] border border-panel-3 bg-[#181918]/95 px-1 shadow-[0_10px_36px_rgba(0,0,0,0.6)] backdrop-blur-xl lg:hidden">
       {items.map((item) => {
         const on = isActive(pathname, item);
         const Icon = item.icon;
         return (
-          <Link key={item.href} href={item.href} aria-current={on ? "page" : undefined} className={`relative flex flex-col items-center justify-center gap-0.5 text-[11px] ${on ? "text-lime" : "text-stone"}`}>
+          <Link key={item.href} href={item.href} aria-current={on ? "page" : undefined} className={`relative mx-0.5 flex h-[58px] flex-col items-center justify-center gap-0.5 rounded-[19px] text-[10px] transition-all duration-200 ${on ? "bg-lime text-black shadow-[0_4px_14px_rgba(189,246,36,0.12)]" : "text-cream/65 hover:bg-white/10 hover:text-cream"}`}>
             <Icon className="size-5" aria-hidden="true" />
             {item.label}
             {item.count ? <span className="absolute top-2 left-[calc(50%+6px)] size-2 rounded-full bg-lime" /> : null}
           </Link>
         );
       })}
-      <button type="button" onClick={onMore} className="flex flex-col items-center justify-center gap-0.5 text-[11px] text-stone">
+      <button type="button" onClick={onMore} className="mx-0.5 flex h-[58px] flex-col items-center justify-center gap-0.5 rounded-[19px] text-[10px] text-cream/65 transition hover:bg-white/10 hover:text-cream">
         <Menu className="size-5" aria-hidden="true" />
         {n.more}
       </button>
@@ -582,7 +582,7 @@ function FloatingAxori() {
       onPointerLeave={() => held.current && setHolding(false)}
       onContextMenu={(e) => e.preventDefault()}
       aria-label={t.app.axori.holdToTalk}
-      className={`fixed right-4 z-[60] grid size-16 ${raised ? "bottom-40" : "bottom-20"} touch-none place-items-center rounded-full border border-lime/40 bg-[#1c2112] shadow-xl shadow-black/50 select-none lg:hidden`}
+      className={`fixed right-4 z-[60] grid size-16 ${raised ? "bottom-44" : "bottom-24"} touch-none place-items-center rounded-full border border-lime/40 bg-[#1c2112] shadow-xl shadow-black/50 select-none lg:hidden`}
     >
       <Mascot state={holding ? "listening" : mascot} size={52} />
     </button>
@@ -648,7 +648,7 @@ export function AppShell({ pageLabels, children, ...props }: Props) {
 
           <div className="flex min-w-0 flex-1 flex-col">
             <TopBar counts={props.counts} approvals={props.approvals} onMenu={() => setDrawer(true)} onSearch={() => setSearch(true)} />
-            <div className="flex min-h-0 flex-1 flex-col pb-16 lg:pb-0">{children}</div>
+            <div className="flex min-h-0 flex-1 flex-col pb-24 lg:pb-0">{children}</div>
           </div>
         </div>
         <SearchPalette open={search} onOpenChange={setSearch} />

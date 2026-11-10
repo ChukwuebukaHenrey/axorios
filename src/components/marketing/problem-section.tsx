@@ -42,10 +42,10 @@ export function ProblemSection() {
           <div className="relative -mr-5 sm:-mr-8 xl:-mr-[calc((100vw-1160px)/2)]">
             <div className="relative overflow-hidden rounded-l-2xl border border-r-0 border-panel-3 bg-panel">
               <Image
-                src="/images/tritty/shopify-install.png"
+                src="/images/marketing/problem-scattered.webp"
                 alt={p.imageAlt}
-                width={1600}
-                height={900}
+                width={1448}
+                height={1086}
                 sizes="(min-width: 1024px) 60vw, 100vw"
                 className="h-auto w-full"
               />

@@ -11,9 +11,10 @@ export const metadata = { title: "Use Case | AxoriOS" };
 
 const u = t.marketing.useCasePage;
 /** Storefront shows the product itself (a screenshot on the light panel); the others are photos that fill it. */
-const SHOTS: { src: string; w: number; h: number; photo?: boolean }[] = [
+// Sales: the real Telegram chat floats on the "sell while you sleep" photo.
+const SHOTS: { src: string; w: number; h: number; photo?: boolean; bg?: string }[] = [
   { src: "/images/marketing/dash-store.webp", w: 1528, h: 811 },
-  { src: "/images/marketing/usecase-sales.webp", w: 1448, h: 1086, photo: true },
+  { src: "/images/marketing/chat-telegram.webp", w: 825, h: 816, bg: "/images/marketing/usecase-sales.webp" },
   { src: "/images/marketing/service-payments.webp", w: 1447, h: 1087, photo: true },
   { src: "/images/marketing/usecase-marketing.webp", w: 1600, h: 1174, photo: true },
 ];
@@ -90,16 +91,19 @@ export default function UseCasePage() {
                     {shot.photo ? (
                       <Image src={shot.src} alt={item.imageAlt} fill sizes="(min-width: 1024px) 624px, 100vw" className="object-cover" />
                     ) : (
-                      <div className="absolute inset-0 flex items-center justify-center p-4">
-                        <Image
-                          src={shot.src}
-                          alt={item.imageAlt}
-                          width={shot.w}
-                          height={shot.h}
-                          sizes="(min-width: 1024px) 624px, 100vw"
-                          className={`rounded-lg shadow-lg ${tall ? "h-full w-auto" : "h-auto w-full"}`}
-                        />
-                      </div>
+                      <>
+                        {shot.bg && <Image src={shot.bg} alt="" fill sizes="(min-width: 1024px) 624px, 100vw" className="object-cover" />}
+                        <div className={`absolute inset-0 flex items-center justify-center ${shot.bg ? "p-6 sm:p-10" : "p-4"}`}>
+                          <Image
+                            src={shot.src}
+                            alt={item.imageAlt}
+                            width={shot.w}
+                            height={shot.h}
+                            sizes="(min-width: 1024px) 624px, 100vw"
+                            className={`rounded-lg shadow-lg ${shot.bg ? "h-auto max-h-full w-auto max-w-[min(100%,420px)] shadow-2xl shadow-black/50" : tall ? "h-full w-auto" : "h-auto w-full"}`}
+                          />
+                        </div>
+                      </>
                     )}
                   </div>
                 </li>

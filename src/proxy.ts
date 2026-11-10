@@ -20,11 +20,10 @@ export async function proxy(request: NextRequest) {
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Verifies the JWT locally against the cached JWKS (asymmetric keys), refreshing an expiring session first.
+  const { data, error } = await supabase.auth.getClaims();
 
-  if (!user) return NextResponse.redirect(new URL("/sign-in", request.url));
+  if (error || !data?.claims?.sub) return NextResponse.redirect(new URL("/sign-in", request.url));
   return response;
 }
 

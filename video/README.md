@@ -15,6 +15,17 @@ npm ci
 scripts/cut-clips.sh /path/to/AxoriOS.mp4 /path/to/tg.mp4   # writes public/clips/*.mp4 (crops, speed-ups, email blur)
 ```
 
+## Music
+
+`public/audio/music.m4a` is an original track synthesized by `scripts/make-music.py` (numpy only, no samples, so no licence to clear). It is timed to the cuts in `src/Demo.tsx`; if you change shot lengths, update the frame numbers at the top of the script and regenerate:
+
+```
+python3 -I scripts/make-music.py /tmp/music.wav
+ffmpeg -i /tmp/music.wav -af loudnorm=I=-19:TP=-2:LRA=9 -ar 48000 -c:a aac -b:a 192k public/audio/music.m4a
+```
+
+It sits at about -19 LUFS so a voice-over (aim for about -16 LUFS) stays on top.
+
 ## Preview and render
 
 ```

@@ -1,6 +1,7 @@
 import React from "react";
 import { TransitionSeries, linearTiming } from "@remotion/transitions";
 import { fade } from "@remotion/transitions/fade";
+import { Audio, staticFile } from "remotion";
 import { LEN, S1, S10, S11, S12, S13, S2, S3, S4, S5, S6, S7, S8, S9 } from "./shots";
 
 const XF = 10; // frames: soft fade inside a chapter; chapters change on a hard cut, as in the reference
@@ -25,6 +26,9 @@ const SHOTS: [React.FC, number, boolean][] = [
 export const DEMO_FRAMES = SHOTS.reduce((t, [, d]) => t + d, 0) - SHOTS.filter(([, , f]) => f).length * XF;
 
 export const Demo: React.FC = () => (
+  <>
+  {/* Original track from scripts/make-music.py, timed to the cuts below. */}
+  <Audio src={staticFile("audio/music.m4a")} />
   <TransitionSeries>
     {SHOTS.flatMap(([Shot, d, fadeNext], i) => {
       const seq = (
@@ -35,4 +39,5 @@ export const Demo: React.FC = () => (
       return fadeNext && i < SHOTS.length - 1 ? [seq, <TransitionSeries.Transition key={`f${i}`} presentation={fade()} timing={linearTiming({ durationInFrames: XF })} />] : [seq];
     })}
   </TransitionSeries>
+  </>
 );

@@ -269,7 +269,7 @@ export const S11: React.FC = () => {
   const items = [
     { src: "shots/features-02.jpg", cap: "On-brand posts, scheduled" },
     { src: "shots/landing-10.jpg", cap: "Nothing posts until you approve" },
-    { src: "shots/landing-14.jpg", cap: "One-tap Shopify sync" },
+    { src: "shots/landing-13.jpg", cap: "One-tap Shopify sync" },
   ];
   return (
     <AbsoluteFill>

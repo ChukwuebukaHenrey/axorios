@@ -4,8 +4,10 @@ import { ArrowRight, Menu, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { Logo } from "@/components/logo";
+import { Segmented } from "@/components/ui/segmented";
 import { t } from "@/lib/messages";
 
 const n = t.marketing.nav;
@@ -22,9 +24,23 @@ export const NAV_LINKS = [
 const TAB_LINKS = NAV_LINKS.filter(({ href }) => href !== "/");
 
 const THEMES = {
-  light: { tab: "bg-white text-black", corner: "#ffffff", divider: "divide-black/[0.07]", muted: "text-black/65 hover:text-black" },
-  dark: { tab: "bg-panel-2 text-cream", corner: "#1f1f1f", divider: "divide-cream/10", muted: "text-cream/65 hover:text-cream" },
+  light: { tab: "bg-white text-black", corner: "#ffffff", divider: "divide-black/[0.07]", muted: "text-black/65 hover:text-black", tone: "light" },
+  dark: { tab: "bg-panel-2 text-cream", corner: "#1f1f1f", divider: "divide-cream/10", muted: "text-cream/65 hover:text-cream", tone: "dark" },
 } as const;
+
+const noSubscription = () => () => {};
+
+/** True once the page has scrolled away from the top (the phone tab then floats free of the edge). */
+function useScrolled(offset = 8) {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > offset);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [offset]);
+  return scrolled;
+}
 
 /**
  * The tab's concave top corners: a square filled with the tab colour except for a quarter circle,
@@ -61,7 +77,15 @@ export function SiteNav({ theme = "dark" }: { theme?: "light" | "dark" }) {
   const pathname = usePathname();
   const reduce = useReducedMotion();
   const [open, setOpen] = useState(false);
+  const scrolled = useScrolled();
+  const inBrowser = useSyncExternalStore(
+    noSubscription,
+    () => true,
+    () => false,
+  );
   const c = THEMES[theme];
+  // On phones the tab leaves the top edge once scrolled (or opened): even corners, a gap above, no cut-out corners.
+  const floating = open || scrolled;
 
   useEffect(() => {
     if (!open) return;
@@ -77,31 +101,23 @@ export function SiteNav({ theme = "dark" }: { theme?: "light" | "dark" }) {
     </Link>
   );
 
-  return (
-    <header className="relative z-30 px-3 sm:px-6">
+  const bar = (
+    <header className="fixed inset-x-0 top-0 z-50 px-3 sm:px-6">
       {/* Desktop: links left, logo centred, sign in + CTA right. */}
       <nav
         aria-label={n.label}
-        className={`relative mx-auto hidden h-[68px] max-w-[1080px] grid-cols-[1fr_auto_1fr] items-center rounded-b-[22px] px-6 lg:grid ${c.tab}`}
+        className={`relative mx-auto hidden h-[68px] max-w-[1080px] grid-cols-[1fr_auto_1fr] items-center rounded-b-[22px] px-6 transition-shadow lg:grid ${c.tab} ${scrolled ? "shadow-xl shadow-black/25" : ""}`}
       >
         <Corner side="left" color={c.corner} />
         <Corner side="right" color={c.corner} />
-        <ul className="flex items-center gap-7">
-          {TAB_LINKS.map(({ href, label }) => {
-            const active = pathname === href;
-            return (
-              <li key={href}>
-                <Link
-                  href={href}
-                  aria-current={active ? "page" : undefined}
-                  className={`font-display text-[15px] transition ${active ? "font-medium" : c.muted}`}
-                >
-                  {label}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+        <Segmented
+          label={n.label}
+          tone={c.tone}
+          keepScroll={false}
+          value={pathname}
+          items={TAB_LINKS.map(({ href, label }) => ({ value: href, href, label }))}
+          className="justify-self-start font-display"
+        />
         {brand}
         <div className="flex items-center justify-end gap-5">
           <Link href="/sign-in" className={`font-display text-[15px] transition ${c.muted}`}>
@@ -118,14 +134,14 @@ export function SiteNav({ theme = "dark" }: { theme?: "light" | "dark" }) {
         layout={!reduce}
         transition={{ type: "spring", bounce: 0, duration: 0.35 }}
         style={{
-          borderTopLeftRadius: open ? 22 : 0,
-          borderTopRightRadius: open ? 22 : 0,
-          borderBottomLeftRadius: open ? 22 : 20,
-          borderBottomRightRadius: open ? 22 : 20,
+          borderTopLeftRadius: floating ? 22 : 0,
+          borderTopRightRadius: floating ? 22 : 0,
+          borderBottomLeftRadius: floating ? 22 : 20,
+          borderBottomRightRadius: floating ? 22 : 20,
         }}
-        className={`absolute inset-x-0 mx-auto max-w-[560px] ${c.tab} ${open ? "top-3 shadow-2xl shadow-black/40" : "top-0"}`}
+        className={`absolute inset-x-0 mx-auto max-w-[560px] ${c.tab} ${floating ? "top-3 shadow-2xl shadow-black/40" : "top-0"}`}
       >
-        {!open && (
+        {!floating && (
           <>
             <Corner side="left" color={c.corner} />
             <Corner side="right" color={c.corner} />
@@ -181,5 +197,14 @@ export function SiteNav({ theme = "dark" }: { theme?: "light" | "dark" }) {
       </motion.nav>
       </div>
     </header>
+  );
+
+  // Holds the nav's place in the page; the nav itself is fixed to the top. Once hydrated it moves to <body>, so a
+  // hero's own stacking context (the photo heroes use `isolate`) can't let later sections paint over it.
+  return (
+    <>
+      <div aria-hidden="true" className="h-14 shrink-0 lg:h-[68px]" />
+      {inBrowser ? createPortal(bar, document.body) : bar}
+    </>
   );
 }

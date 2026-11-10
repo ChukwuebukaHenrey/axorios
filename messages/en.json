@@ -61,7 +61,13 @@
     "cta": {
       "title": "Your first order could be one voice note away.",
       "body": "Describe your business, approve your store and share the link. No code, no setup calls and no payment forms to configure.",
-      "button": "Start building"
+      "button": "Start building",
+      "storeEyebrow": "Your store · example",
+      "storeValue": "₦45,000",
+      "storeNote": "Birthday cake, paid in USD",
+      "approvalEyebrow": "Approval preview",
+      "approvalValue": "Review first",
+      "approvalNote": "Nothing goes live without your yes."
     },
     "footer": {
       "tagline": "Turn a business idea into a storefront that takes real payments, with an AI agent that sells while you sleep.",

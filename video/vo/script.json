@@ -76,8 +76,8 @@
       "text": "AxoriOS. From idea to first paid order. Built on PayPal."
     }
   ],
-  "say": {
-    "AxoriOS": "Axo-ree-oss",
-    "Axori AI": "Axo-ree A.I."
+  "phonemes": {
+    "Axori AI": "ˌæksəɹˈiː ˌeɪˈaɪ",
+    "AxoriOS": "ˌæksəɹˈiːoʊs"
   }
 }

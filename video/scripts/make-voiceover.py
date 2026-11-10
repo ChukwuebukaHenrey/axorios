@@ -12,6 +12,7 @@ Setup (outside the repo):
 Usage: .tts/bin/python -I scripts/make-voiceover.py <dir with the two model files> [voice]
 """
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -26,14 +27,32 @@ lang = "en-gb" if voice.startswith("b") else cfg["lang"]
 model_dir = Path(sys.argv[1])
 k = Kokoro(str(model_dir / "kokoro-v1.0.onnx"), str(model_dir / "voices-v1.0.bin"))
 
+FIXED = cfg.get("phonemes", {})  # exact sounds for names the phonemizer gets wrong ("axo-ree-os")
+NAME = re.compile("|".join(re.escape(n) for n in sorted(FIXED, key=len, reverse=True))) if FIXED else None
+
+
+def to_phonemes(text):
+    if not NAME:
+        return k.tokenizer.phonemize(text, lang)
+    parts, last = [], 0
+    for m in NAME.finditer(text):
+        if text[last:m.start()].strip():
+            parts.append(k.tokenizer.phonemize(text[last:m.start()], lang))
+        parts.append(FIXED[m.group(0)] + (" " if m.end() < len(text) and text[m.end()] == " " else ""))
+        last = m.end()
+    if text[last:].strip():
+        parts.append(k.tokenizer.phonemize(text[last:], lang))
+    return re.sub(r" ([.,!?;:])", r"\1", " ".join(p.strip() for p in parts))
+
+
 out = ROOT / "public/audio/vo"
 out.mkdir(parents=True, exist_ok=True)
 meta, problems = [], []
 for line in cfg["lines"]:
-    spoken = line["text"]
-    for word, sound in cfg.get("say", {}).items():  # pronunciation fixes, voice only
-        spoken = spoken.replace(word, sound)
-    audio, sr = k.create(spoken, voice=voice, speed=cfg["speed"], lang=lang)
+    ph = to_phonemes(line["text"])
+    if NAME and NAME.search(line["text"]):
+        print(f"   {line['id']} phonemes: {ph}")
+    audio, sr = k.create(ph, is_phonemes=True, voice=voice, speed=cfg["speed"], lang=lang)
     # trim leading/trailing silence, then resample to 48 kHz by linear interpolation
     nz = np.flatnonzero(np.abs(audio) > 0.01)
     audio = audio[max(0, nz[0] - 800): nz[-1] + 2400]

@@ -10,7 +10,7 @@ const codes = PHOTO_SHORTCUTS;
 type Result = { url: string; command: string };
 
 /** Mobile-friendly original-photo editor, separate from ordinary agent messages. */
-export function ProductPhotoStudio({ threadId }: { threadId: string }) {
+export function ProductPhotoStudio({ threadId, commandOverride }: { threadId: string; commandOverride?: string }) {
   const [open, setOpen] = useState(false);
   const [original, setOriginal] = useState<UploadedMedia | null>(null);
   const [command, setCommand] = useState("/whitebg");
@@ -21,7 +21,7 @@ export function ProductPhotoStudio({ threadId }: { threadId: string }) {
   const resultUrl = useRef<string | null>(null);
   const media = useMediaUpload(threadId === "draft" ? undefined : threadId);
 
-  useEffect(() => () => {
+  useEffect(() => {\n    if (!commandOverride) return;\n    setCommand(commandOverride);\n    setError("");\n    setOpen(true);\n  }, [commandOverride]);\n\n  useEffect(() => () => {
     if (resultUrl.current) URL.revokeObjectURL(resultUrl.current);
   }, []);
 

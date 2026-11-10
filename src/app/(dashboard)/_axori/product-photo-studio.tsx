@@ -21,7 +21,14 @@ export function ProductPhotoStudio({ threadId, commandOverride }: { threadId: st
   const resultUrl = useRef<string | null>(null);
   const media = useMediaUpload(threadId === "draft" ? undefined : threadId);
 
-  useEffect(() => {\n    if (!commandOverride) return;\n    setCommand(commandOverride);\n    setError("");\n    setOpen(true);\n  }, [commandOverride]);\n\n  useEffect(() => () => {
+  useEffect(() => {
+    if (!commandOverride) return;
+    setCommand(commandOverride);
+    setError("");
+    setOpen(true);
+  }, [commandOverride]);
+
+  useEffect(() => () => {
     if (resultUrl.current) URL.revokeObjectURL(resultUrl.current);
   }, []);
 

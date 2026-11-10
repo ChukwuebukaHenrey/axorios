@@ -38,7 +38,7 @@ export function StatsGrid() {
             <h3 className="font-display text-4xl font-medium tracking-[-0.02em] text-cream">{s.blueprintTitle}</h3>
             <p className="mt-4 text-lg leading-relaxed text-cream sm:text-2xl sm:leading-relaxed">{s.blueprintBody}</p>
           </div>
-          <StatCard {...first} />
+          <StatCard {...first} image="/images/marketing/stat-chat.webp" focus="82% 50%" />
           <StatCard {...third} image="/images/marketing/stat-approvals.webp" focus="80% 50%" />
           <StatCard {...second} image="/images/marketing/stat-voice.webp" focus="62% 50%" />
           <StatCard {...fourth} image="/images/marketing/stat-currency.webp" focus="78% 50%" />

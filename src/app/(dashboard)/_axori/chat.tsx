@@ -6,12 +6,14 @@ import { ArrowUp, Mic, Paperclip, Square, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type KeyboardEvent } from "react";
 import { t } from "@/lib/messages";
+import { parsePhotoShortcut } from "@/modules/creative/photo-shortcuts";
 import { useVoiceRecorder, type VoiceNote } from "../build/use-voice-recorder";
 import { switchStore } from "../shell-actions";
 import { Mascot, useMomentary, type MascotState } from "./mascot";
 import { ApprovalCard, MessageParts, type ToolPart } from "./parts";
 import { chipKey, chipPayload, useAxori, type Chip } from "./provider";
 import { MEDIA_ACCEPT, useMediaUpload } from "./use-media-upload";
+import { ProductPhotoStudio } from "./product-photo-studio";
 
 const a = t.app.axori;
 
@@ -68,6 +70,7 @@ export function AxoriChat({
   const router = useRouter();
   const { chips, getChips, addChip, removeChip, setMascot, holding, takePending, pending } = useAxori();
   const [input, setInput] = useState("");
+  const [photoCommand, setPhotoCommand] = useState<string | undefined>();
   const endRef = useRef<HTMLDivElement>(null);
   const areaRef = useRef<HTMLTextAreaElement>(null);
   const isAccount = thread.storeId === null;
@@ -187,6 +190,11 @@ export function AxoriChat({
   function send(text: string) {
     const clean = text.trim();
     if (!clean || busy) return;
+    if (parsePhotoShortcut(clean)) {
+      setPhotoCommand(clean);
+      setInput("");
+      return;
+    }
     setInput("");
     if (isDraft) onDraft?.({ text: clean });
     else sendMessage({ text: clean });
@@ -268,6 +276,7 @@ export function AxoriChat({
       onDrop={onDrop}
       className={`rounded-xl border bg-panel-2 shadow-[0_4px_24px_rgb(0_0_0/0.35)] transition-colors focus-within:border-cream/25 ${dragging ? "border-lime" : "border-panel-3"}`}
     >
+      <div className="max-h-[52dvh] overflow-y-auto px-2 pt-2"><ProductPhotoStudio threadId={thread.id} commandOverride={photoCommand} /></div>
       {pinned.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5 px-3 pt-3 text-xs">
           {pinned.map((chip) => (

@@ -1,0 +1,2 @@
+# The Remotion demo video is its own package; Vercel never needs it.
+video/

@@ -269,7 +269,7 @@ export const S11: React.FC = () => {
   const items = [
     { src: "shots/features-02.jpg", cap: "On-brand posts, scheduled" },
     { src: "shots/landing-10.jpg", cap: "Nothing posts until you approve" },
-    { src: "shots/landing-13.jpg", cap: "One-tap Shopify sync" },
+    { src: "shots/landing-13.jpg", cap: "One-tap Shopify sync", zoom: 1.3 },
   ];
   return (
     <AbsoluteFill>
@@ -277,7 +277,9 @@ export const S11: React.FC = () => {
       {items.map((it, i) => (
         <Sequence key={it.src} from={Math.round(i * beat)} durationInFrames={Math.round(beat)}>
           <Panel w={1500} h={938} dur={Math.round(beat)} move={{ ry: [i % 2 ? 14 : -14, i % 2 ? 4 : -4], rx: [8, 2], s: [0.9, 0.98] }} glow="rgba(245,155,10,0.25)">
-            <Still src={it.src} />
+            <div style={{ width: "100%", height: "100%", transform: `scale(${"zoom" in it ? it.zoom : 1})`, transformOrigin: "50% 0%" }}>
+              <Still src={it.src} />
+            </div>
           </Panel>
           <Caption text={it.cap} dur={Math.round(beat)} delay={6} />
         </Sequence>

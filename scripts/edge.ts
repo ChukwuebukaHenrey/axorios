@@ -67,7 +67,8 @@ export async function openEdge(base: string, port = 9335) {
   const go = async (path: string, ready = "document.readyState === 'complete'") => {
     await send("Page.navigate", { url: `${base}${path}` });
     await new Promise((r) => setTimeout(r, 300));
-    return waitFor(ready, 30_000);
+    // A route's loading.tsx skeleton (aria-busy) shows first; wait until the real page has replaced it.
+    return waitFor(`(${ready}) && !document.querySelector('[aria-busy="true"]')`, 30_000);
   };
   const shot = async (name: string) => {
     const { data } = (await send("Page.captureScreenshot", { format: "png" })) as { data: string };

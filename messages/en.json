@@ -1111,6 +1111,7 @@
     "paymentLink": "Pay here: {url}"
   },
   "app": {
+    "loadingPage": "Loading page",
     "charts": {
       "total": "Total",
       "average": "Daily average",

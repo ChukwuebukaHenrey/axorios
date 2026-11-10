@@ -6,6 +6,7 @@ import type {
   AgReportState,
   AgWidgetLayoutState,
 } from "ag-studio";
+import { PAGED_GRID, PAGED_GRID_SPAN } from "./paged-grid-config";
 
 const at = (
   xTrack: number,
@@ -288,8 +289,9 @@ const reconciliation: AgPageState = {
     "kpi-charged": kpi("Charged through PayPal", sum("orders.chargeTotal")),
     "kpi-fees": kpi("PayPal fees (charged)", sum("orders.chargeFee")),
     "kpi-mismatch": kpi("Mismatches", sum("orders.mismatch")),
+    // Every order / transaction: one page at a time (see paged-grid.tsx), not a scroller inside the card.
     grid: {
-      type: "grid",
+      type: PAGED_GRID as "grid",
       dataMapping: {
         cols: [
           { id: "orders.number" },
@@ -319,7 +321,7 @@ const reconciliation: AgPageState = {
     "kpi-charged": at(6, 0, 6, 7),
     "kpi-fees": at(12, 0, 6, 7),
     "kpi-mismatch": at(18, 0, 6, 7),
-    grid: at(0, 7, 24, 34),
+    grid: at(0, 7, 24, PAGED_GRID_SPAN),
   },
 };
 
@@ -344,8 +346,9 @@ const paypal: AgPageState = {
         },
       },
     },
+    // Every order / transaction: one page at a time (see paged-grid.tsx), not a scroller inside the card.
     grid: {
-      type: "grid",
+      type: PAGED_GRID as "grid",
       dataMapping: {
         cols: [
           { id: "paypal.at" },
@@ -367,7 +370,7 @@ const paypal: AgPageState = {
     "kpi-count": at(0, 0, 8, 7),
     "kpi-amount": at(8, 0, 8, 7),
     "by-match": at(16, 0, 8, 16),
-    grid: at(0, 16, 24, 28),
+    grid: at(0, 16, 24, PAGED_GRID_SPAN),
   },
 };
 
@@ -383,3 +386,23 @@ export const defaultReport: AgReportState = {
     paypal,
   ],
 };
+
+/** Widgets that moved to the paged table: reports saved in a browser before the move are upgraded on load. */
+const PAGED: Record<string, string> = { reconciliation: "grid", paypal: "grid" };
+
+export function upgradeSaved(state: AgReportState): AgReportState {
+  return {
+    ...state,
+    pages: state.pages.map((page) => {
+      const id = PAGED[page.id];
+      const widget = id ? (page.widgets as Record<string, { type?: string }> | undefined)?.[id] : undefined;
+      if (!id || !widget || widget.type !== "grid") return page;
+      const layout = (page.widgetLayout ?? {}) as Record<string, AgWidgetLayoutState>;
+      return {
+        ...page,
+        widgets: { ...page.widgets, [id]: { ...widget, type: PAGED_GRID } } as AgPageState["widgets"],
+        widgetLayout: layout[id] ? { ...layout, [id]: { ...layout[id], ySpan: Math.max(layout[id].ySpan, PAGED_GRID_SPAN) } } : layout,
+      };
+    }),
+  };
+}

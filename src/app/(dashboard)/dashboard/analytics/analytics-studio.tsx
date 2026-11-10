@@ -8,15 +8,16 @@
 // panel opens as a bottom sheet instead of a strip beside the charts. Editing the layout is a desktop job.
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { AgReportState, AgStudioApi, AgStudioMode } from "ag-studio";
-import { AgStudio, AgStudioProvider } from "ag-studio-react";
+import { AgStudio, AgStudioProvider, createWidgets } from "ag-studio-react";
 import { Eraser, ListFilter, MoreHorizontal, Pencil, RotateCcw, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PopoverContent, PopoverRoot, PopoverTrigger } from "@/components/smoothui/popover";
 import { Segmented } from "@/components/ui/segmented";
 import type { StudioRows } from "@/modules/analytics/studio-rows";
 import { buildStudioData } from "./studio-data";
+import { pagedGridDefinition } from "./paged-grid";
 import { reflow, type Layout } from "./studio-layout";
-import { defaultReport, PAGE_TITLES, PERIOD_FIELD } from "./studio-report";
+import { defaultReport, PAGE_TITLES, PERIOD_FIELD, upgradeSaved } from "./studio-report";
 import { axoriStudioTheme } from "./studio-theme";
 
 export type PeriodKey = "7d" | "30d" | "3m" | "6m";
@@ -38,6 +39,8 @@ type Labels = {
 };
 
 const noSubscription = () => () => {};
+/** Studio's widgets plus the paged table (module scope: Studio reads it once). */
+const widgets = createWidgets({ additionalTypes: [pagedGridDefinition] } as never);
 const menuItem =
   "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm text-cream transition-colors hover:bg-panel-2 focus-visible:bg-panel-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-40";
 
@@ -76,7 +79,7 @@ function withPeriod(state: AgReportState, range: { from: string; to: string }): 
 function readSaved(key: string): AgReportState | null {
   try {
     const raw = localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as AgReportState) : null;
+    return raw ? upgradeSaved(JSON.parse(raw) as AgReportState) : null;
   } catch {
     return null;
   }
@@ -339,6 +342,7 @@ function Studio({ rows, licenseKey, ranges, storageKey, labels }: { rows: Studio
             style={{ height: "100%", width: "100%" }}
             theme={axoriStudioTheme}
             layout={layout}
+            widgets={widgets}
             panels={panels}
             data={data}
             initialState={initialState}

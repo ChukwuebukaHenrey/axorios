@@ -1,6 +1,7 @@
 import type { AgPageState, AgReportState } from "ag-studio";
 import { describe, expect, it } from "vitest";
-import { defaultReport } from "./studio-report";
+import { PAGED_GRID, PAGED_GRID_SPAN, PHONE_PAGER_EXTRA } from "./paged-grid-config";
+import { defaultReport, upgradeSaved } from "./studio-report";
 import { phoneLayout, reflow, type Layout } from "./studio-layout";
 
 const sales = defaultReport.pages.find((p) => p.id === "sales") as AgPageState;
@@ -47,5 +48,25 @@ describe("Analytics phone layout", () => {
     expect(onPhone.pages[0].widgetLayout).not.toEqual(defaultReport.pages[0].widgetLayout);
     const back = reflow(onPhone, false, false, kept);
     back.pages.forEach((p, i) => expect(p.widgetLayout).toEqual(defaultReport.pages[i].widgetLayout));
+  });
+
+  it("keeps paged tables at their full height on phones, so a page of rows never scrolls inside the card", () => {
+    for (const id of ["reconciliation", "paypal"]) {
+      const page = defaultReport.pages.find((p) => p.id === id) as AgPageState;
+      expect((page.widgets as Record<string, { type: string }>).grid.type).toBe(PAGED_GRID);
+      expect(phoneLayout(page, false).grid).toMatchObject({ xTrack: 0, xSpan: 24, ySpan: PAGED_GRID_SPAN + PHONE_PAGER_EXTRA });
+    }
+  });
+
+  it("upgrades a report saved before the paged tables, keeping everything else", () => {
+    const old = structuredClone(defaultReport) as AgReportState;
+    const rec = old.pages.find((p) => p.id === "reconciliation")!;
+    (rec.widgets as Record<string, { type: string }>).grid.type = "grid";
+    (rec.widgetLayout as Layout).grid.ySpan = 34;
+    const up = upgradeSaved(old);
+    const after = up.pages.find((p) => p.id === "reconciliation")!;
+    expect((after.widgets as Record<string, { type: string }>).grid.type).toBe(PAGED_GRID);
+    expect((after.widgetLayout as Layout).grid.ySpan).toBe(PAGED_GRID_SPAN);
+    expect(up.pages.find((p) => p.id === "sales")).toEqual(old.pages.find((p) => p.id === "sales"));
   });
 });

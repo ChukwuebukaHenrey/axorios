@@ -1757,6 +1757,19 @@
         "outside": "Older than PayPal's 31-day search",
         "missing": "Not found in PayPal",
         "notOurs": "Not an AxoriOS order"
+      },
+      "pager": {
+        "nav": "Table pages",
+        "previous": "Previous",
+        "next": "Next",
+        "goToPrevious": "Go to previous page",
+        "goToNext": "Go to next page",
+        "goTo": "Go to page {page}",
+        "range": "{from}–{to} of {total}",
+        "total": "Total",
+        "empty": "No rows for these filters.",
+        "columns": "Columns",
+        "widget": "Paged table"
       }
     },
     "home": {
